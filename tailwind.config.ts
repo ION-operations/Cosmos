@@ -57,6 +57,15 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        earth: {
+          cyan: "hsl(var(--earth-cyan))",
+          blue: "hsl(var(--earth-blue))",
+          ocean: "hsl(var(--earth-ocean))",
+          terrain: "hsl(var(--earth-terrain))",
+          cloud: "hsl(var(--earth-cloud))",
+          sunset: "hsl(var(--earth-sunset))",
+          night: "hsl(var(--earth-night))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
