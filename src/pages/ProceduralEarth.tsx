@@ -1910,6 +1910,17 @@ const LayerToggle: React.FC<LayerToggleProps> = ({ label, icon, enabled, onChang
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
+// Check WebGL support
+const isWebGLSupported = (): boolean => {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    return !!gl;
+  } catch (e) {
+    return false;
+  }
+};
+
 const ProceduralEarth: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -1934,6 +1945,7 @@ const ProceduralEarth: React.FC = () => {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [activeTab, setActiveTab] = useState('atmosphere');
+  const [webglError, setWebglError] = useState<string | null>(null);
 
   const updateSetting = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -1966,14 +1978,28 @@ const ProceduralEarth: React.FC = () => {
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Check WebGL support first
+    if (!isWebGLSupported()) {
+      setWebglError('WebGL is not supported in this environment. Please try opening this page in a new browser tab or enable hardware acceleration.');
+      return;
+    }
+
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     
-    const renderer = new THREE.WebGLRenderer({ 
-      antialias: false, 
-      powerPreference: 'high-performance',
-      precision: 'highp'
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ 
+        antialias: false, 
+        powerPreference: 'high-performance',
+        precision: 'highp',
+        failIfMajorPerformanceCaveat: false
+      });
+    } catch (e) {
+      setWebglError('Failed to create WebGL context. This may happen in sandboxed environments. Try opening in a new browser tab.');
+      return;
+    }
+    
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     containerRef.current.appendChild(renderer.domElement);
@@ -2425,6 +2451,52 @@ const ProceduralEarth: React.FC = () => {
       setIsFullscreen(false);
     }
   };
+
+  // WebGL error fallback
+  if (webglError) {
+    return (
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-8">
+        <div className="max-w-lg text-center space-y-6">
+          <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
+            <Cloud className="w-12 h-12 text-cyan-400" />
+          </div>
+          <h1 className="text-3xl font-bold text-white">Procedural Earth V4</h1>
+          <p className="text-lg text-cyan-400">WebGL Required</p>
+          <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+            <p className="text-slate-300 text-sm leading-relaxed">{webglError}</p>
+          </div>
+          <div className="space-y-3 text-left bg-slate-800/30 rounded-xl p-4">
+            <p className="text-slate-400 text-sm font-medium">Try these solutions:</p>
+            <ul className="text-slate-400 text-sm space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="text-cyan-400">1.</span>
+                <span>Open this page directly in a <strong className="text-white">new browser tab</strong></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-cyan-400">2.</span>
+                <span>Enable <strong className="text-white">hardware acceleration</strong> in browser settings</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-cyan-400">3.</span>
+                <span>Try a different browser (Chrome, Firefox, Edge)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-cyan-400">4.</span>
+                <span>Update your graphics drivers</span>
+              </li>
+            </ul>
+          </div>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-screen relative overflow-hidden bg-background">
