@@ -1669,18 +1669,21 @@ const ProceduralEarthGPU: React.FC = () => {
     };
 
     const initWebGL2 = (): boolean => {
+      console.log('[WebGL2] Requesting context...');
       const gl = canvas.getContext('webgl2', { antialias: false, alpha: false });
-      if (!gl) return false;
+      if (!gl) { console.error('[WebGL2] getContext returned null'); return false; }
+      console.log('[WebGL2] Context OK. Compiling shaders...');
       const program = createGLProgram(gl, GL_VERT, GL_FRAG);
-      if (!program) return false;
+      if (!program) { console.error('[WebGL2] Shader compilation/linking failed'); return false; }
+      console.log('[WebGL2] Shaders OK. Setting up...');
       gl.useProgram(program);
       const uniforms = getGL2Uniforms(gl, program);
       const vao = gl.createVertexArray();
-      if (!vao) return false;
+      if (!vao) { console.error('[WebGL2] VAO creation failed'); return false; }
       gl.bindVertexArray(vao);
-      console.log('Generating 3D noise texture (64³)...');
+      console.log('[WebGL2] Generating 3D noise texture (64³)...');
       const noiseTex = generate3DNoiseTexture(gl, 64);
-      if (!noiseTex) return false;
+      if (!noiseTex) { console.error('[WebGL2] Noise texture failed'); return false; }
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_3D, noiseTex);
       gl.uniform1i(uniforms.u_noiseTex, 0);
@@ -1710,10 +1713,16 @@ const ProceduralEarthGPU: React.FC = () => {
           console.log('✓ Using WebGPU backend');
           setRendererType('webgpu');
         } else {
-          // WebGPU failed during full init but we already called getContext('webgpu') on canvas
-          // Canvas is now contaminated — we cannot get webgl2 on same canvas
-          setGpuError('WebGPU initialization failed during pipeline setup. Please refresh and try again.');
-          return;
+          // WebGPU context may have contaminated the canvas, try WebGL2 anyway
+          console.warn('WebGPU full init failed, attempting WebGL2 fallback...');
+          const gl2ok = initWebGL2();
+          if (gl2ok) {
+            console.log('✓ Using WebGL2 backend (after WebGPU failure)');
+            setRendererType('webgl2');
+          } else {
+            setGpuError('WebGPU pipeline setup failed and WebGL2 fallback also failed. Try refreshing or use a different browser.');
+            return;
+          }
         }
       } else {
         console.log('WebGPU unavailable, trying WebGL2...');
@@ -1722,7 +1731,7 @@ const ProceduralEarthGPU: React.FC = () => {
           console.log('✓ Using WebGL2 backend');
           setRendererType('webgl2');
         } else {
-          setGpuError('Neither WebGPU nor WebGL2 could be initialized.');
+          setGpuError('WebGL2 initialization failed. Check browser console for details.');
           return;
         }
       }
