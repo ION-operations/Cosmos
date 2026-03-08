@@ -1190,17 +1190,26 @@ vec3 getOceanSSS(vec3 viewDir, vec3 normal, vec3 sunDir, vec3 oceanColor) {
 }
 
 float getFoam(vec3 displacement, vec2 pos, float time) {
-    float heightFoam = saturate(displacement.y * 2.0 - 0.5);
+    // Wave-crest foam from Jacobian approximation
+    float heightFoam = pow(saturate(displacement.y * 1.5 - 0.3), 1.5);
+    
+    // Turbulent foam patches
+    float foamNoise = fbm(vec3(pos * 0.08 + time * 0.1, time * 0.3), 3);
+    float turbulentFoam = pow(saturate(foamNoise), 3.0) * 0.3;
     
     float breakingFoam = 0.0;
     if(uWeatherType == 3) {
-        float noise = fbm(vec3(pos * 0.1, time), 3);
-        breakingFoam = pow(noise, 2.0) * uWeatherIntensity;
+        float noise = fbm(vec3(pos * 0.05 + time * 0.2, time * 0.5), 4);
+        breakingFoam = pow(noise * 0.5 + 0.5, 2.0) * uWeatherIntensity * 0.8;
     }
     
-    float shoreFoam = fbm(vec3(pos * 0.5, time * 2.0), 2) * 0.5;
+    // Streaky wind foam
+    float windAngle = uWindDirection;
+    vec2 windDir = vec2(cos(windAngle), sin(windAngle));
+    float streak = sin(dot(pos, windDir) * 0.3 + time * 0.5) * 0.5 + 0.5;
+    streak *= fbm(vec3(pos * 0.15, time * 0.2), 2) * uWindSpeed * 0.3;
     
-    return saturate((heightFoam + breakingFoam + shoreFoam) * uFoamIntensity);
+    return saturate((heightFoam + turbulentFoam + breakingFoam + streak) * uFoamIntensity);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
