@@ -1113,6 +1113,8 @@ float sea_octave(vec2 uv, float choppy) {
 
 // Ocean height map - FBM of sea_octave with rotation between octaves
 float oceanMap(vec3 p, int iterations) {
+    if(!uEnableWaves) return p.y;
+    
     float SEA_FREQ = uWaveFrequency * 0.16;
     float SEA_HEIGHT = uWaveHeight * 0.6;
     float SEA_CHOPPY = 4.0 + uOceanRoughness * 4.0;
@@ -1122,9 +1124,8 @@ float oceanMap(vec3 p, int iterations) {
     float amp = SEA_HEIGHT;
     float choppy = SEA_CHOPPY;
     vec2 uv = p.xz;
-    uv.x *= 0.75; // Aspect ratio correction to avoid square patterns
+    uv.x *= 0.75;
     
-    // Wind influence on wave direction
     float windAngle = uWindDirection;
     mat2 windRot = mat2(cos(windAngle), -sin(windAngle), sin(windAngle), cos(windAngle));
     uv = windRot * uv;
@@ -1133,21 +1134,18 @@ float oceanMap(vec3 p, int iterations) {
     for(int i = 0; i < 8; i++) {
         if(i >= iterations) break;
         
-        // Two opposing wave directions for standing wave patterns
         d = sea_octave((uv + SEA_TIME) * freq, choppy);
         d += sea_octave((uv - SEA_TIME) * freq, choppy);
         
         h += d * amp;
         
-        // Rotate UV between octaves - THIS breaks all grid patterns
         uv = octave_m * uv;
         
-        freq *= 1.9;   // Frequency increase
-        amp *= 0.22;    // Amplitude decrease (energy cascade)
-        choppy = mix(choppy, 1.0, 0.2); // Reduce choppiness at small scales
+        freq *= 1.9;
+        amp *= 0.22;
+        choppy = mix(choppy, 1.0, 0.2);
     }
     
-    // Storm extra energy
     if(uWeatherType == 3) {
         float stormWave = sea_octave(p.xz * 0.05 + SEA_TIME * 0.5, 2.0);
         h += stormWave * uWeatherIntensity * uWaveHeight * 1.5;
