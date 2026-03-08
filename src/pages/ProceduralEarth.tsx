@@ -1892,19 +1892,19 @@ const DEFAULT_SETTINGS = {
     [0.95, 0.95, 0.95] as [number, number, number], // White
   ],
   
-  // Ocean
+  // Ocean - TDM Seascape colors
   oceanLevel: 0,
-  oceanColor: [0.0, 0.3, 0.5] as [number, number, number],
-  oceanDeepColor: [0.0, 0.1, 0.2] as [number, number, number],
-  waveHeight: 2.0,
+  oceanColor: [0.0, 0.09, 0.18] as [number, number, number],    // SEA_BASE from TDM
+  oceanDeepColor: [0.0, 0.04, 0.1] as [number, number, number], // Deep abyss
+  waveHeight: 0.6,
   waveFrequency: 1.0,
-  waveSpeed: 1.0,
-  oceanFresnel: 0.02,
+  waveSpeed: 0.8,
+  oceanFresnel: 0.04,
   oceanRoughness: 0.3,
-  foamIntensity: 0.5,
-  causticsIntensity: 0.5,
-  bubbleIntensity: 0.3,
-  sssIntensity: 0.5,
+  foamIntensity: 0.3,
+  causticsIntensity: 0.3,
+  bubbleIntensity: 0.15,
+  sssIntensity: 0.4,
   
   // Underwater
   underwaterFogDensity: 0.5,
