@@ -2314,10 +2314,24 @@ const ProceduralEarth: React.FC = () => {
       keysRef.current.delete(e.key.toLowerCase());
     };
 
+    // Scroll wheel zoom - infinite range
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const cam = cameraRef.current;
+      const zoomAmount = -e.deltaY * settingsRef.current.zoomSpeed * 0.1;
+      const forward = new THREE.Vector3(
+        Math.cos(cam.pitch) * Math.sin(cam.yaw),
+        Math.sin(cam.pitch),
+        Math.cos(cam.pitch) * Math.cos(cam.yaw)
+      );
+      cam.pos.add(forward.multiplyScalar(zoomAmount));
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
     renderer.domElement.addEventListener('click', handleClick);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
     const clock = new THREE.Clock();
     let lastTime = 0;
