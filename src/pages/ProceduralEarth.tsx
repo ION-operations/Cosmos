@@ -3026,9 +3026,33 @@ const ProceduralEarth: React.FC = () => {
                       min={0} max={10} step={0.1}
                       onChange={(v) => updateSetting('waveHeight', v)}
                     />
+                    <SliderSetting
+                      label="Wave Speed"
+                      value={settings.waveSpeed}
+                      min={0} max={3} step={0.1}
+                      onChange={(v) => updateSetting('waveSpeed', v)}
+                    />
+                    <SliderSetting
+                      label="Roughness"
+                      value={settings.oceanRoughness}
+                      min={0} max={1} step={0.05}
+                      onChange={(v) => updateSetting('oceanRoughness', v)}
+                    />
+                    <SliderSetting
+                      label="Fresnel"
+                      value={settings.oceanFresnel}
+                      min={0} max={0.1} step={0.005}
+                      onChange={(v) => updateSetting('oceanFresnel', v)}
+                    />
+                    <SliderSetting
+                      label="Foam"
+                      value={settings.foamIntensity}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamIntensity', v)}
+                    />
                   </SettingSection>
                   
-                  <SettingSection title="GPT Waves V7">
+                  <SettingSection title="FFT Ocean Effects">
                     <SliderSetting
                       label="Caustics"
                       value={settings.causticsIntensity}
