@@ -30,6 +30,7 @@ void main() {
 // ─── GLSL ES 3.0 — Fragment Shader ───
 const GL_FRAG = `#version 300 es
 precision highp float;
+precision highp sampler3D;
 in vec2 vUv;
 out vec4 fragColor;
 
