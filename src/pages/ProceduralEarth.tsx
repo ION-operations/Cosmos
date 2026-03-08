@@ -2839,6 +2839,12 @@ const ProceduralEarth: React.FC = () => {
     u.uEnableFresnel.value = settings.enableFresnel;
     u.uEnableCaustics.value = settings.enableCaustics;
     u.uEnableFoam.value = settings.enableFoam;
+    u.uEnableFoamJacobian.value = settings.enableFoamJacobian;
+    u.uEnableFoamShoreline.value = settings.enableFoamShoreline;
+    u.uEnableFoamTurbulent.value = settings.enableFoamTurbulent;
+    u.uEnableFoamWindstreak.value = settings.enableFoamWindstreak;
+    u.uEnableFoamSpray.value = settings.enableFoamSpray;
+    u.uEnableFoamVoronoi.value = settings.enableFoamVoronoi;
     u.uEnableSSS.value = settings.enableSSS;
     u.uEnableBubbles.value = settings.enableBubbles;
     u.uEnableUnderwaterCaustics.value = settings.enableUnderwaterCaustics;
