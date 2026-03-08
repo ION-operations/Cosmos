@@ -1957,6 +1957,20 @@ const DEFAULT_SETTINGS = {
   saturation: 1.1,
   vignetteStrength: 0.3,
   chromaticAberration: 0.5,
+  
+  // Zoom
+  zoomSpeed: 50,
+  
+  // Ocean Sub-Feature Toggles
+  enableWaves: true,
+  enableFresnel: true,
+  enableCaustics: true,
+  enableFoam: true,
+  enableSSS: true,
+  enableBubbles: true,
+  enableUnderwaterCaustics: true,
+  enableUnderwaterGodRays: true,
+  enableUnderwaterBubbles: true,
 };
 
 const DEFAULT_LAYERS: LayerVisibility = {
