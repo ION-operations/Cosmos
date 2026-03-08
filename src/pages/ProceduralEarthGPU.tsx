@@ -1621,6 +1621,14 @@ const ProceduralEarthGPU: React.FC = () => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
 
+    // CRITICAL: Set canvas pixel dimensions before requesting any context.
+    // Without explicit width/height, getContext('webgl2') returns null in many environments.
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    console.log(`[Init] Canvas size: ${canvas.width}x${canvas.height} (DPR ${dpr})`);
+
     const initWebGPU = async (): Promise<boolean> => {
       try {
         if (!navigator.gpu) return false;
