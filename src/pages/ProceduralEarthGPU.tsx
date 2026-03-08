@@ -1564,7 +1564,7 @@ function setGL2Uniforms(gl: WebGL2RenderingContext, u: GL2Uniforms, s: EngineSet
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
-type RendererBackend = 'webgpu' | 'webgl2' | 'canvas2d';
+type RendererBackend = 'webgpu' | 'webgl2';
 
 const ProceduralEarthGPU: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
