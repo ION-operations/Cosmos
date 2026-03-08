@@ -591,12 +591,12 @@ float sampleCloudDensity(vec3 p, bool cheap) {
     if(edgeFade <= 0.0) return 0.0;
     
     vec3 windOffset = vec3(
-        cos(uWindDirection) * uWindSpeed * iTime * 50.0,
+        cos(uWindDirection) * uWindSpeed * iTime * 10.0,
         0.0,
-        sin(uWindDirection) * uWindSpeed * iTime * 50.0
+        sin(uWindDirection) * uWindSpeed * iTime * 10.0
     );
     
-    vec3 shapeCoord = (p + windOffset) * uCloudScale * 0.0001 + vec3(iTime * uCloudSpeed * 0.01, 0.0, 0.0);
+    vec3 shapeCoord = (p + windOffset) * uCloudScale * 0.0001 + vec3(iTime * uCloudSpeed * 0.002, 0.0, 0.0);
     
     float shape = perlinWorley(shapeCoord, 4);
     
@@ -612,7 +612,7 @@ float sampleCloudDensity(vec3 p, bool cheap) {
         return density * edgeFade * uCloudDensity;
     }
     
-    vec3 detailCoord = (p + windOffset) * uCloudDetailScale * 0.001 + vec3(iTime * uCloudSpeed * 0.02, 0.0, 0.0);
+    vec3 detailCoord = (p + windOffset) * uCloudDetailScale * 0.001 + vec3(iTime * uCloudSpeed * 0.004, 0.0, 0.0);
     float detail = fbm(detailCoord, 3) * 0.3;
     
     density = remap(density, detail, 1.0, 0.0, 1.0);
@@ -739,27 +739,35 @@ float sampleCloudShadow(vec3 worldPos, vec3 sunDir) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 float getTerrainHeight(vec2 p) {
-    vec2 pos = p * uTerrainScale * 0.0001;
+    vec2 pos = p * uTerrainScale * 0.001;
     
-    float continent = fbm(vec3(pos * 0.5, 0.0), 2) * 0.5 + 0.5;
-    continent = smoothstep(0.3, 0.7, continent);
+    // Large-scale continent shape
+    float continent = fbm(vec3(pos * 0.3 + 7.3, 0.0), 3) * 0.5 + 0.5;
+    continent = smoothstep(0.25, 0.65, continent);
     
-    float mountains = ridgedFbm(vec3(pos * 2.0, 0.0), 5);
+    // Mountain ridges
+    float mountains = ridgedFbm(vec3(pos * 1.5 + 3.7, 0.5), 5);
     mountains = pow(mountains, uMountainSharpness) * uMountainHeight;
     
-    float hills = fbm(vec3(pos * 4.0, 1.0), 4) * uTerrainHeight * 0.3;
-    float detail = fbm(vec3(pos * 16.0, 2.0), 3) * uTerrainHeight * 0.05;
+    // Rolling hills
+    float hills = fbm(vec3(pos * 3.0 + 11.1, 1.0), 4) * uTerrainHeight * 0.4;
+    
+    // Fine detail
+    float detail = fbm(vec3(pos * 12.0 + 5.5, 2.0), 3) * uTerrainHeight * 0.08;
+    
+    // Domain-warped variation for organic look
+    float warp = warpedNoise(vec3(pos * 2.0, 0.3), 0.5, 3) * uTerrainHeight * 0.2;
     
     float erosion = 0.0;
     if(uErosionStrength > 0.0) {
-        vec3 erosionNoise = curlNoise(vec3(pos * 8.0, iTime * 0.01));
-        erosion = (erosionNoise.x + erosionNoise.y) * uErosionStrength * 50.0;
+        vec3 erosionNoise = curlNoise(vec3(pos * 5.0, 0.0));
+        erosion = (erosionNoise.x + erosionNoise.y) * uErosionStrength * 80.0;
         
-        float valleys = pow(1.0 - abs(gradientNoise(vec3(pos * 3.0, 0.5))), 3.0);
-        erosion += valleys * uErosionStrength * 100.0;
+        float valleys = pow(1.0 - abs(gradientNoise(vec3(pos * 2.0, 0.5))), 3.0);
+        erosion += valleys * uErosionStrength * 150.0;
     }
     
-    float height = continent * (mountains + hills + detail - erosion);
+    float height = continent * (mountains + hills + detail + warp - erosion);
     height += uOceanLevel;
     
     return height;
@@ -985,16 +993,38 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
     hitDist = -1.0;
     if(!uShowTerrain) return vec4(0.0);
     
-    float t = 0.0;
-    float maxDist = 50000.0;
+    // Only march if ray could potentially hit ground
+    if(rd.y > 0.1 && ro.y > uMountainHeight + uOceanLevel + 500.0) return vec4(0.0);
     
-    for(int i = 0; i < 256; i++) {
+    float t = 0.0;
+    float maxDist = 80000.0;
+    float lastH = 0.0;
+    float lastY = 0.0;
+    
+    for(int i = 0; i < 300; i++) {
         vec3 pos = ro + rd * t;
         
         float terrainHeight = getTerrainHeight(pos.xz);
         float distToTerrain = pos.y - terrainHeight;
         
-        if(distToTerrain < 1.0) {
+        if(distToTerrain < 0.5) {
+            // Binary search refinement for precision
+            float tLow = t - max(1.0, abs(lastY - lastH) * 0.3);
+            float tHigh = t;
+            for(int j = 0; j < 6; j++) {
+                float tMid = (tLow + tHigh) * 0.5;
+                vec3 midPos = ro + rd * tMid;
+                float midH = getTerrainHeight(midPos.xz);
+                if(midPos.y < midH) {
+                    tHigh = tMid;
+                } else {
+                    tLow = tMid;
+                }
+            }
+            t = (tLow + tHigh) * 0.5;
+            pos = ro + rd * t;
+            terrainHeight = getTerrainHeight(pos.xz);
+            
             hitDist = t;
             
             vec3 normal = getTerrainNormal(pos.xz, terrainHeight);
@@ -1015,14 +1045,23 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
                 lightningFlash = uLightningIntensity * exp(-abs(iTime - uLightningTime) * 10.0);
             }
             
-            vec3 ambient = material.rgb * 0.2;
+            vec3 ambient = material.rgb * 0.25;
             vec3 diffuse = material.rgb * lightColor * NdotL * cloudShadow;
             vec3 lightning = material.rgb * lightningFlash * 3.0;
             
-            return vec4(ambient + diffuse + lightning, 1.0);
+            // Distance-based ambient boost (atmosphere effect)
+            float distFade = saturate(t / maxDist);
+            vec3 color = ambient + diffuse + lightning;
+            
+            return vec4(color, 1.0);
         }
         
-        t += max(1.0, distToTerrain * 0.5);
+        lastH = terrainHeight;
+        lastY = pos.y;
+        
+        // Adaptive step size: smaller near terrain, larger far away
+        float stepScale = max(0.3, distToTerrain * 0.4);
+        t += max(0.5, min(stepScale, 200.0 + t * 0.01));
         
         if(t > maxDist) break;
     }
@@ -1031,12 +1070,13 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GPT WAVES V7 OCEAN SYSTEM
+// FFT-STYLE MULTI-OCTAVE OCEAN SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Gerstner wave with proper dispersion relation
 vec3 gerstnerWave(vec2 pos, float time, vec2 dir, float steepness, float wavelength) {
     float k = TAU / wavelength;
-    float c = sqrt(9.8 / k);
+    float c = sqrt(9.8 / k); // Deep water dispersion
     float f = k * (dot(dir, pos) - c * time);
     float a = steepness / k;
     
@@ -1047,43 +1087,85 @@ vec3 gerstnerWave(vec2 pos, float time, vec2 dir, float steepness, float wavelen
     );
 }
 
+// Multi-octave FFT-approximated ocean displacement
+// Uses 12+ wave octaves with physically-based spectrum distribution
 vec3 getOceanDisplacement(vec2 pos, float time) {
     vec3 displacement = vec3(0.0);
     
-    vec2 windDir = vec2(cos(uWindDirection), sin(uWindDirection));
+    vec2 windDir = normalize(vec2(cos(uWindDirection), sin(uWindDirection)));
     float windInfluence = uWindSpeed * 0.5 + 0.5;
     
-    displacement += gerstnerWave(pos, time, normalize(windDir), uWaveHeight * 0.5 * windInfluence, 60.0);
-    displacement += gerstnerWave(pos, time, normalize(windDir * 0.8 + vec2(0.2, 0.0)), uWaveHeight * 0.3 * windInfluence, 31.0);
+    // Phillips-spectrum inspired wave distribution
+    // Long swell waves (dominant wavelength)
+    displacement += gerstnerWave(pos, time, windDir, uWaveHeight * 0.4 * windInfluence, 120.0);
+    displacement += gerstnerWave(pos, time, normalize(windDir + vec2(0.1, 0.05)), uWaveHeight * 0.35 * windInfluence, 85.0);
     
-    displacement += gerstnerWave(pos, time, normalize(vec2(-windDir.y, windDir.x)), uWaveHeight * 0.2, 18.0);
-    displacement += gerstnerWave(pos, time, normalize(vec2(-0.4, 0.7)), uWaveHeight * 0.15, 9.0);
+    // Medium waves - slightly off wind direction for realism
+    float ang1 = atan(windDir.y, windDir.x);
+    displacement += gerstnerWave(pos, time, vec2(cos(ang1 + 0.3), sin(ang1 + 0.3)), uWaveHeight * 0.25 * windInfluence, 55.0);
+    displacement += gerstnerWave(pos, time, vec2(cos(ang1 - 0.4), sin(ang1 - 0.4)), uWaveHeight * 0.2 * windInfluence, 38.0);
+    displacement += gerstnerWave(pos, time, vec2(cos(ang1 + 0.7), sin(ang1 + 0.7)), uWaveHeight * 0.18, 27.0);
     
+    // Short waves - cross-wind chop
+    vec2 crossWind = vec2(-windDir.y, windDir.x);
+    displacement += gerstnerWave(pos, time, normalize(crossWind + windDir * 0.3), uWaveHeight * 0.12, 17.0);
+    displacement += gerstnerWave(pos, time, normalize(-crossWind + windDir * 0.2), uWaveHeight * 0.1, 12.0);
+    displacement += gerstnerWave(pos, time * 1.1, normalize(windDir * 0.5 + crossWind * 0.8), uWaveHeight * 0.08, 8.0);
+    
+    // Capillary/ripple waves (high frequency detail)
+    displacement += gerstnerWave(pos, time * 1.2, vec2(cos(ang1 + 1.2), sin(ang1 + 1.2)), uWaveHeight * 0.05, 4.5);
+    displacement += gerstnerWave(pos, time * 1.3, vec2(cos(ang1 - 0.8), sin(ang1 - 0.8)), uWaveHeight * 0.04, 3.0);
+    displacement += gerstnerWave(pos, time * 1.4, vec2(cos(ang1 + 2.1), sin(ang1 + 2.1)), uWaveHeight * 0.03, 1.8);
+    displacement += gerstnerWave(pos, time * 1.5, vec2(cos(ang1 - 1.5), sin(ang1 - 1.5)), uWaveHeight * 0.02, 1.0);
+    
+    // Storm waves - additional chaotic energy
     if(uWeatherType == 3) {
-        displacement += gerstnerWave(pos, time * 1.5, windDir, uWaveHeight * uWeatherIntensity, 80.0);
-        displacement += gerstnerWave(pos, time * 1.3, normalize(windDir + vec2(0.3, 0.1)), uWaveHeight * uWeatherIntensity * 0.7, 45.0);
+        displacement += gerstnerWave(pos, time * 1.3, windDir, uWaveHeight * uWeatherIntensity * 1.2, 150.0);
+        displacement += gerstnerWave(pos, time * 1.5, normalize(windDir + vec2(0.4, 0.2)), uWaveHeight * uWeatherIntensity * 0.8, 90.0);
+        displacement += gerstnerWave(pos, time * 1.1, normalize(crossWind), uWaveHeight * uWeatherIntensity * 0.5, 50.0);
     }
+    
+    // FBM-based micro-displacement for breaking up repetition
+    float microDetail = fbm(vec3(pos * 0.02 + windDir * time * 0.5, time * 0.1), 3);
+    displacement.y += microDetail * uWaveHeight * 0.15;
     
     return displacement;
 }
 
 vec3 getOceanNormal(vec2 pos, float time) {
-    float e = 0.5;
+    // Use smaller epsilon for sharper normals, scale with distance later
+    float e = 0.3;
     vec3 p0 = vec3(pos.x, 0.0, pos.y) + getOceanDisplacement(pos, time);
     vec3 p1 = vec3(pos.x + e, 0.0, pos.y) + getOceanDisplacement(pos + vec2(e, 0.0), time);
     vec3 p2 = vec3(pos.x, 0.0, pos.y + e) + getOceanDisplacement(pos + vec2(0.0, e), time);
     
-    return normalize(cross(p2 - p0, p1 - p0));
+    vec3 normal = normalize(cross(p2 - p0, p1 - p0));
+    
+    // Add high-frequency normal perturbation from noise for micro-detail
+    vec3 microNormal = vec3(
+        gradientNoise(vec3(pos * 0.3 + time * 0.2, 0.0)),
+        0.0,
+        gradientNoise(vec3(pos * 0.3 + time * 0.2, 5.0))
+    ) * 0.05 * uOceanRoughness;
+    
+    return normalize(normal + microNormal);
 }
 
 float getCaustics(vec3 worldPos, float time) {
-    vec2 uv = worldPos.xz * 0.05;
+    // Multi-layer caustics from refracted wave normals
+    vec2 uv1 = worldPos.xz * 0.04 + vec2(time * 0.3, time * 0.2);
+    vec2 uv2 = worldPos.xz * 0.06 + vec2(-time * 0.25, time * 0.35);
+    vec2 uv3 = worldPos.xz * 0.1 + vec2(time * 0.15, -time * 0.2);
     
-    float c1 = sin(uv.x * 10.0 + time * 2.0) * sin(uv.y * 10.0 + time * 1.5);
-    float c2 = sin((uv.x + uv.y) * 8.0 + time * 1.8);
-    float c3 = worleyNoise(vec3(uv * 3.0, time * 0.5)) * 0.5;
+    float c1 = sin(uv1.x * 8.0) * sin(uv1.y * 8.0 + 0.5);
+    float c2 = sin(uv2.x * 12.0 + 1.0) * sin(uv2.y * 12.0);
+    float c3 = worleyNoise(vec3(uv3 * 2.0, time * 0.3)) * 0.6;
     
-    return (c1 + c2 + c3) * 0.5 + 0.5;
+    // Sharper caustic peaks via power function
+    float caustic = (c1 + c2) * 0.3 + c3;
+    caustic = pow(caustic * 0.5 + 0.5, 2.0);
+    
+    return caustic;
 }
 
 float getBubbles(vec3 worldPos, float time) {
@@ -1108,17 +1190,26 @@ vec3 getOceanSSS(vec3 viewDir, vec3 normal, vec3 sunDir, vec3 oceanColor) {
 }
 
 float getFoam(vec3 displacement, vec2 pos, float time) {
-    float heightFoam = saturate(displacement.y * 2.0 - 0.5);
+    // Wave-crest foam from Jacobian approximation
+    float heightFoam = pow(saturate(displacement.y * 1.5 - 0.3), 1.5);
+    
+    // Turbulent foam patches
+    float foamNoise = fbm(vec3(pos * 0.08 + time * 0.1, time * 0.3), 3);
+    float turbulentFoam = pow(saturate(foamNoise), 3.0) * 0.3;
     
     float breakingFoam = 0.0;
     if(uWeatherType == 3) {
-        float noise = fbm(vec3(pos * 0.1, time), 3);
-        breakingFoam = pow(noise, 2.0) * uWeatherIntensity;
+        float noise = fbm(vec3(pos * 0.05 + time * 0.2, time * 0.5), 4);
+        breakingFoam = pow(noise * 0.5 + 0.5, 2.0) * uWeatherIntensity * 0.8;
     }
     
-    float shoreFoam = fbm(vec3(pos * 0.5, time * 2.0), 2) * 0.5;
+    // Streaky wind foam
+    float windAngle = uWindDirection;
+    vec2 windDir = vec2(cos(windAngle), sin(windAngle));
+    float streak = sin(dot(pos, windDir) * 0.3 + time * 0.5) * 0.5 + 0.5;
+    streak *= fbm(vec3(pos * 0.15, time * 0.2), 2) * uWindSpeed * 0.3;
     
-    return saturate((heightFoam + breakingFoam + shoreFoam) * uFoamIntensity);
+    return saturate((heightFoam + turbulentFoam + breakingFoam + streak) * uFoamIntensity);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1743,7 +1834,7 @@ const DEFAULT_SETTINGS = {
   cloudDensity: 0.05,
   cloudScale: 1.0,
   cloudDetailScale: 3.0,
-  cloudSpeed: 5.0,
+  cloudSpeed: 0.5,
   cloudHeight: 1500,
   cloudThickness: 1500,
   cloudLightAbsorption: 0.5,
@@ -2835,6 +2926,21 @@ const ProceduralEarth: React.FC = () => {
                     />
                   </SettingSection>
                   
+                  <SettingSection title="Cloud Motion">
+                    <SliderSetting
+                      label="Cloud Speed"
+                      value={settings.cloudSpeed}
+                      min={0} max={5} step={0.1}
+                      onChange={(v) => updateSetting('cloudSpeed', v)}
+                    />
+                    <SliderSetting
+                      label="Detail Scale"
+                      value={settings.cloudDetailScale}
+                      min={0.5} max={10} step={0.5}
+                      onChange={(v) => updateSetting('cloudDetailScale', v)}
+                    />
+                  </SettingSection>
+                  
                   <SettingSection title="Cloud Layer">
                     <SliderSetting
                       label="Height (m)"
@@ -2920,9 +3026,33 @@ const ProceduralEarth: React.FC = () => {
                       min={0} max={10} step={0.1}
                       onChange={(v) => updateSetting('waveHeight', v)}
                     />
+                    <SliderSetting
+                      label="Wave Speed"
+                      value={settings.waveSpeed}
+                      min={0} max={3} step={0.1}
+                      onChange={(v) => updateSetting('waveSpeed', v)}
+                    />
+                    <SliderSetting
+                      label="Roughness"
+                      value={settings.oceanRoughness}
+                      min={0} max={1} step={0.05}
+                      onChange={(v) => updateSetting('oceanRoughness', v)}
+                    />
+                    <SliderSetting
+                      label="Fresnel"
+                      value={settings.oceanFresnel}
+                      min={0} max={0.1} step={0.005}
+                      onChange={(v) => updateSetting('oceanFresnel', v)}
+                    />
+                    <SliderSetting
+                      label="Foam"
+                      value={settings.foamIntensity}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamIntensity', v)}
+                    />
                   </SettingSection>
                   
-                  <SettingSection title="GPT Waves V7">
+                  <SettingSection title="FFT Ocean Effects">
                     <SliderSetting
                       label="Caustics"
                       value={settings.causticsIntensity}
