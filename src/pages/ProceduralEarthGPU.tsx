@@ -1626,13 +1626,18 @@ const ProceduralEarthGPU: React.FC = () => {
         if (!navigator.gpu) return false;
         const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
         if (!adapter) return false;
+        // Test WebGPU on a throwaway canvas first to avoid contaminating the React canvas
+        const testCanvas = document.createElement('canvas');
+        testCanvas.width = 1; testCanvas.height = 1;
+        const testCtx = testCanvas.getContext('webgpu');
+        if (!testCtx) return false;
+        // WebGPU works — now use the real canvas
         const device = await adapter.requestDevice({ requiredLimits: { maxStorageTexturesPerShaderStage: 1 } });
         const context = canvas.getContext('webgpu') as GPUCanvasContext | null;
         if (!context) return false;
         const format = navigator.gpu.getPreferredCanvasFormat();
         context.configure({ device, format, alphaMode: 'premultiplied' });
 
-        // Compute noise
         const noiseSize = 128;
         const noiseTexture = device.createTexture({ size: [noiseSize, noiseSize, noiseSize], format: 'rgba8unorm', usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING });
         const computeModule = device.createShaderModule({ code: NOISE_COMPUTE_WGSL });
@@ -1643,7 +1648,6 @@ const ProceduralEarthGPU: React.FC = () => {
         pass.dispatchWorkgroups(noiseSize / 4, noiseSize / 4, noiseSize / 4); pass.end();
         device.queue.submit([enc.finish()]);
 
-        // Render pipeline
         const renderModule = device.createShaderModule({ code: RENDER_WGSL });
         const compilationInfo = await renderModule.getCompilationInfo();
         const errors = compilationInfo.messages.filter(m => m.type === 'error');
@@ -1674,7 +1678,6 @@ const ProceduralEarthGPU: React.FC = () => {
       const vao = gl.createVertexArray();
       if (!vao) return false;
       gl.bindVertexArray(vao);
-      // Generate 3D noise texture on CPU
       console.log('Generating 3D noise texture (64³)...');
       const noiseTex = generate3DNoiseTexture(gl, 64);
       if (!noiseTex) return false;
@@ -1687,48 +1690,41 @@ const ProceduralEarthGPU: React.FC = () => {
     };
 
     const init = async () => {
-      const webGPUOk = await initWebGPU();
-      if (webGPUOk) {
-        console.log('✓ Using WebGPU backend');
-        setRendererType('webgpu');
+      // First check if WebGPU is available WITHOUT touching the React canvas
+      let useWebGPU = false;
+      try {
+        if (navigator.gpu) {
+          const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+          if (adapter) {
+            const testCanvas = document.createElement('canvas');
+            testCanvas.width = 1; testCanvas.height = 1;
+            const testCtx = testCanvas.getContext('webgpu');
+            useWebGPU = !!testCtx;
+          }
+        }
+      } catch { useWebGPU = false; }
+
+      if (useWebGPU) {
+        const ok = await initWebGPU();
+        if (ok) {
+          console.log('✓ Using WebGPU backend');
+          setRendererType('webgpu');
+        } else {
+          // WebGPU failed during full init but we already called getContext('webgpu') on canvas
+          // Canvas is now contaminated — we cannot get webgl2 on same canvas
+          setGpuError('WebGPU initialization failed during pipeline setup. Please refresh and try again.');
+          return;
+        }
       } else {
         console.log('WebGPU unavailable, trying WebGL2...');
-        // Canvas may be locked after a WebGPU getContext attempt.
-        // Replace it with a fresh canvas to guarantee WebGL2 works.
-        const parent = canvas.parentElement;
-        if (parent) {
-          const freshCanvas = document.createElement('canvas');
-          freshCanvas.className = canvas.className;
-          freshCanvas.style.cssText = canvas.style.cssText;
-          parent.replaceChild(freshCanvas, canvas);
-          canvasRef.current = freshCanvas;
-        }
-        const gl2Canvas = canvasRef.current!;
-        const gl = gl2Canvas.getContext('webgl2', { antialias: false, alpha: false });
-        if (!gl) {
-          setGpuError('WebGL2 context could not be created. Your browser or environment may not support it.');
+        const ok = initWebGL2();
+        if (ok) {
+          console.log('✓ Using WebGL2 backend');
+          setRendererType('webgl2');
+        } else {
+          setGpuError('Neither WebGPU nor WebGL2 could be initialized.');
           return;
         }
-        const program = createGLProgram(gl, GL_VERT, GL_FRAG);
-        if (!program) {
-          setGpuError('Shader compilation failed. Check console for details.');
-          return;
-        }
-        gl.useProgram(program);
-        const uniforms = getGL2Uniforms(gl, program);
-        const vao = gl.createVertexArray();
-        if (!vao) { setGpuError('Failed to create VAO.'); return; }
-        gl.bindVertexArray(vao);
-        console.log('Generating 3D noise texture (64³)...');
-        const noiseTex = generate3DNoiseTexture(gl, 64);
-        if (!noiseTex) { setGpuError('Failed to generate noise texture.'); return; }
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_3D, noiseTex);
-        gl.uniform1i(uniforms.u_noiseTex, 0);
-        gl2Ref.current = { gl, program, uniforms, vao, noiseTex };
-        backendRef.current = 'webgl2';
-        console.log('✓ Using WebGL2 backend');
-        setRendererType('webgl2');
       }
       startTimeRef.current = performance.now() / 1000;
       setGpuReady(true);
