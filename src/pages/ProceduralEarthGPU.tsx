@@ -1579,7 +1579,8 @@ const ProceduralEarthGPU: React.FC = () => {
   const gpuRef = useRef<{
     device: GPUDevice; context: GPUCanvasContext; pipeline: GPURenderPipeline;
     uniformBuffers: GPUBuffer[]; bindGroup0: GPUBindGroup; bindGroup1: GPUBindGroup;
-    noiseTexture: GPUTexture;
+    noiseTexture: GPUTexture; format: GPUTextureFormat;
+    lastConfiguredWidth: number; lastConfiguredHeight: number;
   } | null>(null);
 
   // WebGL2 state
@@ -1674,7 +1675,7 @@ const ProceduralEarthGPU: React.FC = () => {
         const bindGroup0 = device.createBindGroup({ layout: bgl0, entries: uniformBuffers.map((buffer, i) => ({ binding: i, resource: { buffer } })) });
         const bindGroup1 = device.createBindGroup({ layout: bgl1, entries: [{ binding: 0, resource: noiseTexture.createView({ dimension: '3d' }) }, { binding: 1, resource: sampler }] });
 
-        gpuRef.current = { device, context, pipeline, uniformBuffers, bindGroup0, bindGroup1, noiseTexture };
+        gpuRef.current = { device, context, pipeline, uniformBuffers, bindGroup0, bindGroup1, noiseTexture, format, lastConfiguredWidth: canvas.width, lastConfiguredHeight: canvas.height };
         backendRef.current = 'webgpu';
         return true;
       } catch (e) { console.warn('WebGPU init failed:', e); return false; }
@@ -1727,6 +1728,13 @@ const ProceduralEarthGPU: React.FC = () => {
         const ok = await initWebGPU();
         if (ok) {
           console.log('✓ Using WebGPU backend');
+          // Listen for device loss
+          if (gpuRef.current) {
+            gpuRef.current.device.lost.then((info) => {
+              console.error(`[WebGPU] Device lost: ${info.reason} — ${info.message}`);
+              setGpuError(`WebGPU device lost: ${info.reason}. Reload to retry.`);
+            });
+          }
           setRendererType('webgpu');
         } else {
           // WebGPU context may have contaminated the canvas, try WebGL2 anyway
@@ -1815,22 +1823,39 @@ const ProceduralEarthGPU: React.FC = () => {
 
       // ─ WebGPU render ─
       if (backendRef.current === 'webgpu' && gpuRef.current) {
-        const { device, context, pipeline, uniformBuffers, bindGroup0, bindGroup1 } = gpuRef.current;
-        device.queue.writeBuffer(uniformBuffers[0], 0, buildFrameBuffer(time, frameRef.current, w, h));
-        device.queue.writeBuffer(uniformBuffers[1], 0, buildCameraBuffer(cam.pos, s.cameraFOV, cam.yaw, cam.pitch));
-        device.queue.writeBuffer(uniformBuffers[2], 0, buildSunBuffer(s));
-        device.queue.writeBuffer(uniformBuffers[3], 0, buildAtmosphereBuffer(s));
-        device.queue.writeBuffer(uniformBuffers[4], 0, buildCloudBuffer(s));
-        device.queue.writeBuffer(uniformBuffers[5], 0, buildTerrainBuffer(s));
-        device.queue.writeBuffer(uniformBuffers[6], 0, buildOceanBuffer(s));
-        device.queue.writeBuffer(uniformBuffers[7], 0, buildWeatherBuffer(s, lightningTimeRef.current));
-        device.queue.writeBuffer(uniformBuffers[8], 0, buildFogBuffer(s));
-        device.queue.writeBuffer(uniformBuffers[9], 0, buildPostBuffer(s));
-        device.queue.writeBuffer(uniformBuffers[10], 0, buildLayerBuffer(l));
-        const encoder = device.createCommandEncoder();
-        const rp = encoder.beginRenderPass({ colorAttachments: [{ view: context.getCurrentTexture().createView(), clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }] });
-        rp.setPipeline(pipeline); rp.setBindGroup(0, bindGroup0); rp.setBindGroup(1, bindGroup1); rp.draw(3); rp.end();
-        device.queue.submit([encoder.finish()]);
+        const gpu = gpuRef.current;
+        const { device, context, pipeline, uniformBuffers, bindGroup0, bindGroup1 } = gpu;
+
+        // CRITICAL: Reconfigure context when canvas size changes
+        if (w !== gpu.lastConfiguredWidth || h !== gpu.lastConfiguredHeight) {
+          try {
+            context.configure({ device, format: gpu.format, alphaMode: 'premultiplied' });
+            gpu.lastConfiguredWidth = w;
+            gpu.lastConfiguredHeight = h;
+            console.log(`[WebGPU] Reconfigured context: ${w}x${h}`);
+          } catch (e) { console.error('[WebGPU] Reconfigure failed:', e); return; }
+        }
+
+        try {
+          device.queue.writeBuffer(uniformBuffers[0], 0, buildFrameBuffer(time, frameRef.current, w, h));
+          device.queue.writeBuffer(uniformBuffers[1], 0, buildCameraBuffer(cam.pos, s.cameraFOV, cam.yaw, cam.pitch));
+          device.queue.writeBuffer(uniformBuffers[2], 0, buildSunBuffer(s));
+          device.queue.writeBuffer(uniformBuffers[3], 0, buildAtmosphereBuffer(s));
+          device.queue.writeBuffer(uniformBuffers[4], 0, buildCloudBuffer(s));
+          device.queue.writeBuffer(uniformBuffers[5], 0, buildTerrainBuffer(s));
+          device.queue.writeBuffer(uniformBuffers[6], 0, buildOceanBuffer(s));
+          device.queue.writeBuffer(uniformBuffers[7], 0, buildWeatherBuffer(s, lightningTimeRef.current));
+          device.queue.writeBuffer(uniformBuffers[8], 0, buildFogBuffer(s));
+          device.queue.writeBuffer(uniformBuffers[9], 0, buildPostBuffer(s));
+          device.queue.writeBuffer(uniformBuffers[10], 0, buildLayerBuffer(l));
+          const texture = context.getCurrentTexture();
+          const encoder = device.createCommandEncoder();
+          const rp = encoder.beginRenderPass({ colorAttachments: [{ view: texture.createView(), clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }] });
+          rp.setPipeline(pipeline); rp.setBindGroup(0, bindGroup0); rp.setBindGroup(1, bindGroup1); rp.draw(3); rp.end();
+          device.queue.submit([encoder.finish()]);
+        } catch (e) {
+          console.error('[WebGPU] Render error:', e);
+        }
       }
 
       // ─ WebGL2 render ─
