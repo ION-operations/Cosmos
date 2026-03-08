@@ -1693,14 +1693,42 @@ const ProceduralEarthGPU: React.FC = () => {
         setRendererType('webgpu');
       } else {
         console.log('WebGPU unavailable, trying WebGL2...');
-        const webGL2Ok = initWebGL2();
-        if (webGL2Ok) {
-          console.log('✓ Using WebGL2 backend');
-          setRendererType('webgl2');
-        } else {
-          setGpuError('Neither WebGPU nor WebGL2 is available. Please use a modern browser.');
+        // Canvas may be locked after a WebGPU getContext attempt.
+        // Replace it with a fresh canvas to guarantee WebGL2 works.
+        const parent = canvas.parentElement;
+        if (parent) {
+          const freshCanvas = document.createElement('canvas');
+          freshCanvas.className = canvas.className;
+          freshCanvas.style.cssText = canvas.style.cssText;
+          parent.replaceChild(freshCanvas, canvas);
+          canvasRef.current = freshCanvas;
+        }
+        const gl2Canvas = canvasRef.current!;
+        const gl = gl2Canvas.getContext('webgl2', { antialias: false, alpha: false });
+        if (!gl) {
+          setGpuError('WebGL2 context could not be created. Your browser or environment may not support it.');
           return;
         }
+        const program = createGLProgram(gl, GL_VERT, GL_FRAG);
+        if (!program) {
+          setGpuError('Shader compilation failed. Check console for details.');
+          return;
+        }
+        gl.useProgram(program);
+        const uniforms = getGL2Uniforms(gl, program);
+        const vao = gl.createVertexArray();
+        if (!vao) { setGpuError('Failed to create VAO.'); return; }
+        gl.bindVertexArray(vao);
+        console.log('Generating 3D noise texture (64³)...');
+        const noiseTex = generate3DNoiseTexture(gl, 64);
+        if (!noiseTex) { setGpuError('Failed to generate noise texture.'); return; }
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_3D, noiseTex);
+        gl.uniform1i(uniforms.u_noiseTex, 0);
+        gl2Ref.current = { gl, program, uniforms, vao, noiseTex };
+        backendRef.current = 'webgl2';
+        console.log('✓ Using WebGL2 backend');
+        setRendererType('webgl2');
       }
       startTimeRef.current = performance.now() / 1000;
       setGpuReady(true);
@@ -1803,10 +1831,10 @@ const ProceduralEarthGPU: React.FC = () => {
     return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
   }, [gpuReady]);
 
-  // Input handlers
+  // Input handlers — re-bind when gpuReady (canvas may have been replaced)
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !gpuReady) return;
     const handleMouseMove = (e: MouseEvent) => {
       if (document.pointerLockElement === canvas) {
         cameraRef.current.yaw += e.movementX * 0.002;
@@ -1827,7 +1855,7 @@ const ProceduralEarthGPU: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [gpuReady]);
 
   const setTimePreset = (preset: 'night' | 'sunrise' | 'day' | 'sunset') => {
     switch (preset) {
