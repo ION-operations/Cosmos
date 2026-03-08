@@ -2835,6 +2835,21 @@ const ProceduralEarth: React.FC = () => {
                     />
                   </SettingSection>
                   
+                  <SettingSection title="Cloud Motion">
+                    <SliderSetting
+                      label="Cloud Speed"
+                      value={settings.cloudSpeed}
+                      min={0} max={5} step={0.1}
+                      onChange={(v) => updateSetting('cloudSpeed', v)}
+                    />
+                    <SliderSetting
+                      label="Detail Scale"
+                      value={settings.cloudDetailScale}
+                      min={0.5} max={10} step={0.5}
+                      onChange={(v) => updateSetting('cloudDetailScale', v)}
+                    />
+                  </SettingSection>
+                  
                   <SettingSection title="Cloud Layer">
                     <SliderSetting
                       label="Height (m)"
