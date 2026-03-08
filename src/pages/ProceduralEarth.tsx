@@ -173,6 +173,17 @@ uniform bool uShowWeather;
 uniform bool uShowFog;
 uniform bool uShowGodRays;
 
+// Ocean Sub-Feature Toggles
+uniform bool uEnableWaves;
+uniform bool uEnableFresnel;
+uniform bool uEnableCaustics;
+uniform bool uEnableFoam;
+uniform bool uEnableSSS;
+uniform bool uEnableBubbles;
+uniform bool uEnableUnderwaterCaustics;
+uniform bool uEnableUnderwaterGodRays;
+uniform bool uEnableUnderwaterBubbles;
+
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1102,6 +1113,8 @@ float sea_octave(vec2 uv, float choppy) {
 
 // Ocean height map - FBM of sea_octave with rotation between octaves
 float oceanMap(vec3 p, int iterations) {
+    if(!uEnableWaves) return p.y;
+    
     float SEA_FREQ = uWaveFrequency * 0.16;
     float SEA_HEIGHT = uWaveHeight * 0.6;
     float SEA_CHOPPY = 4.0 + uOceanRoughness * 4.0;
@@ -1111,9 +1124,8 @@ float oceanMap(vec3 p, int iterations) {
     float amp = SEA_HEIGHT;
     float choppy = SEA_CHOPPY;
     vec2 uv = p.xz;
-    uv.x *= 0.75; // Aspect ratio correction to avoid square patterns
+    uv.x *= 0.75;
     
-    // Wind influence on wave direction
     float windAngle = uWindDirection;
     mat2 windRot = mat2(cos(windAngle), -sin(windAngle), sin(windAngle), cos(windAngle));
     uv = windRot * uv;
@@ -1122,21 +1134,18 @@ float oceanMap(vec3 p, int iterations) {
     for(int i = 0; i < 8; i++) {
         if(i >= iterations) break;
         
-        // Two opposing wave directions for standing wave patterns
         d = sea_octave((uv + SEA_TIME) * freq, choppy);
         d += sea_octave((uv - SEA_TIME) * freq, choppy);
         
         h += d * amp;
         
-        // Rotate UV between octaves - THIS breaks all grid patterns
         uv = octave_m * uv;
         
-        freq *= 1.9;   // Frequency increase
-        amp *= 0.22;    // Amplitude decrease (energy cascade)
-        choppy = mix(choppy, 1.0, 0.2); // Reduce choppiness at small scales
+        freq *= 1.9;
+        amp *= 0.22;
+        choppy = mix(choppy, 1.0, 0.2);
     }
     
-    // Storm extra energy
     if(uWeatherType == 3) {
         float stormWave = sea_octave(p.xz * 0.05 + SEA_TIME * 0.5, 2.0);
         h += stormWave * uWeatherIntensity * uWaveHeight * 1.5;
@@ -1234,14 +1243,17 @@ float oceanSpecular(vec3 n, vec3 l, vec3 e, float s) {
 
 // TDM Seascape-style ocean shading - proven realistic approach
 vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float dist) {
-    // Fresnel - TDM style: simple pow(3) on view angle
-    float fresnel = clamp(1.0 - dot(n, -eye), 0.0, 1.0);
-    fresnel = pow(fresnel, 3.0) * 0.5;
+    // Fresnel
+    float fresnel = 0.0;
+    if(uEnableFresnel) {
+        fresnel = clamp(1.0 - dot(n, -eye), 0.0, 1.0);
+        fresnel = pow(fresnel, 3.0) * 0.5;
+    }
     
-    // Reflection - sky color in reflected direction
+    // Reflection
     vec3 reflected = getSkyColor(reflect(eye, n), sunDir);
     
-    // Refraction - diffuse-lit water body color (key TDM technique)
+    // Refraction
     vec3 seaBase = uOceanDeepColor;
     vec3 seaWaterColor = uOceanColor * 1.5 + vec3(0.0, 0.1, 0.05);
     vec3 refracted = seaBase + oceanDiffuse(n, sunDir, 80.0) * seaWaterColor * 0.12;
@@ -1249,30 +1261,34 @@ vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float
     // Combine via fresnel
     vec3 color = mix(refracted, reflected, fresnel);
     
-    // Height-based color boost - brighter at wave crests (TDM signature look)
+    // Height-based color boost
     float waveHeight = oceanMapDetailed(p);
     float heightBoost = max(p.y - waveHeight, 0.0);
     float atten = max(1.0 - dist * dist * 0.0000015, 0.0);
     color += seaWaterColor * heightBoost * 0.18 * atten;
     
-    // Subsurface scattering - light through wave crests
-    float sss = pow(saturate(dot(-eye, sunDir + n * 0.4)), 3.0);
-    vec3 sssColor = vec3(0.0, 0.15, 0.1) * sss * uSSSIntensity * atten;
-    color += sssColor;
+    // Subsurface scattering
+    if(uEnableSSS) {
+        float sss = pow(saturate(dot(-eye, sunDir + n * 0.4)), 3.0);
+        vec3 sssColor = vec3(0.0, 0.15, 0.1) * sss * uSSSIntensity * atten;
+        color += sssColor;
+    }
     
-    // Specular - TDM style with normalization
+    // Specular
     float spec = oceanSpecular(n, sunDir, eye, 60.0);
     color += vec3(spec) * lightColor;
     
-    // Subtle caustics visible on surface near sun angle
-    float caustics = getCaustics(p, iTime) * uCausticsIntensity * 0.08;
-    color += caustics * lightColor * atten;
+    // Caustics
+    if(uEnableCaustics) {
+        float caustics = getCaustics(p, iTime) * uCausticsIntensity * 0.08;
+        color += caustics * lightColor * atten;
+    }
     
     // Cloud shadows
     float cloudShadow = sampleCloudShadow(p, sunDir);
     color *= mix(0.6, 1.0, cloudShadow);
     
-    // Atmospheric distance fade into sky color
+    // Atmospheric distance fade
     float atmosphereFade = 1.0 - saturate(dist * 0.0003);
     color = mix(getSkyColor(eye, sunDir) * 0.8, color, atmosphereFade);
     
@@ -1285,7 +1301,7 @@ vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float
 
 vec4 renderUnderwater(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
     float underwaterGodRays = 0.0;
-    if(uUnderwaterGodRayStrength > 0.0) {
+    if(uEnableUnderwaterGodRays && uUnderwaterGodRayStrength > 0.0) {
         float raySteps = 16.0;
         float stepSize = 50.0;
         float decay = 1.0;
@@ -1309,13 +1325,16 @@ vec4 renderUnderwater(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
     float depth = uOceanLevel - ro.y;
     float surfaceT = (uOceanLevel - ro.y) / max(0.1, sunDir.y);
     vec3 surfacePos = ro + sunDir * surfaceT;
-    float caustics = getCaustics(surfacePos, iTime) * uUnderwaterCausticsStrength;
+    float caustics = 0.0;
+    if(uEnableUnderwaterCaustics) {
+        caustics = getCaustics(surfacePos, iTime) * uUnderwaterCausticsStrength;
+    }
     
     float fogFactor = 1.0 - exp(-depth * uUnderwaterFogDensity * 0.005);
     vec3 underwaterFog = uUnderwaterFogColor * (1.0 + caustics * 0.5);
     
     float bubbles = 0.0;
-    if(uUnderwaterBubbleCount > 0.0) {
+    if(uEnableUnderwaterBubbles && uUnderwaterBubbleCount > 0.0) {
         for(float i = 0.0; i < 5.0; i++) {
             vec3 bubbleStream = ro + rd * (10.0 + i * 20.0);
             vec2 bubbleUV = bubbleStream.xz * 0.1 + vec2(i * 3.7, i * 2.3);
@@ -1938,6 +1957,20 @@ const DEFAULT_SETTINGS = {
   saturation: 1.1,
   vignetteStrength: 0.3,
   chromaticAberration: 0.5,
+  
+  // Zoom
+  zoomSpeed: 50,
+  
+  // Ocean Sub-Feature Toggles
+  enableWaves: true,
+  enableFresnel: true,
+  enableCaustics: true,
+  enableFoam: true,
+  enableSSS: true,
+  enableBubbles: true,
+  enableUnderwaterCaustics: true,
+  enableUnderwaterGodRays: true,
+  enableUnderwaterBubbles: true,
 };
 
 const DEFAULT_LAYERS: LayerVisibility = {
@@ -2058,6 +2091,8 @@ const ProceduralEarth: React.FC = () => {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [activeTab, setActiveTab] = useState('atmosphere');
   const [webglError, setWebglError] = useState<string | null>(null);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
   const updateSetting = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -2239,6 +2274,17 @@ const ProceduralEarth: React.FC = () => {
         uShowWeather: { value: false },
         uShowFog: { value: false },
         uShowGodRays: { value: false },
+        
+        // Ocean sub-feature toggles
+        uEnableWaves: { value: settings.enableWaves },
+        uEnableFresnel: { value: settings.enableFresnel },
+        uEnableCaustics: { value: settings.enableCaustics },
+        uEnableFoam: { value: settings.enableFoam },
+        uEnableSSS: { value: settings.enableSSS },
+        uEnableBubbles: { value: settings.enableBubbles },
+        uEnableUnderwaterCaustics: { value: settings.enableUnderwaterCaustics },
+        uEnableUnderwaterGodRays: { value: settings.enableUnderwaterGodRays },
+        uEnableUnderwaterBubbles: { value: settings.enableUnderwaterBubbles },
       },
       vertexShader: VERTEX_SHADER,
       fragmentShader: EARTH_FRAGMENT_SHADER,
@@ -2270,10 +2316,24 @@ const ProceduralEarth: React.FC = () => {
       keysRef.current.delete(e.key.toLowerCase());
     };
 
+    // Scroll wheel zoom - infinite range
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const cam = cameraRef.current;
+      const zoomAmount = -e.deltaY * settingsRef.current.zoomSpeed * 0.1;
+      const forward = new THREE.Vector3(
+        Math.cos(cam.pitch) * Math.sin(cam.yaw),
+        Math.sin(cam.pitch),
+        Math.cos(cam.pitch) * Math.cos(cam.yaw)
+      );
+      cam.pos.add(forward.multiplyScalar(zoomAmount));
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
     renderer.domElement.addEventListener('click', handleClick);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
     const clock = new THREE.Clock();
     let lastTime = 0;
@@ -2356,6 +2416,7 @@ const ProceduralEarth: React.FC = () => {
       renderer.domElement.removeEventListener('click', handleClick);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      renderer.domElement.removeEventListener('wheel', handleWheel);
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (rendererRef.current) {
@@ -2461,6 +2522,17 @@ const ProceduralEarth: React.FC = () => {
     u.uSaturation.value = settings.saturation;
     u.uVignetteStrength.value = settings.vignetteStrength;
     u.uChromaticAberration.value = settings.chromaticAberration;
+    
+    // Ocean sub-feature toggles
+    u.uEnableWaves.value = settings.enableWaves;
+    u.uEnableFresnel.value = settings.enableFresnel;
+    u.uEnableCaustics.value = settings.enableCaustics;
+    u.uEnableFoam.value = settings.enableFoam;
+    u.uEnableSSS.value = settings.enableSSS;
+    u.uEnableBubbles.value = settings.enableBubbles;
+    u.uEnableUnderwaterCaustics.value = settings.enableUnderwaterCaustics;
+    u.uEnableUnderwaterGodRays.value = settings.enableUnderwaterGodRays;
+    u.uEnableUnderwaterBubbles.value = settings.enableUnderwaterBubbles;
   }, [settings]);
 
   // Update layer visibility uniforms
@@ -2629,6 +2701,7 @@ const ProceduralEarth: React.FC = () => {
           <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">WASD</kbd> Move</span>
           <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Space/Shift</kbd> Up/Down</span>
           <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Mouse</kbd> Look</span>
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Scroll</kbd> Zoom</span>
         </div>
       </div>
       
@@ -2920,6 +2993,12 @@ const ProceduralEarth: React.FC = () => {
                       min={10} max={500} step={10}
                       onChange={(v) => updateSetting('cameraSpeed', v)}
                     />
+                    <SliderSetting
+                      label="Zoom Speed"
+                      value={settings.zoomSpeed}
+                      min={5} max={500} step={5}
+                      onChange={(v) => updateSetting('zoomSpeed', v)}
+                    />
                   </SettingSection>
                 </TabsContent>
                 
@@ -3034,6 +3113,15 @@ const ProceduralEarth: React.FC = () => {
                 
                 {/* OCEAN TAB */}
                 <TabsContent value="ocean" className="mt-0 space-y-4">
+                  <SettingSection title="Feature Toggles">
+                    <LayerToggle label="Waves" icon={<Waves className="w-4 h-4 text-primary" />} enabled={settings.enableWaves} onChange={(v) => updateSetting('enableWaves', v)} />
+                    <LayerToggle label="Fresnel" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableFresnel} onChange={(v) => updateSetting('enableFresnel', v)} />
+                    <LayerToggle label="Caustics" icon={<Sparkles className="w-4 h-4 text-primary" />} enabled={settings.enableCaustics} onChange={(v) => updateSetting('enableCaustics', v)} />
+                    <LayerToggle label="Foam" icon={<Cloud className="w-4 h-4 text-primary" />} enabled={settings.enableFoam} onChange={(v) => updateSetting('enableFoam', v)} />
+                    <LayerToggle label="Subsurface Scattering" icon={<Sun className="w-4 h-4 text-primary" />} enabled={settings.enableSSS} onChange={(v) => updateSetting('enableSSS', v)} />
+                    <LayerToggle label="Bubbles" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableBubbles} onChange={(v) => updateSetting('enableBubbles', v)} />
+                  </SettingSection>
+                  
                   <SettingSection title="Ocean Surface">
                     <SliderSetting
                       label="Sea Level (m)"
@@ -3073,7 +3161,7 @@ const ProceduralEarth: React.FC = () => {
                     />
                   </SettingSection>
                   
-                  <SettingSection title="FFT Ocean Effects">
+                  <SettingSection title="Effects">
                     <SliderSetting
                       label="Caustics"
                       value={settings.causticsIntensity}
@@ -3086,6 +3174,12 @@ const ProceduralEarth: React.FC = () => {
                       min={0} max={1} step={0.05}
                       onChange={(v) => updateSetting('sssIntensity', v)}
                     />
+                  </SettingSection>
+                  
+                  <SettingSection title="Underwater Toggles">
+                    <LayerToggle label="Underwater Caustics" icon={<Sparkles className="w-4 h-4 text-primary" />} enabled={settings.enableUnderwaterCaustics} onChange={(v) => updateSetting('enableUnderwaterCaustics', v)} />
+                    <LayerToggle label="Underwater God Rays" icon={<Sun className="w-4 h-4 text-primary" />} enabled={settings.enableUnderwaterGodRays} onChange={(v) => updateSetting('enableUnderwaterGodRays', v)} />
+                    <LayerToggle label="Underwater Bubbles" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableUnderwaterBubbles} onChange={(v) => updateSetting('enableUnderwaterBubbles', v)} />
                   </SettingSection>
                   
                   <SettingSection title="Underwater">
