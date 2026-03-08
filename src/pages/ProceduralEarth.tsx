@@ -1243,14 +1243,17 @@ float oceanSpecular(vec3 n, vec3 l, vec3 e, float s) {
 
 // TDM Seascape-style ocean shading - proven realistic approach
 vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float dist) {
-    // Fresnel - TDM style: simple pow(3) on view angle
-    float fresnel = clamp(1.0 - dot(n, -eye), 0.0, 1.0);
-    fresnel = pow(fresnel, 3.0) * 0.5;
+    // Fresnel
+    float fresnel = 0.0;
+    if(uEnableFresnel) {
+        fresnel = clamp(1.0 - dot(n, -eye), 0.0, 1.0);
+        fresnel = pow(fresnel, 3.0) * 0.5;
+    }
     
-    // Reflection - sky color in reflected direction
+    // Reflection
     vec3 reflected = getSkyColor(reflect(eye, n), sunDir);
     
-    // Refraction - diffuse-lit water body color (key TDM technique)
+    // Refraction
     vec3 seaBase = uOceanDeepColor;
     vec3 seaWaterColor = uOceanColor * 1.5 + vec3(0.0, 0.1, 0.05);
     vec3 refracted = seaBase + oceanDiffuse(n, sunDir, 80.0) * seaWaterColor * 0.12;
@@ -1258,30 +1261,34 @@ vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float
     // Combine via fresnel
     vec3 color = mix(refracted, reflected, fresnel);
     
-    // Height-based color boost - brighter at wave crests (TDM signature look)
+    // Height-based color boost
     float waveHeight = oceanMapDetailed(p);
     float heightBoost = max(p.y - waveHeight, 0.0);
     float atten = max(1.0 - dist * dist * 0.0000015, 0.0);
     color += seaWaterColor * heightBoost * 0.18 * atten;
     
-    // Subsurface scattering - light through wave crests
-    float sss = pow(saturate(dot(-eye, sunDir + n * 0.4)), 3.0);
-    vec3 sssColor = vec3(0.0, 0.15, 0.1) * sss * uSSSIntensity * atten;
-    color += sssColor;
+    // Subsurface scattering
+    if(uEnableSSS) {
+        float sss = pow(saturate(dot(-eye, sunDir + n * 0.4)), 3.0);
+        vec3 sssColor = vec3(0.0, 0.15, 0.1) * sss * uSSSIntensity * atten;
+        color += sssColor;
+    }
     
-    // Specular - TDM style with normalization
+    // Specular
     float spec = oceanSpecular(n, sunDir, eye, 60.0);
     color += vec3(spec) * lightColor;
     
-    // Subtle caustics visible on surface near sun angle
-    float caustics = getCaustics(p, iTime) * uCausticsIntensity * 0.08;
-    color += caustics * lightColor * atten;
+    // Caustics
+    if(uEnableCaustics) {
+        float caustics = getCaustics(p, iTime) * uCausticsIntensity * 0.08;
+        color += caustics * lightColor * atten;
+    }
     
     // Cloud shadows
     float cloudShadow = sampleCloudShadow(p, sunDir);
     color *= mix(0.6, 1.0, cloudShadow);
     
-    // Atmospheric distance fade into sky color
+    // Atmospheric distance fade
     float atmosphereFade = 1.0 - saturate(dist * 0.0003);
     color = mix(getSkyColor(eye, sunDir) * 0.8, color, atmosphereFade);
     
