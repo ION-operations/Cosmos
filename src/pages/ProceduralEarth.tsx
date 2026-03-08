@@ -993,16 +993,38 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
     hitDist = -1.0;
     if(!uShowTerrain) return vec4(0.0);
     
-    float t = 0.0;
-    float maxDist = 50000.0;
+    // Only march if ray could potentially hit ground
+    if(rd.y > 0.1 && ro.y > uMountainHeight + uOceanLevel + 500.0) return vec4(0.0);
     
-    for(int i = 0; i < 256; i++) {
+    float t = 0.0;
+    float maxDist = 80000.0;
+    float lastH = 0.0;
+    float lastY = 0.0;
+    
+    for(int i = 0; i < 300; i++) {
         vec3 pos = ro + rd * t;
         
         float terrainHeight = getTerrainHeight(pos.xz);
         float distToTerrain = pos.y - terrainHeight;
         
-        if(distToTerrain < 1.0) {
+        if(distToTerrain < 0.5) {
+            // Binary search refinement for precision
+            float tLow = t - max(1.0, abs(lastY - lastH) * 0.3);
+            float tHigh = t;
+            for(int j = 0; j < 6; j++) {
+                float tMid = (tLow + tHigh) * 0.5;
+                vec3 midPos = ro + rd * tMid;
+                float midH = getTerrainHeight(midPos.xz);
+                if(midPos.y < midH) {
+                    tHigh = tMid;
+                } else {
+                    tLow = tMid;
+                }
+            }
+            t = (tLow + tHigh) * 0.5;
+            pos = ro + rd * t;
+            terrainHeight = getTerrainHeight(pos.xz);
+            
             hitDist = t;
             
             vec3 normal = getTerrainNormal(pos.xz, terrainHeight);
@@ -1023,14 +1045,23 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
                 lightningFlash = uLightningIntensity * exp(-abs(iTime - uLightningTime) * 10.0);
             }
             
-            vec3 ambient = material.rgb * 0.2;
+            vec3 ambient = material.rgb * 0.25;
             vec3 diffuse = material.rgb * lightColor * NdotL * cloudShadow;
             vec3 lightning = material.rgb * lightningFlash * 3.0;
             
-            return vec4(ambient + diffuse + lightning, 1.0);
+            // Distance-based ambient boost (atmosphere effect)
+            float distFade = saturate(t / maxDist);
+            vec3 color = ambient + diffuse + lightning;
+            
+            return vec4(color, 1.0);
         }
         
-        t += max(1.0, distToTerrain * 0.5);
+        lastH = terrainHeight;
+        lastY = pos.y;
+        
+        // Adaptive step size: smaller near terrain, larger far away
+        float stepScale = max(0.3, distToTerrain * 0.4);
+        t += max(0.5, min(stepScale, 200.0 + t * 0.01));
         
         if(t > maxDist) break;
     }
