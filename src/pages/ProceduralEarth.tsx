@@ -1152,13 +1152,20 @@ vec3 getOceanNormal(vec2 pos, float time) {
 }
 
 float getCaustics(vec3 worldPos, float time) {
-    vec2 uv = worldPos.xz * 0.05;
+    // Multi-layer caustics from refracted wave normals
+    vec2 uv1 = worldPos.xz * 0.04 + vec2(time * 0.3, time * 0.2);
+    vec2 uv2 = worldPos.xz * 0.06 + vec2(-time * 0.25, time * 0.35);
+    vec2 uv3 = worldPos.xz * 0.1 + vec2(time * 0.15, -time * 0.2);
     
-    float c1 = sin(uv.x * 10.0 + time * 2.0) * sin(uv.y * 10.0 + time * 1.5);
-    float c2 = sin((uv.x + uv.y) * 8.0 + time * 1.8);
-    float c3 = worleyNoise(vec3(uv * 3.0, time * 0.5)) * 0.5;
+    float c1 = sin(uv1.x * 8.0) * sin(uv1.y * 8.0 + 0.5);
+    float c2 = sin(uv2.x * 12.0 + 1.0) * sin(uv2.y * 12.0);
+    float c3 = worleyNoise(vec3(uv3 * 2.0, time * 0.3)) * 0.6;
     
-    return (c1 + c2 + c3) * 0.5 + 0.5;
+    // Sharper caustic peaks via power function
+    float caustic = (c1 + c2) * 0.3 + c3;
+    caustic = pow(caustic * 0.5 + 0.5, 2.0);
+    
+    return caustic;
 }
 
 float getBubbles(vec3 worldPos, float time) {
