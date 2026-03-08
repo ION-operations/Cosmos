@@ -1861,23 +1861,7 @@ vec3 extractBrightness(vec3 color) {
 vec3 applyBloom(vec3 color, vec2 uv) {
     if(uBloomIntensity <= 0.0) return color;
     
-    vec3 bloom = vec3(0.0);
-    float total = 0.0;
-    
-    for(float x = -4.0; x <= 4.0; x++) {
-        for(float y = -4.0; y <= 4.0; y++) {
-            vec2 offset = vec2(x, y) / iResolution * 4.0;
-            float weight = exp(-(x*x + y*y) / 8.0);
-            
-            vec2 sampleUV = uv + offset;
-            if(sampleUV.x >= 0.0 && sampleUV.x <= 1.0 && sampleUV.y >= 0.0 && sampleUV.y <= 1.0) {
-                bloom += extractBrightness(color) * weight;
-                total += weight;
-            }
-        }
-    }
-    
-    bloom /= total;
+    vec3 bloom = extractBrightness(color);
     
     return color + bloom * uBloomIntensity;
 }
