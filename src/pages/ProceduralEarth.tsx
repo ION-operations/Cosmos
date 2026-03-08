@@ -488,7 +488,7 @@ float getStars(vec3 rd) {
     float level = floor((theta / PI) * 20000.0);
     float stars = 0.0;
     
-    for(float l = -10.0; l <= 10.0; l++) {
+    for(float l = -5.0; l <= 5.0; l++) {
         float level_ = clamp(level + l, 0.0, 19999.0);
         float theta_ = (level_ + 0.5) * width;
         
