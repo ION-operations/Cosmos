@@ -2992,6 +2992,12 @@ const ProceduralEarth: React.FC = () => {
                       min={10} max={500} step={10}
                       onChange={(v) => updateSetting('cameraSpeed', v)}
                     />
+                    <SliderSetting
+                      label="Zoom Speed"
+                      value={settings.zoomSpeed}
+                      min={5} max={500} step={5}
+                      onChange={(v) => updateSetting('zoomSpeed', v)}
+                    />
                   </SettingSection>
                 </TabsContent>
                 
