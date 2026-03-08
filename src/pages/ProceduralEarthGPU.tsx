@@ -1853,6 +1853,12 @@ const ProceduralEarthGPU: React.FC = () => {
         setGL2Uniforms(gl, uniforms, s, l, cam, time, lightningTimeRef.current, w, h);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       }
+
+      // ─ Canvas 2D fallback render ─
+      if (backendRef.current === 'canvas2d' && ctx2dRef.current) {
+        const ctx = ctx2dRef.current;
+        renderCanvas2D(ctx, w, h, time, s, cam);
+      }
     };
 
     animate();
