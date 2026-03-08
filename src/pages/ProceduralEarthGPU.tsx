@@ -1572,7 +1572,7 @@ function renderCanvas2D(ctx: CanvasRenderingContext2D, w: number, h: number, tim
   ctx.fillRect(0, 0, w, Math.ceil(horizon));
 
   // Sun glow
-  const sunAngle = s.autoTime ? time * s.cycleSpeed * 0.1 : s.sunAzimuth;
+  const sunAngle = s.autoTimeEnabled ? time * s.dayNightCycleSpeed * 0.1 : s.sunAzimuth;
   const sunX = w * 0.5 + Math.cos(sunAngle) * w * 0.3;
   const sunY = horizon - Math.sin(Math.max(0, sunElev)) * horizon * 0.8;
   if (dayFactor > 0.2) {
