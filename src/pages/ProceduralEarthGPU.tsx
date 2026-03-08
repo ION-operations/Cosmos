@@ -1831,10 +1831,10 @@ const ProceduralEarthGPU: React.FC = () => {
     return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
   }, [gpuReady]);
 
-  // Input handlers
+  // Input handlers — re-bind when gpuReady (canvas may have been replaced)
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !gpuReady) return;
     const handleMouseMove = (e: MouseEvent) => {
       if (document.pointerLockElement === canvas) {
         cameraRef.current.yaw += e.movementX * 0.002;
@@ -1855,7 +1855,7 @@ const ProceduralEarthGPU: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [gpuReady]);
 
   const setTimePreset = (preset: 'night' | 'sunrise' | 'day' | 'sunset') => {
     switch (preset) {
