@@ -1854,17 +1854,8 @@ const ProceduralEarthGPU: React.FC = () => {
             console.log('✓ Using WebGL2 backend (after WebGPU failure)');
             setRendererType('webgl2');
           } else {
-            console.warn('WebGL2 also failed after WebGPU, trying Canvas 2D...');
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx2dRef.current = ctx;
-              backendRef.current = 'canvas2d';
-              setRendererType('canvas2d');
-              console.log('✓ Using Canvas 2D fallback backend');
-            } else {
-              setGpuError('No rendering context available. Try a different browser.');
-              return;
-            }
+            setGpuError('Rendering failed. WebGPU pipeline failed and WebGL2 shader compilation also failed. Try Chrome or Edge.');
+            return;
           }
         }
       } else {
