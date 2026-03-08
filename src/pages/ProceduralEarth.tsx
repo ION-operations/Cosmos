@@ -3434,9 +3434,81 @@ const ProceduralEarth: React.FC = () => {
                     <LayerToggle label="Waves" icon={<Waves className="w-4 h-4 text-primary" />} enabled={settings.enableWaves} onChange={(v) => updateSetting('enableWaves', v)} />
                     <LayerToggle label="Fresnel" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableFresnel} onChange={(v) => updateSetting('enableFresnel', v)} />
                     <LayerToggle label="Caustics" icon={<Sparkles className="w-4 h-4 text-primary" />} enabled={settings.enableCaustics} onChange={(v) => updateSetting('enableCaustics', v)} />
-                    <LayerToggle label="Foam" icon={<Cloud className="w-4 h-4 text-primary" />} enabled={settings.enableFoam} onChange={(v) => updateSetting('enableFoam', v)} />
+                    <LayerToggle label="Foam (Master)" icon={<Cloud className="w-4 h-4 text-primary" />} enabled={settings.enableFoam} onChange={(v) => updateSetting('enableFoam', v)} />
                     <LayerToggle label="Subsurface Scattering" icon={<Sun className="w-4 h-4 text-primary" />} enabled={settings.enableSSS} onChange={(v) => updateSetting('enableSSS', v)} />
                     <LayerToggle label="Bubbles" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableBubbles} onChange={(v) => updateSetting('enableBubbles', v)} />
+                  </SettingSection>
+                  
+                  <SettingSection title="Foam Types">
+                    <LayerToggle label="Jacobian Whitecaps" icon={<Waves className="w-4 h-4 text-primary" />} enabled={settings.enableFoamJacobian} onChange={(v) => updateSetting('enableFoamJacobian', v)} />
+                    <LayerToggle label="Shoreline Foam" icon={<Mountain className="w-4 h-4 text-primary" />} enabled={settings.enableFoamShoreline} onChange={(v) => updateSetting('enableFoamShoreline', v)} />
+                    <LayerToggle label="Turbulent Breakwater" icon={<Wind className="w-4 h-4 text-primary" />} enabled={settings.enableFoamTurbulent} onChange={(v) => updateSetting('enableFoamTurbulent', v)} />
+                    <LayerToggle label="Wind Streaks" icon={<Layers className="w-4 h-4 text-primary" />} enabled={settings.enableFoamWindstreak} onChange={(v) => updateSetting('enableFoamWindstreak', v)} />
+                    <LayerToggle label="Spray / Mist" icon={<CloudRain className="w-4 h-4 text-primary" />} enabled={settings.enableFoamSpray} onChange={(v) => updateSetting('enableFoamSpray', v)} />
+                    <LayerToggle label="Voronoi Cellular" icon={<Sparkles className="w-4 h-4 text-primary" />} enabled={settings.enableFoamVoronoi} onChange={(v) => updateSetting('enableFoamVoronoi', v)} />
+                  </SettingSection>
+                  
+                  <SettingSection title="Foam Parameters">
+                    <SliderSetting
+                      label="Master Intensity"
+                      value={settings.foamIntensity}
+                      min={0} max={3} step={0.05}
+                      onChange={(v) => updateSetting('foamIntensity', v)}
+                    />
+                    <SliderSetting
+                      label="Jacobian Strength"
+                      value={settings.foamJacobianStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamJacobianStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Shoreline Strength"
+                      value={settings.foamShorelineStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamShorelineStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Turbulent Strength"
+                      value={settings.foamTurbulentStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamTurbulentStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Windstreak Strength"
+                      value={settings.foamWindstreakStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamWindstreakStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Spray Strength"
+                      value={settings.foamSprayStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamSprayStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Voronoi Strength"
+                      value={settings.foamVoronoiStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamVoronoiStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Shoreline Width"
+                      value={settings.foamShorelineWidth}
+                      min={5} max={200} step={5}
+                      onChange={(v) => updateSetting('foamShorelineWidth', v)}
+                    />
+                    <SliderSetting
+                      label="Foam Scale"
+                      value={settings.foamScale}
+                      min={0.1} max={5} step={0.1}
+                      onChange={(v) => updateSetting('foamScale', v)}
+                    />
+                    <SliderSetting
+                      label="Foam Decay"
+                      value={settings.foamDecay}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamDecay', v)}
+                    />
                   </SettingSection>
                   
                   <SettingSection title="Ocean Surface">
@@ -3469,12 +3541,6 @@ const ProceduralEarth: React.FC = () => {
                       value={settings.oceanFresnel}
                       min={0} max={0.1} step={0.005}
                       onChange={(v) => updateSetting('oceanFresnel', v)}
-                    />
-                    <SliderSetting
-                      label="Foam"
-                      value={settings.foamIntensity}
-                      min={0} max={2} step={0.05}
-                      onChange={(v) => updateSetting('foamIntensity', v)}
                     />
                   </SettingSection>
                   
