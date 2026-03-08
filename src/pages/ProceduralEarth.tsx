@@ -173,6 +173,17 @@ uniform bool uShowWeather;
 uniform bool uShowFog;
 uniform bool uShowGodRays;
 
+// Ocean Sub-Feature Toggles
+uniform bool uEnableWaves;
+uniform bool uEnableFresnel;
+uniform bool uEnableCaustics;
+uniform bool uEnableFoam;
+uniform bool uEnableSSS;
+uniform bool uEnableBubbles;
+uniform bool uEnableUnderwaterCaustics;
+uniform bool uEnableUnderwaterGodRays;
+uniform bool uEnableUnderwaterBubbles;
+
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════
