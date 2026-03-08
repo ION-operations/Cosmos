@@ -1593,14 +1593,14 @@ const ProceduralEarthGPU: React.FC = () => {
         }
       });
 
-      const context = canvas.getContext('webgpu');
+      const context = canvas.getContext('webgpu') as GPUCanvasContext | null;
       if (!context) {
         setGpuError('Failed to get WebGPU context.');
         return;
       }
 
       const format = navigator.gpu.getPreferredCanvasFormat();
-      context.configure({ device, format, alphaMode: 'premultiplied' });
+      (context as GPUCanvasContext).configure({ device, format, alphaMode: 'premultiplied' });
 
       // Create 3D noise texture
       const noiseSize = 128;
