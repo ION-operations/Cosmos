@@ -840,8 +840,7 @@ fn oceanMap(p: vec3f, iterations: i32) -> f32 {
   var freq = SEA_FREQ;
   var amp = SEA_HEIGHT;
   var choppy = SEA_CHOPPY;
-  var uv = p.xz;
-  uv.x *= 0.75;
+  var uv = vec2f(p.x * 0.75, p.z);
 
   let windAngle = weather.windDirection;
   let windRot = mat2x2f(cos(windAngle), -sin(windAngle), sin(windAngle), cos(windAngle));
