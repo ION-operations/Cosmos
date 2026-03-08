@@ -1678,8 +1678,12 @@ const ProceduralEarthGPU: React.FC = () => {
 
     const initWebGL2 = (): boolean => {
       console.log('[WebGL2] Requesting context...');
-      const gl = canvas.getContext('webgl2', { antialias: false, alpha: false });
-      if (!gl) { console.error('[WebGL2] getContext returned null'); return false; }
+      console.log(`[WebGL2] Canvas dimensions: ${canvas.width}x${canvas.height}, clientSize: ${canvas.clientWidth}x${canvas.clientHeight}`);
+      // Try with permissive options first, then strict
+      const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, failIfMajorPerformanceCaveat: false, desynchronized: true, powerPreference: 'default' })
+                || canvas.getContext('webgl2', { antialias: false, alpha: false })
+                || canvas.getContext('webgl2');
+      if (!gl) { console.error('[WebGL2] getContext returned null — WebGL2 not supported in this environment'); return false; }
       console.log('[WebGL2] Context OK. Compiling shaders...');
       const program = createGLProgram(gl, GL_VERT, GL_FRAG);
       if (!program) { console.error('[WebGL2] Shader compilation/linking failed'); return false; }
