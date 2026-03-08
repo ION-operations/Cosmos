@@ -1197,58 +1197,7 @@ vec3 getOceanNormal(vec3 p, float eps) {
     return normalize(n);
 }
 
-// Diffuse + specular ocean shading
-vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float dist) {
-    // Fresnel - Schlick approximation
-    float fresnel = clamp(1.0 - dot(n, -eye), 0.0, 1.0);
-    fresnel = pow(fresnel, 3.0) * 0.5;
-    fresnel = mix(uOceanFresnel, 1.0, fresnel);
-    
-    // Reflection
-    vec3 reflected = getSkyColor(reflect(eye, n), sunDir);
-    
-    // Refraction / water body color
-    float depth = saturate(dist * 0.002);
-    vec3 refracted = mix(uOceanColor, uOceanDeepColor, depth);
-    
-    // Subsurface scattering through wave crests
-    vec3 sssColor = uOceanColor * 1.5 + vec3(0.0, 0.05, 0.05);
-    float sss = pow(saturate(dot(eye, sunDir + n * 0.3)), 4.0) * uSSSIntensity;
-    refracted += sssColor * sss;
-    
-    // Caustics on shallow areas
-    float caustics = getCaustics(p, iTime) * uCausticsIntensity;
-    refracted += caustics * 0.15 * lightColor;
-    
-    // Bubbles
-    float bubbles = getBubbles(p, iTime);
-    refracted = mix(refracted, vec3(0.9, 0.95, 1.0), bubbles);
-    
-    // Combine reflection and refraction
-    vec3 color = mix(refracted, reflected, fresnel);
-    
-    // Specular highlight (Blinn-Phong)
-    vec3 halfDir = normalize(sunDir - eye);
-    float spec = pow(max(dot(n, halfDir), 0.0), 256.0) * uSunIntensity;
-    color += lightColor * spec * 2.0;
-    
-    // Foam - wave height based + wind streaks
-    float foamAmount = getFoam(vec3(0.0, oceanMapDetailed(p) + p.y, 0.0), p.xz, iTime);
-    color = mix(color, vec3(1.0), foamAmount);
-    
-    // Cloud shadows
-    float cloudShadow = sampleCloudShadow(p, sunDir);
-    color *= mix(0.5, 1.0, cloudShadow);
-    
-    // Atmospheric distance fade
-    float atten = max(1.0 - dot(dist, dist) * 0.000001, 0.0);
-    color = mix(getSkyColor(eye, sunDir), color, atten);
-    
-    return color;
-}
-
 float getCaustics(vec3 worldPos, float time) {
-    // Multi-layer caustics from refracted wave normals
     vec2 uv1 = worldPos.xz * 0.04 + vec2(time * 0.3, time * 0.2);
     vec2 uv2 = worldPos.xz * 0.06 + vec2(-time * 0.25, time * 0.35);
     vec2 uv3 = worldPos.xz * 0.1 + vec2(time * 0.15, -time * 0.2);
@@ -1302,6 +1251,56 @@ float getFoam(vec3 displacement, vec2 pos, float time) {
     streak *= fbm(vec3(pos * 0.15, time * 0.2), 2) * uWindSpeed * 0.3;
     
     return saturate((heightFoam + turbulentFoam + breakingFoam + streak) * uFoamIntensity);
+}
+
+// Diffuse + specular ocean shading
+vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float dist) {
+    // Fresnel - Schlick approximation
+    float fresnel = clamp(1.0 - dot(n, -eye), 0.0, 1.0);
+    fresnel = pow(fresnel, 3.0) * 0.5;
+    fresnel = mix(uOceanFresnel, 1.0, fresnel);
+    
+    // Reflection
+    vec3 reflected = getSkyColor(reflect(eye, n), sunDir);
+    
+    // Refraction / water body color
+    float depth = saturate(dist * 0.002);
+    vec3 refracted = mix(uOceanColor, uOceanDeepColor, depth);
+    
+    // Subsurface scattering through wave crests
+    vec3 sssColor = uOceanColor * 1.5 + vec3(0.0, 0.05, 0.05);
+    float sss = pow(saturate(dot(eye, sunDir + n * 0.3)), 4.0) * uSSSIntensity;
+    refracted += sssColor * sss;
+    
+    // Caustics on shallow areas
+    float caustics = getCaustics(p, iTime) * uCausticsIntensity;
+    refracted += caustics * 0.15 * lightColor;
+    
+    // Bubbles
+    float bubbles = getBubbles(p, iTime);
+    refracted = mix(refracted, vec3(0.9, 0.95, 1.0), bubbles);
+    
+    // Combine reflection and refraction
+    vec3 color = mix(refracted, reflected, fresnel);
+    
+    // Specular highlight (Blinn-Phong)
+    vec3 halfDir = normalize(sunDir - eye);
+    float spec = pow(max(dot(n, halfDir), 0.0), 256.0) * uSunIntensity;
+    color += lightColor * spec * 2.0;
+    
+    // Foam - wave height based + wind streaks
+    float foamAmount = getFoam(vec3(0.0, oceanMapDetailed(p) + p.y, 0.0), p.xz, iTime);
+    color = mix(color, vec3(1.0), foamAmount);
+    
+    // Cloud shadows
+    float cloudShadow = sampleCloudShadow(p, sunDir);
+    color *= mix(0.5, 1.0, cloudShadow);
+    
+    // Atmospheric distance fade
+    float atten = max(1.0 - dot(dist, dist) * 0.000001, 0.0);
+    color = mix(getSkyColor(eye, sunDir), color, atten);
+    
+    return color;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
