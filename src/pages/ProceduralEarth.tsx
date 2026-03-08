@@ -1743,7 +1743,7 @@ const DEFAULT_SETTINGS = {
   cloudDensity: 0.05,
   cloudScale: 1.0,
   cloudDetailScale: 3.0,
-  cloudSpeed: 5.0,
+  cloudSpeed: 0.5,
   cloudHeight: 1500,
   cloudThickness: 1500,
   cloudLightAbsorption: 0.5,
