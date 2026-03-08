@@ -1579,7 +1579,8 @@ const ProceduralEarthGPU: React.FC = () => {
   const gpuRef = useRef<{
     device: GPUDevice; context: GPUCanvasContext; pipeline: GPURenderPipeline;
     uniformBuffers: GPUBuffer[]; bindGroup0: GPUBindGroup; bindGroup1: GPUBindGroup;
-    noiseTexture: GPUTexture;
+    noiseTexture: GPUTexture; format: GPUTextureFormat;
+    lastConfiguredWidth: number; lastConfiguredHeight: number;
   } | null>(null);
 
   // WebGL2 state
