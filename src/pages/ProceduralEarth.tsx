@@ -1325,13 +1325,16 @@ vec4 renderUnderwater(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
     float depth = uOceanLevel - ro.y;
     float surfaceT = (uOceanLevel - ro.y) / max(0.1, sunDir.y);
     vec3 surfacePos = ro + sunDir * surfaceT;
-    float caustics = getCaustics(surfacePos, iTime) * uUnderwaterCausticsStrength;
+    float caustics = 0.0;
+    if(uEnableUnderwaterCaustics) {
+        caustics = getCaustics(surfacePos, iTime) * uUnderwaterCausticsStrength;
+    }
     
     float fogFactor = 1.0 - exp(-depth * uUnderwaterFogDensity * 0.005);
     vec3 underwaterFog = uUnderwaterFogColor * (1.0 + caustics * 0.5);
     
     float bubbles = 0.0;
-    if(uUnderwaterBubbleCount > 0.0) {
+    if(uEnableUnderwaterBubbles && uUnderwaterBubbleCount > 0.0) {
         for(float i = 0.0; i < 5.0; i++) {
             vec3 bubbleStream = ro + rd * (10.0 + i * 20.0);
             vec2 bubbleUV = bubbleStream.xz * 0.1 + vec2(i * 3.7, i * 2.3);
