@@ -2505,6 +2505,17 @@ const ProceduralEarth: React.FC = () => {
     u.uSaturation.value = settings.saturation;
     u.uVignetteStrength.value = settings.vignetteStrength;
     u.uChromaticAberration.value = settings.chromaticAberration;
+    
+    // Ocean sub-feature toggles
+    u.uEnableWaves.value = settings.enableWaves;
+    u.uEnableFresnel.value = settings.enableFresnel;
+    u.uEnableCaustics.value = settings.enableCaustics;
+    u.uEnableFoam.value = settings.enableFoam;
+    u.uEnableSSS.value = settings.enableSSS;
+    u.uEnableBubbles.value = settings.enableBubbles;
+    u.uEnableUnderwaterCaustics.value = settings.enableUnderwaterCaustics;
+    u.uEnableUnderwaterGodRays.value = settings.enableUnderwaterGodRays;
+    u.uEnableUnderwaterBubbles.value = settings.enableUnderwaterBubbles;
   }, [settings]);
 
   // Update layer visibility uniforms
