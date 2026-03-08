@@ -1070,12 +1070,13 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GPT WAVES V7 OCEAN SYSTEM
+// FFT-STYLE MULTI-OCTAVE OCEAN SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Gerstner wave with proper dispersion relation
 vec3 gerstnerWave(vec2 pos, float time, vec2 dir, float steepness, float wavelength) {
     float k = TAU / wavelength;
-    float c = sqrt(9.8 / k);
+    float c = sqrt(9.8 / k); // Deep water dispersion
     float f = k * (dot(dir, pos) - c * time);
     float a = steepness / k;
     
@@ -1086,33 +1087,68 @@ vec3 gerstnerWave(vec2 pos, float time, vec2 dir, float steepness, float wavelen
     );
 }
 
+// Multi-octave FFT-approximated ocean displacement
+// Uses 12+ wave octaves with physically-based spectrum distribution
 vec3 getOceanDisplacement(vec2 pos, float time) {
     vec3 displacement = vec3(0.0);
     
-    vec2 windDir = vec2(cos(uWindDirection), sin(uWindDirection));
+    vec2 windDir = normalize(vec2(cos(uWindDirection), sin(uWindDirection)));
     float windInfluence = uWindSpeed * 0.5 + 0.5;
     
-    displacement += gerstnerWave(pos, time, normalize(windDir), uWaveHeight * 0.5 * windInfluence, 60.0);
-    displacement += gerstnerWave(pos, time, normalize(windDir * 0.8 + vec2(0.2, 0.0)), uWaveHeight * 0.3 * windInfluence, 31.0);
+    // Phillips-spectrum inspired wave distribution
+    // Long swell waves (dominant wavelength)
+    displacement += gerstnerWave(pos, time, windDir, uWaveHeight * 0.4 * windInfluence, 120.0);
+    displacement += gerstnerWave(pos, time, normalize(windDir + vec2(0.1, 0.05)), uWaveHeight * 0.35 * windInfluence, 85.0);
     
-    displacement += gerstnerWave(pos, time, normalize(vec2(-windDir.y, windDir.x)), uWaveHeight * 0.2, 18.0);
-    displacement += gerstnerWave(pos, time, normalize(vec2(-0.4, 0.7)), uWaveHeight * 0.15, 9.0);
+    // Medium waves - slightly off wind direction for realism
+    float ang1 = atan(windDir.y, windDir.x);
+    displacement += gerstnerWave(pos, time, vec2(cos(ang1 + 0.3), sin(ang1 + 0.3)), uWaveHeight * 0.25 * windInfluence, 55.0);
+    displacement += gerstnerWave(pos, time, vec2(cos(ang1 - 0.4), sin(ang1 - 0.4)), uWaveHeight * 0.2 * windInfluence, 38.0);
+    displacement += gerstnerWave(pos, time, vec2(cos(ang1 + 0.7), sin(ang1 + 0.7)), uWaveHeight * 0.18, 27.0);
     
+    // Short waves - cross-wind chop
+    vec2 crossWind = vec2(-windDir.y, windDir.x);
+    displacement += gerstnerWave(pos, time, normalize(crossWind + windDir * 0.3), uWaveHeight * 0.12, 17.0);
+    displacement += gerstnerWave(pos, time, normalize(-crossWind + windDir * 0.2), uWaveHeight * 0.1, 12.0);
+    displacement += gerstnerWave(pos, time * 1.1, normalize(windDir * 0.5 + crossWind * 0.8), uWaveHeight * 0.08, 8.0);
+    
+    // Capillary/ripple waves (high frequency detail)
+    displacement += gerstnerWave(pos, time * 1.2, vec2(cos(ang1 + 1.2), sin(ang1 + 1.2)), uWaveHeight * 0.05, 4.5);
+    displacement += gerstnerWave(pos, time * 1.3, vec2(cos(ang1 - 0.8), sin(ang1 - 0.8)), uWaveHeight * 0.04, 3.0);
+    displacement += gerstnerWave(pos, time * 1.4, vec2(cos(ang1 + 2.1), sin(ang1 + 2.1)), uWaveHeight * 0.03, 1.8);
+    displacement += gerstnerWave(pos, time * 1.5, vec2(cos(ang1 - 1.5), sin(ang1 - 1.5)), uWaveHeight * 0.02, 1.0);
+    
+    // Storm waves - additional chaotic energy
     if(uWeatherType == 3) {
-        displacement += gerstnerWave(pos, time * 1.5, windDir, uWaveHeight * uWeatherIntensity, 80.0);
-        displacement += gerstnerWave(pos, time * 1.3, normalize(windDir + vec2(0.3, 0.1)), uWaveHeight * uWeatherIntensity * 0.7, 45.0);
+        displacement += gerstnerWave(pos, time * 1.3, windDir, uWaveHeight * uWeatherIntensity * 1.2, 150.0);
+        displacement += gerstnerWave(pos, time * 1.5, normalize(windDir + vec2(0.4, 0.2)), uWaveHeight * uWeatherIntensity * 0.8, 90.0);
+        displacement += gerstnerWave(pos, time * 1.1, normalize(crossWind), uWaveHeight * uWeatherIntensity * 0.5, 50.0);
     }
+    
+    // FBM-based micro-displacement for breaking up repetition
+    float microDetail = fbm(vec3(pos * 0.02 + windDir * time * 0.5, time * 0.1), 3);
+    displacement.y += microDetail * uWaveHeight * 0.15;
     
     return displacement;
 }
 
 vec3 getOceanNormal(vec2 pos, float time) {
-    float e = 0.5;
+    // Use smaller epsilon for sharper normals, scale with distance later
+    float e = 0.3;
     vec3 p0 = vec3(pos.x, 0.0, pos.y) + getOceanDisplacement(pos, time);
     vec3 p1 = vec3(pos.x + e, 0.0, pos.y) + getOceanDisplacement(pos + vec2(e, 0.0), time);
     vec3 p2 = vec3(pos.x, 0.0, pos.y + e) + getOceanDisplacement(pos + vec2(0.0, e), time);
     
-    return normalize(cross(p2 - p0, p1 - p0));
+    vec3 normal = normalize(cross(p2 - p0, p1 - p0));
+    
+    // Add high-frequency normal perturbation from noise for micro-detail
+    vec3 microNormal = vec3(
+        gradientNoise(vec3(pos * 0.3 + time * 0.2, 0.0)),
+        0.0,
+        gradientNoise(vec3(pos * 0.3 + time * 0.2, 5.0))
+    ) * 0.05 * uOceanRoughness;
+    
+    return normalize(normal + microNormal);
 }
 
 float getCaustics(vec3 worldPos, float time) {
