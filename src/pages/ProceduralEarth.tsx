@@ -591,12 +591,12 @@ float sampleCloudDensity(vec3 p, bool cheap) {
     if(edgeFade <= 0.0) return 0.0;
     
     vec3 windOffset = vec3(
-        cos(uWindDirection) * uWindSpeed * iTime * 50.0,
+        cos(uWindDirection) * uWindSpeed * iTime * 10.0,
         0.0,
-        sin(uWindDirection) * uWindSpeed * iTime * 50.0
+        sin(uWindDirection) * uWindSpeed * iTime * 10.0
     );
     
-    vec3 shapeCoord = (p + windOffset) * uCloudScale * 0.0001 + vec3(iTime * uCloudSpeed * 0.01, 0.0, 0.0);
+    vec3 shapeCoord = (p + windOffset) * uCloudScale * 0.0001 + vec3(iTime * uCloudSpeed * 0.002, 0.0, 0.0);
     
     float shape = perlinWorley(shapeCoord, 4);
     
