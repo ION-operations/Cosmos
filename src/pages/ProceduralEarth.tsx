@@ -1551,6 +1551,11 @@ vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float
         color += caustics * lightColor * atten;
     }
     
+    // ─── FOAM COMPOSITING ───
+    float waveH = oceanMapDetailed(p);
+    vec3 foamContribution = computeAllFoam(p, n, sunDir, lightColor, dist, max(p.y - waveH, 0.0));
+    color += foamContribution;
+    
     // Cloud shadows
     float cloudShadow = sampleCloudShadow(p, sunDir);
     color *= mix(0.6, 1.0, cloudShadow);
