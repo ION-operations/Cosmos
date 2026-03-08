@@ -126,6 +126,17 @@ uniform float uCausticsIntensity;
 uniform float uBubbleIntensity;
 uniform float uSSSIntensity;
 
+// Foam Sub-Types
+uniform float uFoamJacobianStrength;
+uniform float uFoamShorelineStrength;
+uniform float uFoamTurbulentStrength;
+uniform float uFoamWindstreakStrength;
+uniform float uFoamSprayStrength;
+uniform float uFoamVoronoiStrength;
+uniform float uFoamShorelineWidth;
+uniform float uFoamDecay;
+uniform float uFoamScale;
+
 // Underwater
 uniform float uUnderwaterFogDensity;
 uniform vec3 uUnderwaterFogColor;
@@ -178,6 +189,12 @@ uniform bool uEnableWaves;
 uniform bool uEnableFresnel;
 uniform bool uEnableCaustics;
 uniform bool uEnableFoam;
+uniform bool uEnableFoamJacobian;
+uniform bool uEnableFoamShoreline;
+uniform bool uEnableFoamTurbulent;
+uniform bool uEnableFoamWindstreak;
+uniform bool uEnableFoamSpray;
+uniform bool uEnableFoamVoronoi;
 uniform bool uEnableSSS;
 uniform bool uEnableBubbles;
 uniform bool uEnableUnderwaterCaustics;
@@ -1241,7 +1258,257 @@ float oceanSpecular(vec3 n, vec3 l, vec3 e, float s) {
     return pow(max(dot(reflect(e, n), l), 0.0), s) * nrm;
 }
 
-// TDM Seascape-style ocean shading - proven realistic approach
+// ═══════════════════════════════════════════════════════════════════════════
+// HYPER-REALISTIC FOAM SYSTEM — 6 DISTINCT TECHNIQUES
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── 1. JACOBIAN WHITECAP FOAM ───────────────────────────────────────────
+// Real wave-breaking detection via surface curvature (Jacobian determinant).
+// When the wave surface folds (J < threshold), whitecaps form.
+// Based on Tessendorf's ocean simulation methodology.
+float foamJacobian(vec3 p, float eps) {
+    float h0 = oceanMapDetailed(p);
+    float hx = oceanMapDetailed(vec3(p.x + eps, p.y, p.z));
+    float hz = oceanMapDetailed(vec3(p.x, p.y, p.z + eps));
+    float hxx = oceanMapDetailed(vec3(p.x + eps * 2.0, p.y, p.z));
+    float hzz = oceanMapDetailed(vec3(p.x, p.y, p.z + eps * 2.0));
+    float hxz = oceanMapDetailed(vec3(p.x + eps, p.y, p.z + eps));
+    
+    // Approximate second derivatives (curvature)
+    float dxx = (hxx - 2.0 * hx + h0) / (eps * eps);
+    float dzz = (hzz - 2.0 * hz + h0) / (eps * eps);
+    float dxz = (hxz - hx - hz + h0) / (eps * eps);
+    
+    // Jacobian determinant — negative means wave folding
+    float J = dxx * dzz - dxz * dxz;
+    
+    // Whitecap where curvature is high (folding crests)
+    float curvature = abs(dxx + dzz);
+    float whitecap = smoothstep(0.3, 2.0, curvature) * smoothstep(-0.5, -0.01, J);
+    
+    // Add turbulent noise breakup
+    float noise = fbm(vec3(p.xz * uFoamScale * 3.0, iTime * 0.5), 3);
+    whitecap *= 0.6 + noise * 0.8;
+    
+    return saturate(whitecap * uFoamJacobianStrength);
+}
+
+// ─── 2. SHORELINE / DEPTH-BASED FOAM ────────────────────────────────────
+// Foam that accumulates where waves meet shallow water.
+// Uses terrain proximity to generate realistic beach foam patterns
+// with bubble-like Voronoi structures at the water's edge.
+float foamShoreline(vec3 p) {
+    // Approximate depth by checking terrain height
+    float terrainH = getTerrainHeight(p.xz);
+    float depth = p.y - terrainH;
+    
+    if(depth > uFoamShorelineWidth * 2.0) return 0.0;
+    
+    // Distance-based foam mask
+    float shoreProximity = 1.0 - smoothstep(0.0, uFoamShorelineWidth, depth);
+    
+    // Wave surge pattern - foam pulses with wave motion
+    float surge = sin(p.x * 0.05 + iTime * uWaveSpeed * 2.0) * 0.5 + 0.5;
+    surge *= sin(p.z * 0.07 + iTime * uWaveSpeed * 1.5) * 0.5 + 0.5;
+    
+    // Cellular foam pattern (bubble clusters)
+    float cellFoam = worleyNoise(vec3(p.xz * uFoamScale * 8.0, iTime * 0.3));
+    cellFoam = pow(cellFoam, 2.0);
+    
+    // Lace-like edge pattern
+    float lace = worleyNoise(vec3(p.xz * uFoamScale * 15.0, iTime * 0.1));
+    lace = smoothstep(0.3, 0.7, lace);
+    
+    float foam = shoreProximity * mix(cellFoam, lace, shoreProximity * 0.5);
+    foam *= 0.5 + surge * 0.5;
+    
+    return saturate(foam * uFoamShorelineStrength);
+}
+
+// ─── 3. TURBULENT BREAKWATER FOAM ───────────────────────────────────────
+// Dense, chaotic foam from wave collisions / breaking waves.
+// Uses curl noise for realistic turbulent advection patterns.
+// Simulates the churning white water seen in surf zones.
+float foamTurbulent(vec3 p, vec3 normal) {
+    // Foam at steep wave faces (about to break)
+    float steepness = 1.0 - normal.y;
+    float breakThreshold = smoothstep(0.3, 0.7, steepness);
+    
+    // Curl noise for turbulent streaks
+    vec3 curl = curlNoise(vec3(p.xz * uFoamScale * 2.0, iTime * 0.4));
+    float turbulence = length(curl.xz) * 0.7;
+    
+    // Multi-scale noise for irregular patches
+    float coarse = fbm(vec3(p.xz * uFoamScale * 1.5 + curl.xz * 0.5, iTime * 0.2), 4);
+    float fine = fbm(vec3(p.xz * uFoamScale * 6.0 + curl.xz, iTime * 0.6), 3);
+    
+    // Combine: steep waves get turbulent foam
+    float foam = breakThreshold * (coarse * 0.6 + fine * 0.4 + turbulence * 0.3);
+    
+    // Decay over time (foam dissolves)
+    float age = fract(iTime * uFoamDecay * 0.1 + hash12(floor(p.xz * 0.5)));
+    foam *= smoothstep(1.0, 0.0, age * 0.5);
+    
+    return saturate(foam * uFoamTurbulentStrength);
+}
+
+// ─── 4. WIND STREAK FOAM ────────────────────────────────────────────────
+// Long, thin foam streaks aligned with wind direction (Langmuir circulation).
+// These are the parallel white lines visible on open ocean surfaces
+// caused by wind-driven convergence zones.
+float foamWindstreak(vec3 p) {
+    float windAngle = uWindDirection;
+    vec2 windDir = vec2(cos(windAngle), sin(windAngle));
+    vec2 perpDir = vec2(-windDir.y, windDir.x);
+    
+    // Project position onto perpendicular to wind
+    float perpDist = dot(p.xz, perpDir);
+    float alongDist = dot(p.xz, windDir);
+    
+    // Langmuir circulation spacing (~10-50m streaks)
+    float streakFreq = uFoamScale * 0.3;
+    float streak = sin(perpDist * streakFreq + 
+                       gradientNoise(vec3(alongDist * 0.02, perpDist * 0.01, iTime * 0.1)) * 3.0);
+    streak = smoothstep(0.7, 1.0, streak);
+    
+    // Vary streak intensity along length
+    float intensity = fbm(vec3(alongDist * 0.01, perpDist * streakFreq * 0.1, iTime * 0.05), 3);
+    intensity = smoothstep(0.3, 0.8, intensity);
+    
+    // Wind speed modulation (more wind = more streaks)
+    float windFactor = smoothstep(0.2, 0.8, uWindSpeed);
+    
+    return saturate(streak * intensity * windFactor * uFoamWindstreakStrength);
+}
+
+// ─── 5. SPRAY / MIST FOAM ──────────────────────────────────────────────
+// Fine airborne spray particles torn from wave crests by wind.
+// Creates a misty, translucent white layer above wave peaks.
+// Based on the Beaufort scale spray generation physics.
+float foamSpray(vec3 p, vec3 normal, float waveHeight) {
+    // Only at wave crests pointing upward
+    float crestFactor = smoothstep(0.0, 0.5, waveHeight) * smoothstep(0.5, 0.9, normal.y);
+    
+    // Wind tears spray from crests
+    float windTear = smoothstep(0.3, 1.0, uWindSpeed);
+    
+    // Particle-like noise (very fine, fast-moving)
+    float windAngle = uWindDirection;
+    vec2 windOffset = vec2(cos(windAngle), sin(windAngle)) * iTime * uWindSpeed * 5.0;
+    float particles = fbm(vec3((p.xz + windOffset) * uFoamScale * 12.0, iTime * 2.0), 4);
+    particles = smoothstep(0.4, 0.9, particles);
+    
+    // Stipple pattern for mist effect
+    float stipple = hash12(floor(p.xz * uFoamScale * 20.0 + windOffset));
+    stipple = smoothstep(0.6, 0.95, stipple);
+    
+    float spray = crestFactor * windTear * (particles * 0.7 + stipple * 0.3);
+    
+    return saturate(spray * uFoamSprayStrength);
+}
+
+// ─── 6. VORONOI CELLULAR FOAM ───────────────────────────────────────────
+// Physically accurate bubble-cluster foam using multi-layered Voronoi.
+// Simulates the actual cellular structure of sea foam (thin film bubbles).
+// Each cell represents a bubble, with bright edges where films meet.
+float foamVoronoi(vec3 p) {
+    float foam = 0.0;
+    
+    // Three scales of bubble clusters (macro → micro)
+    for(float layer = 0.0; layer < 3.0; layer++) {
+        float scale = uFoamScale * (3.0 + layer * 5.0);
+        float speed = 0.1 + layer * 0.05;
+        float weight = 1.0 - layer * 0.25;
+        
+        vec2 uv = p.xz * scale + vec2(iTime * speed, iTime * speed * 0.7);
+        
+        // Voronoi with edge detection
+        vec2 n = floor(uv);
+        vec2 f = fract(uv);
+        
+        float md = 8.0;
+        float md2 = 8.0;
+        
+        for(int j = -1; j <= 1; j++)
+        for(int i = -1; i <= 1; i++) {
+            vec2 g = vec2(float(i), float(j));
+            vec2 o = hash22(n + g);
+            // Animate cell centers
+            o = 0.5 + 0.5 * sin(iTime * (0.3 + layer * 0.1) + o * TAU);
+            
+            float d = length(g + o - f);
+            if(d < md) {
+                md2 = md;
+                md = d;
+            } else if(d < md2) {
+                md2 = d;
+            }
+        }
+        
+        // Edge detection: bright where two cells meet (bubble film)
+        float edge = md2 - md;
+        float cellFoam = smoothstep(0.0, 0.15, edge) * smoothstep(0.4, 0.15, edge);
+        
+        // Also add some interior brightness for thicker foam
+        cellFoam += smoothstep(0.3, 0.0, md) * 0.3;
+        
+        foam += cellFoam * weight;
+    }
+    
+    return saturate(foam * uFoamVoronoiStrength * 0.5);
+}
+
+// ─── MASTER FOAM COMPOSITOR ─────────────────────────────────────────────
+// Combines all foam techniques with physically-based shading.
+// Foam = bright, high-albedo, low-specular, slightly translucent material.
+vec3 computeAllFoam(vec3 p, vec3 normal, vec3 sunDir, vec3 lightColor, float dist, float waveHeight) {
+    if(!uEnableFoam || uFoamIntensity <= 0.0) return vec3(0.0);
+    
+    float totalFoam = 0.0;
+    
+    // Accumulate each foam type
+    if(uEnableFoamJacobian) {
+        float eps = max(0.5, dist * 0.005);
+        totalFoam += foamJacobian(p, eps);
+    }
+    if(uEnableFoamShoreline) {
+        totalFoam += foamShoreline(p);
+    }
+    if(uEnableFoamTurbulent) {
+        totalFoam += foamTurbulent(p, normal);
+    }
+    if(uEnableFoamWindstreak) {
+        totalFoam += foamWindstreak(p);
+    }
+    if(uEnableFoamSpray) {
+        totalFoam += foamSpray(p, normal, waveHeight);
+    }
+    if(uEnableFoamVoronoi) {
+        totalFoam += foamVoronoi(p);
+    }
+    
+    totalFoam = saturate(totalFoam) * uFoamIntensity;
+    
+    if(totalFoam < 0.001) return vec3(0.0);
+    
+    // Physically-based foam shading
+    // Foam is a high-albedo diffuse material (wet bubbles ≈ 0.7-0.9 albedo)
+    vec3 foamAlbedo = vec3(0.85, 0.88, 0.9);
+    
+    // Diffuse lighting
+    float NdotL = max(dot(normal, sunDir), 0.0) * 0.6 + 0.4;
+    
+    // Slight blue tint from sky ambient
+    vec3 ambient = vec3(0.4, 0.45, 0.55) * 0.3;
+    
+    vec3 foamColor = foamAlbedo * (lightColor * NdotL + ambient);
+    
+    // Distance fade (foam detail dissolves at distance)
+    float distFade = smoothstep(2000.0, 500.0, dist);
+    totalFoam *= distFade;
+    
+    return foamColor * totalFoam;
+}
 vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float dist) {
     // Fresnel
     float fresnel = 0.0;
@@ -1283,6 +1550,11 @@ vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float
         float caustics = getCaustics(p, iTime) * uCausticsIntensity * 0.08;
         color += caustics * lightColor * atten;
     }
+    
+    // ─── FOAM COMPOSITING ───
+    float waveH = oceanMapDetailed(p);
+    vec3 foamContribution = computeAllFoam(p, n, sunDir, lightColor, dist, max(p.y - waveH, 0.0));
+    color += foamContribution;
     
     // Cloud shadows
     float cloudShadow = sampleCloudShadow(p, sunDir);
@@ -1921,6 +2193,15 @@ const DEFAULT_SETTINGS = {
   oceanFresnel: 0.04,
   oceanRoughness: 0.3,
   foamIntensity: 0.3,
+  foamJacobianStrength: 0.8,
+  foamShorelineStrength: 0.6,
+  foamTurbulentStrength: 0.5,
+  foamWindstreakStrength: 0.4,
+  foamSprayStrength: 0.3,
+  foamVoronoiStrength: 0.5,
+  foamShorelineWidth: 50,
+  foamDecay: 0.5,
+  foamScale: 1.0,
   causticsIntensity: 0.3,
   bubbleIntensity: 0.15,
   sssIntensity: 0.4,
@@ -1966,6 +2247,12 @@ const DEFAULT_SETTINGS = {
   enableFresnel: true,
   enableCaustics: true,
   enableFoam: true,
+  enableFoamJacobian: true,
+  enableFoamShoreline: true,
+  enableFoamTurbulent: true,
+  enableFoamWindstreak: true,
+  enableFoamSpray: true,
+  enableFoamVoronoi: true,
   enableSSS: true,
   enableBubbles: true,
   enableUnderwaterCaustics: true,
@@ -2230,6 +2517,15 @@ const ProceduralEarth: React.FC = () => {
         uOceanFresnel: { value: settings.oceanFresnel },
         uOceanRoughness: { value: settings.oceanRoughness },
         uFoamIntensity: { value: settings.foamIntensity },
+        uFoamJacobianStrength: { value: settings.foamJacobianStrength },
+        uFoamShorelineStrength: { value: settings.foamShorelineStrength },
+        uFoamTurbulentStrength: { value: settings.foamTurbulentStrength },
+        uFoamWindstreakStrength: { value: settings.foamWindstreakStrength },
+        uFoamSprayStrength: { value: settings.foamSprayStrength },
+        uFoamVoronoiStrength: { value: settings.foamVoronoiStrength },
+        uFoamShorelineWidth: { value: settings.foamShorelineWidth },
+        uFoamDecay: { value: settings.foamDecay },
+        uFoamScale: { value: settings.foamScale },
         uCausticsIntensity: { value: settings.causticsIntensity },
         uBubbleIntensity: { value: settings.bubbleIntensity },
         uSSSIntensity: { value: settings.sssIntensity },
@@ -2280,6 +2576,12 @@ const ProceduralEarth: React.FC = () => {
         uEnableFresnel: { value: settings.enableFresnel },
         uEnableCaustics: { value: settings.enableCaustics },
         uEnableFoam: { value: settings.enableFoam },
+        uEnableFoamJacobian: { value: settings.enableFoamJacobian },
+        uEnableFoamShoreline: { value: settings.enableFoamShoreline },
+        uEnableFoamTurbulent: { value: settings.enableFoamTurbulent },
+        uEnableFoamWindstreak: { value: settings.enableFoamWindstreak },
+        uEnableFoamSpray: { value: settings.enableFoamSpray },
+        uEnableFoamVoronoi: { value: settings.enableFoamVoronoi },
         uEnableSSS: { value: settings.enableSSS },
         uEnableBubbles: { value: settings.enableBubbles },
         uEnableUnderwaterCaustics: { value: settings.enableUnderwaterCaustics },
@@ -2492,6 +2794,15 @@ const ProceduralEarth: React.FC = () => {
     u.uOceanFresnel.value = settings.oceanFresnel;
     u.uOceanRoughness.value = settings.oceanRoughness;
     u.uFoamIntensity.value = settings.foamIntensity;
+    u.uFoamJacobianStrength.value = settings.foamJacobianStrength;
+    u.uFoamShorelineStrength.value = settings.foamShorelineStrength;
+    u.uFoamTurbulentStrength.value = settings.foamTurbulentStrength;
+    u.uFoamWindstreakStrength.value = settings.foamWindstreakStrength;
+    u.uFoamSprayStrength.value = settings.foamSprayStrength;
+    u.uFoamVoronoiStrength.value = settings.foamVoronoiStrength;
+    u.uFoamShorelineWidth.value = settings.foamShorelineWidth;
+    u.uFoamDecay.value = settings.foamDecay;
+    u.uFoamScale.value = settings.foamScale;
     u.uCausticsIntensity.value = settings.causticsIntensity;
     u.uBubbleIntensity.value = settings.bubbleIntensity;
     u.uSSSIntensity.value = settings.sssIntensity;
@@ -2528,6 +2839,12 @@ const ProceduralEarth: React.FC = () => {
     u.uEnableFresnel.value = settings.enableFresnel;
     u.uEnableCaustics.value = settings.enableCaustics;
     u.uEnableFoam.value = settings.enableFoam;
+    u.uEnableFoamJacobian.value = settings.enableFoamJacobian;
+    u.uEnableFoamShoreline.value = settings.enableFoamShoreline;
+    u.uEnableFoamTurbulent.value = settings.enableFoamTurbulent;
+    u.uEnableFoamWindstreak.value = settings.enableFoamWindstreak;
+    u.uEnableFoamSpray.value = settings.enableFoamSpray;
+    u.uEnableFoamVoronoi.value = settings.enableFoamVoronoi;
     u.uEnableSSS.value = settings.enableSSS;
     u.uEnableBubbles.value = settings.enableBubbles;
     u.uEnableUnderwaterCaustics.value = settings.enableUnderwaterCaustics;
@@ -3117,9 +3434,81 @@ const ProceduralEarth: React.FC = () => {
                     <LayerToggle label="Waves" icon={<Waves className="w-4 h-4 text-primary" />} enabled={settings.enableWaves} onChange={(v) => updateSetting('enableWaves', v)} />
                     <LayerToggle label="Fresnel" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableFresnel} onChange={(v) => updateSetting('enableFresnel', v)} />
                     <LayerToggle label="Caustics" icon={<Sparkles className="w-4 h-4 text-primary" />} enabled={settings.enableCaustics} onChange={(v) => updateSetting('enableCaustics', v)} />
-                    <LayerToggle label="Foam" icon={<Cloud className="w-4 h-4 text-primary" />} enabled={settings.enableFoam} onChange={(v) => updateSetting('enableFoam', v)} />
+                    <LayerToggle label="Foam (Master)" icon={<Cloud className="w-4 h-4 text-primary" />} enabled={settings.enableFoam} onChange={(v) => updateSetting('enableFoam', v)} />
                     <LayerToggle label="Subsurface Scattering" icon={<Sun className="w-4 h-4 text-primary" />} enabled={settings.enableSSS} onChange={(v) => updateSetting('enableSSS', v)} />
                     <LayerToggle label="Bubbles" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableBubbles} onChange={(v) => updateSetting('enableBubbles', v)} />
+                  </SettingSection>
+                  
+                  <SettingSection title="Foam Types">
+                    <LayerToggle label="Jacobian Whitecaps" icon={<Waves className="w-4 h-4 text-primary" />} enabled={settings.enableFoamJacobian} onChange={(v) => updateSetting('enableFoamJacobian', v)} />
+                    <LayerToggle label="Shoreline Foam" icon={<Mountain className="w-4 h-4 text-primary" />} enabled={settings.enableFoamShoreline} onChange={(v) => updateSetting('enableFoamShoreline', v)} />
+                    <LayerToggle label="Turbulent Breakwater" icon={<Wind className="w-4 h-4 text-primary" />} enabled={settings.enableFoamTurbulent} onChange={(v) => updateSetting('enableFoamTurbulent', v)} />
+                    <LayerToggle label="Wind Streaks" icon={<Layers className="w-4 h-4 text-primary" />} enabled={settings.enableFoamWindstreak} onChange={(v) => updateSetting('enableFoamWindstreak', v)} />
+                    <LayerToggle label="Spray / Mist" icon={<CloudRain className="w-4 h-4 text-primary" />} enabled={settings.enableFoamSpray} onChange={(v) => updateSetting('enableFoamSpray', v)} />
+                    <LayerToggle label="Voronoi Cellular" icon={<Sparkles className="w-4 h-4 text-primary" />} enabled={settings.enableFoamVoronoi} onChange={(v) => updateSetting('enableFoamVoronoi', v)} />
+                  </SettingSection>
+                  
+                  <SettingSection title="Foam Parameters">
+                    <SliderSetting
+                      label="Master Intensity"
+                      value={settings.foamIntensity}
+                      min={0} max={3} step={0.05}
+                      onChange={(v) => updateSetting('foamIntensity', v)}
+                    />
+                    <SliderSetting
+                      label="Jacobian Strength"
+                      value={settings.foamJacobianStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamJacobianStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Shoreline Strength"
+                      value={settings.foamShorelineStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamShorelineStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Turbulent Strength"
+                      value={settings.foamTurbulentStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamTurbulentStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Windstreak Strength"
+                      value={settings.foamWindstreakStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamWindstreakStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Spray Strength"
+                      value={settings.foamSprayStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamSprayStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Voronoi Strength"
+                      value={settings.foamVoronoiStrength}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamVoronoiStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Shoreline Width"
+                      value={settings.foamShorelineWidth}
+                      min={5} max={200} step={5}
+                      onChange={(v) => updateSetting('foamShorelineWidth', v)}
+                    />
+                    <SliderSetting
+                      label="Foam Scale"
+                      value={settings.foamScale}
+                      min={0.1} max={5} step={0.1}
+                      onChange={(v) => updateSetting('foamScale', v)}
+                    />
+                    <SliderSetting
+                      label="Foam Decay"
+                      value={settings.foamDecay}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('foamDecay', v)}
+                    />
                   </SettingSection>
                   
                   <SettingSection title="Ocean Surface">
@@ -3152,12 +3541,6 @@ const ProceduralEarth: React.FC = () => {
                       value={settings.oceanFresnel}
                       min={0} max={0.1} step={0.005}
                       onChange={(v) => updateSetting('oceanFresnel', v)}
-                    />
-                    <SliderSetting
-                      label="Foam"
-                      value={settings.foamIntensity}
-                      min={0} max={2} step={0.05}
-                      onChange={(v) => updateSetting('foamIntensity', v)}
                     />
                   </SettingSection>
                   
