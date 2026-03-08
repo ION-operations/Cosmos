@@ -126,6 +126,17 @@ uniform float uCausticsIntensity;
 uniform float uBubbleIntensity;
 uniform float uSSSIntensity;
 
+// Foam Sub-Types
+uniform float uFoamJacobianStrength;
+uniform float uFoamShorelineStrength;
+uniform float uFoamTurbulentStrength;
+uniform float uFoamWindstreakStrength;
+uniform float uFoamSprayStrength;
+uniform float uFoamVoronoiStrength;
+uniform float uFoamShorelineWidth;
+uniform float uFoamDecay;
+uniform float uFoamScale;
+
 // Underwater
 uniform float uUnderwaterFogDensity;
 uniform vec3 uUnderwaterFogColor;
