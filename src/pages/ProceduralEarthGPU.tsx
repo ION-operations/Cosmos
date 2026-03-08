@@ -1561,7 +1561,7 @@ function setGL2Uniforms(gl: WebGL2RenderingContext, u: GL2Uniforms, s: EngineSet
 // ─── Canvas 2D Procedural Fallback Renderer ───
 function renderCanvas2D(ctx: CanvasRenderingContext2D, w: number, h: number, time: number, s: EngineSettings, cam: { pos: [number, number, number]; yaw: number; pitch: number }) {
   const horizon = h * (0.45 + cam.pitch * 0.3);
-  const sunElev = s.autoTime ? Math.sin(time * s.cycleSpeed * 0.1) * 0.8 : s.sunElevation;
+  const sunElev = s.autoTimeEnabled ? Math.sin(time * s.dayNightCycleSpeed * 0.1) * 0.8 : s.sunElevation;
   const dayFactor = Math.max(0, Math.min(1, sunElev * 2 + 0.5));
 
   // Sky
