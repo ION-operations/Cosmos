@@ -1070,85 +1070,181 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FFT-STYLE MULTI-OCTAVE OCEAN SYSTEM
+// HYPER-REALISTIC RAYMARCHED OCEAN (TDM Seascape Methodology)
+// Domain-warped FBM with rotation between octaves - zero grid artifacts
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Gerstner wave with proper dispersion relation
-vec3 gerstnerWave(vec2 pos, float time, vec2 dir, float steepness, float wavelength) {
-    float k = TAU / wavelength;
-    float c = sqrt(9.8 / k); // Deep water dispersion
-    float f = k * (dot(dir, pos) - c * time);
-    float a = steepness / k;
+// Octave rotation matrix - breaks grid alignment between FBM layers
+const mat2 octave_m = mat2(1.6, 1.2, -1.2, 1.6);
+
+// 2D noise for ocean domain warping
+float oceanNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
     
-    return vec3(
-        dir.x * a * cos(f),
-        a * sin(f),
-        dir.y * a * cos(f)
-    );
+    return mix(
+        mix(hash12(i + vec2(0.0, 0.0)), hash12(i + vec2(1.0, 0.0)), u.x),
+        mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x),
+        u.y
+    ) * 2.0 - 1.0;
 }
 
-// Multi-octave FFT-approximated ocean displacement
-// Uses 12+ wave octaves with physically-based spectrum distribution
-vec3 getOceanDisplacement(vec2 pos, float time) {
-    vec3 displacement = vec3(0.0);
+// Core sea octave - domain warped sine waves with choppiness control
+// This is the key to avoiding grid patterns: noise(uv) warps the sampling domain
+float sea_octave(vec2 uv, float choppy) {
+    uv += vec2(oceanNoise(uv), oceanNoise(uv + 7.3)); // Domain warping!
+    vec2 wv = 1.0 - abs(sin(uv));
+    vec2 swv = abs(cos(uv));
+    wv = mix(wv, swv, wv); // Blend for sharper crests
+    return pow(1.0 - pow(wv.x * wv.y, 0.65), choppy);
+}
+
+// Ocean height map - FBM of sea_octave with rotation between octaves
+float oceanMap(vec3 p, int iterations) {
+    float SEA_FREQ = uWaveFrequency * 0.16;
+    float SEA_HEIGHT = uWaveHeight * 0.6;
+    float SEA_CHOPPY = 4.0 + uOceanRoughness * 4.0;
+    float SEA_TIME = iTime * uWaveSpeed * 0.8;
     
-    vec2 windDir = normalize(vec2(cos(uWindDirection), sin(uWindDirection)));
-    float windInfluence = uWindSpeed * 0.5 + 0.5;
+    float freq = SEA_FREQ;
+    float amp = SEA_HEIGHT;
+    float choppy = SEA_CHOPPY;
+    vec2 uv = p.xz;
+    uv.x *= 0.75; // Aspect ratio correction to avoid square patterns
     
-    // Phillips-spectrum inspired wave distribution
-    // Long swell waves (dominant wavelength)
-    displacement += gerstnerWave(pos, time, windDir, uWaveHeight * 0.4 * windInfluence, 120.0);
-    displacement += gerstnerWave(pos, time, normalize(windDir + vec2(0.1, 0.05)), uWaveHeight * 0.35 * windInfluence, 85.0);
+    // Wind influence on wave direction
+    float windAngle = uWindDirection;
+    mat2 windRot = mat2(cos(windAngle), -sin(windAngle), sin(windAngle), cos(windAngle));
+    uv = windRot * uv;
     
-    // Medium waves - slightly off wind direction for realism
-    float ang1 = atan(windDir.y, windDir.x);
-    displacement += gerstnerWave(pos, time, vec2(cos(ang1 + 0.3), sin(ang1 + 0.3)), uWaveHeight * 0.25 * windInfluence, 55.0);
-    displacement += gerstnerWave(pos, time, vec2(cos(ang1 - 0.4), sin(ang1 - 0.4)), uWaveHeight * 0.2 * windInfluence, 38.0);
-    displacement += gerstnerWave(pos, time, vec2(cos(ang1 + 0.7), sin(ang1 + 0.7)), uWaveHeight * 0.18, 27.0);
-    
-    // Short waves - cross-wind chop
-    vec2 crossWind = vec2(-windDir.y, windDir.x);
-    displacement += gerstnerWave(pos, time, normalize(crossWind + windDir * 0.3), uWaveHeight * 0.12, 17.0);
-    displacement += gerstnerWave(pos, time, normalize(-crossWind + windDir * 0.2), uWaveHeight * 0.1, 12.0);
-    displacement += gerstnerWave(pos, time * 1.1, normalize(windDir * 0.5 + crossWind * 0.8), uWaveHeight * 0.08, 8.0);
-    
-    // Capillary/ripple waves (high frequency detail)
-    displacement += gerstnerWave(pos, time * 1.2, vec2(cos(ang1 + 1.2), sin(ang1 + 1.2)), uWaveHeight * 0.05, 4.5);
-    displacement += gerstnerWave(pos, time * 1.3, vec2(cos(ang1 - 0.8), sin(ang1 - 0.8)), uWaveHeight * 0.04, 3.0);
-    displacement += gerstnerWave(pos, time * 1.4, vec2(cos(ang1 + 2.1), sin(ang1 + 2.1)), uWaveHeight * 0.03, 1.8);
-    displacement += gerstnerWave(pos, time * 1.5, vec2(cos(ang1 - 1.5), sin(ang1 - 1.5)), uWaveHeight * 0.02, 1.0);
-    
-    // Storm waves - additional chaotic energy
-    if(uWeatherType == 3) {
-        displacement += gerstnerWave(pos, time * 1.3, windDir, uWaveHeight * uWeatherIntensity * 1.2, 150.0);
-        displacement += gerstnerWave(pos, time * 1.5, normalize(windDir + vec2(0.4, 0.2)), uWaveHeight * uWeatherIntensity * 0.8, 90.0);
-        displacement += gerstnerWave(pos, time * 1.1, normalize(crossWind), uWaveHeight * uWeatherIntensity * 0.5, 50.0);
+    float d, h = 0.0;
+    for(int i = 0; i < 8; i++) {
+        if(i >= iterations) break;
+        
+        // Two opposing wave directions for standing wave patterns
+        d = sea_octave((uv + SEA_TIME) * freq, choppy);
+        d += sea_octave((uv - SEA_TIME) * freq, choppy);
+        
+        h += d * amp;
+        
+        // Rotate UV between octaves - THIS breaks all grid patterns
+        uv = octave_m * uv;
+        
+        freq *= 1.9;   // Frequency increase
+        amp *= 0.22;    // Amplitude decrease (energy cascade)
+        choppy = mix(choppy, 1.0, 0.2); // Reduce choppiness at small scales
     }
     
-    // FBM-based micro-displacement for breaking up repetition
-    float microDetail = fbm(vec3(pos * 0.02 + windDir * time * 0.5, time * 0.1), 3);
-    displacement.y += microDetail * uWaveHeight * 0.15;
+    // Storm extra energy
+    if(uWeatherType == 3) {
+        float stormWave = sea_octave(p.xz * 0.05 + SEA_TIME * 0.5, 2.0);
+        h += stormWave * uWeatherIntensity * uWaveHeight * 1.5;
+    }
     
-    return displacement;
+    return p.y - h;
 }
 
-vec3 getOceanNormal(vec2 pos, float time) {
-    // Use smaller epsilon for sharper normals, scale with distance later
-    float e = 0.3;
-    vec3 p0 = vec3(pos.x, 0.0, pos.y) + getOceanDisplacement(pos, time);
-    vec3 p1 = vec3(pos.x + e, 0.0, pos.y) + getOceanDisplacement(pos + vec2(e, 0.0), time);
-    vec3 p2 = vec3(pos.x, 0.0, pos.y + e) + getOceanDisplacement(pos + vec2(0.0, e), time);
+// Detailed height map for normal calculation (more octaves)
+float oceanMapDetailed(vec3 p) {
+    return oceanMap(p, 8);
+}
+
+// Coarse height map for raymarching (fewer octaves = faster)
+float oceanMapCoarse(vec3 p) {
+    return oceanMap(p, 5);
+}
+
+// Height-map tracing - finds exact ocean surface intersection
+float heightMapTracing(vec3 ori, vec3 dir, out vec3 hitPoint) {
+    float tm = 0.0;
+    float tx = 2000.0;
     
-    vec3 normal = normalize(cross(p2 - p0, p1 - p0));
+    // Find rough bounds
+    float hx = oceanMapCoarse(ori + dir * tx);
+    if(hx > 0.0) {
+        hitPoint = ori + dir * tx;
+        return tx;
+    }
     
-    // Add high-frequency normal perturbation from noise for micro-detail
-    vec3 microNormal = vec3(
-        gradientNoise(vec3(pos * 0.3 + time * 0.2, 0.0)),
-        0.0,
-        gradientNoise(vec3(pos * 0.3 + time * 0.2, 5.0))
-    ) * 0.05 * uOceanRoughness;
+    float hm = oceanMapCoarse(ori + dir * tm);
+    float tmid = 0.0;
     
-    return normalize(normal + microNormal);
+    for(int i = 0; i < 8; i++) {
+        tmid = mix(tm, tx, hm / (hm - hx));
+        hitPoint = ori + dir * tmid;
+        float hmid = oceanMapCoarse(hitPoint);
+        
+        if(hmid < 0.0) {
+            tx = tmid;
+            hx = hmid;
+        } else {
+            tm = tmid;
+            hm = hmid;
+        }
+    }
+    
+    return tmid;
+}
+
+// Compute ocean normal from height field
+vec3 getOceanNormal(vec3 p, float eps) {
+    vec3 n;
+    n.y = oceanMapDetailed(p);
+    n.x = oceanMapDetailed(vec3(p.x + eps, p.y, p.z)) - n.y;
+    n.z = oceanMapDetailed(vec3(p.x, p.y, p.z + eps)) - n.y;
+    n.y = eps;
+    return normalize(n);
+}
+
+// Diffuse + specular ocean shading
+vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float dist) {
+    // Fresnel - Schlick approximation
+    float fresnel = clamp(1.0 - dot(n, -eye), 0.0, 1.0);
+    fresnel = pow(fresnel, 3.0) * 0.5;
+    fresnel = mix(uOceanFresnel, 1.0, fresnel);
+    
+    // Reflection
+    vec3 reflected = getSkyColor(reflect(eye, n), sunDir);
+    
+    // Refraction / water body color
+    float depth = saturate(dist * 0.002);
+    vec3 refracted = mix(uOceanColor, uOceanDeepColor, depth);
+    
+    // Subsurface scattering through wave crests
+    vec3 sssColor = uOceanColor * 1.5 + vec3(0.0, 0.05, 0.05);
+    float sss = pow(saturate(dot(eye, sunDir + n * 0.3)), 4.0) * uSSSIntensity;
+    refracted += sssColor * sss;
+    
+    // Caustics on shallow areas
+    float caustics = getCaustics(p, iTime) * uCausticsIntensity;
+    refracted += caustics * 0.15 * lightColor;
+    
+    // Bubbles
+    float bubbles = getBubbles(p, iTime);
+    refracted = mix(refracted, vec3(0.9, 0.95, 1.0), bubbles);
+    
+    // Combine reflection and refraction
+    vec3 color = mix(refracted, reflected, fresnel);
+    
+    // Specular highlight (Blinn-Phong)
+    vec3 halfDir = normalize(sunDir - eye);
+    float spec = pow(max(dot(n, halfDir), 0.0), 256.0) * uSunIntensity;
+    color += lightColor * spec * 2.0;
+    
+    // Foam - wave height based + wind streaks
+    float foamAmount = getFoam(vec3(0.0, oceanMapDetailed(p) + p.y, 0.0), p.xz, iTime);
+    color = mix(color, vec3(1.0), foamAmount);
+    
+    // Cloud shadows
+    float cloudShadow = sampleCloudShadow(p, sunDir);
+    color *= mix(0.5, 1.0, cloudShadow);
+    
+    // Atmospheric distance fade
+    float atten = max(1.0 - dot(dist, dist) * 0.000001, 0.0);
+    color = mix(getSkyColor(eye, sunDir), color, atten);
+    
+    return color;
 }
 
 float getCaustics(vec3 worldPos, float time) {
@@ -1161,7 +1257,6 @@ float getCaustics(vec3 worldPos, float time) {
     float c2 = sin(uv2.x * 12.0 + 1.0) * sin(uv2.y * 12.0);
     float c3 = worleyNoise(vec3(uv3 * 2.0, time * 0.3)) * 0.6;
     
-    // Sharper caustic peaks via power function
     float caustic = (c1 + c2) * 0.3 + c3;
     caustic = pow(caustic * 0.5 + 0.5, 2.0);
     
@@ -1190,10 +1285,8 @@ vec3 getOceanSSS(vec3 viewDir, vec3 normal, vec3 sunDir, vec3 oceanColor) {
 }
 
 float getFoam(vec3 displacement, vec2 pos, float time) {
-    // Wave-crest foam from Jacobian approximation
     float heightFoam = pow(saturate(displacement.y * 1.5 - 0.3), 1.5);
     
-    // Turbulent foam patches
     float foamNoise = fbm(vec3(pos * 0.08 + time * 0.1, time * 0.3), 3);
     float turbulentFoam = pow(saturate(foamNoise), 3.0) * 0.3;
     
@@ -1203,7 +1296,6 @@ float getFoam(vec3 displacement, vec2 pos, float time) {
         breakingFoam = pow(noise * 0.5 + 0.5, 2.0) * uWeatherIntensity * 0.8;
     }
     
-    // Streaky wind foam
     float windAngle = uWindDirection;
     vec2 windDir = vec2(cos(windAngle), sin(windAngle));
     float streak = sin(dot(pos, windDir) * 0.3 + time * 0.5) * 0.5 + 0.5;
@@ -1217,7 +1309,6 @@ float getFoam(vec3 displacement, vec2 pos, float time) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 vec4 renderUnderwater(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
-    // Underwater god rays
     float underwaterGodRays = 0.0;
     if(uUnderwaterGodRayStrength > 0.0) {
         float raySteps = 16.0;
@@ -1226,16 +1317,12 @@ vec4 renderUnderwater(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
         
         for(float i = 0.0; i < raySteps; i++) {
             vec3 samplePos = ro + rd * i * stepSize;
-            
-            // Check if ray exits water
             if(samplePos.y > uOceanLevel) break;
             
-            // Surface caustics projection
             float surfaceT = (uOceanLevel - samplePos.y) / max(0.1, sunDir.y);
             vec3 surfacePos = samplePos + sunDir * surfaceT;
             float caustic = getCaustics(surfacePos, iTime);
             
-            // Depth attenuation
             float depth = uOceanLevel - samplePos.y;
             float attenuation = exp(-depth * uUnderwaterFogDensity * 0.01);
             
@@ -1244,17 +1331,14 @@ vec4 renderUnderwater(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
         }
     }
     
-    // Underwater caustics on surfaces
     float depth = uOceanLevel - ro.y;
     float surfaceT = (uOceanLevel - ro.y) / max(0.1, sunDir.y);
     vec3 surfacePos = ro + sunDir * surfaceT;
     float caustics = getCaustics(surfacePos, iTime) * uUnderwaterCausticsStrength;
     
-    // Underwater fog color based on depth
     float fogFactor = 1.0 - exp(-depth * uUnderwaterFogDensity * 0.005);
     vec3 underwaterFog = uUnderwaterFogColor * (1.0 + caustics * 0.5);
     
-    // Bubbles rising
     float bubbles = 0.0;
     if(uUnderwaterBubbleCount > 0.0) {
         for(float i = 0.0; i < 5.0; i++) {
@@ -1280,88 +1364,50 @@ vec4 renderUnderwater(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
     return vec4(underwaterColor, fogFactor);
 }
 
+// Main ocean render function using height-map raytracing
 vec4 renderOcean(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, vec3 skyColor, float terrainDist) {
     if(!uShowOcean) return vec4(0.0);
     
-    // Check if camera is underwater
     bool isUnderwater = ro.y < uOceanLevel;
     
-    float t;
     if(isUnderwater) {
-        // Looking up at surface from below
-        t = (uOceanLevel - ro.y) / rd.y;
-    } else {
-        // Looking down at surface from above
-        t = (uOceanLevel - ro.y) / rd.y;
-    }
-    
-    if(t < 0.0 || (terrainDist > 0.0 && t > terrainDist)) {
-        // If underwater but not hitting surface, apply underwater fog
-        if(isUnderwater) {
+        // Underwater: simple plane intersection for surface from below
+        float t = (uOceanLevel - ro.y) / rd.y;
+        if(t < 0.0) {
             vec4 underwater = renderUnderwater(ro, rd, sunDir, lightColor);
             return vec4(underwater.rgb, underwater.a + 0.5);
         }
-        return vec4(0.0);
-    }
-    
-    vec3 hitPos = ro + rd * t;
-    
-    vec3 displacement = getOceanDisplacement(hitPos.xz, iTime * uWaveSpeed);
-    vec3 normal = getOceanNormal(hitPos.xz, iTime * uWaveSpeed);
-    
-    if(isUnderwater) {
-        normal = -normal; // Flip normal when looking up
-    }
-    
-    vec3 viewDir = -rd;
-    
-    float fresnel = uOceanFresnel + (1.0 - uOceanFresnel) * pow(1.0 - max(0.0, dot(normal, viewDir)), 5.0);
-    fresnel = mix(fresnel, 1.0, uOceanRoughness * 0.3);
-    
-    vec3 reflectDir = reflect(-viewDir, normal);
-    vec3 reflection = getSkyColor(reflectDir, sunDir);
-    
-    if(!isUnderwater) {
-        vec4 reflectedClouds = raymarchClouds(hitPos + vec3(0.0, 1.0, 0.0), reflectDir, sunDir, lightColor);
-        reflection = mix(reflection, reflectedClouds.rgb, reflectedClouds.a * 0.7);
-    }
-    
-    float depth = abs(hitPos.y - uOceanLevel);
-    vec3 refraction = mix(uOceanColor, uOceanDeepColor, saturate(depth * 0.01));
-    
-    float caustics = getCaustics(hitPos, iTime) * uCausticsIntensity;
-    refraction += caustics * 0.2 * lightColor;
-    
-    float bubbles = getBubbles(hitPos, iTime);
-    refraction = mix(refraction, vec3(0.9, 0.95, 1.0), bubbles);
-    
-    vec3 sss = getOceanSSS(viewDir, normal, sunDir, uOceanColor);
-    
-    vec3 halfDir = normalize(viewDir + sunDir);
-    float spec = pow(max(0.0, dot(normal, halfDir)), 256.0);
-    vec3 specular = uSunColor * spec * uSunIntensity * 2.0;
-    
-    float foam = getFoam(displacement, hitPos.xz, iTime);
-    
-    vec3 oceanColor;
-    if(isUnderwater) {
-        // Underwater view: more refraction, caustics, less reflection
-        oceanColor = refraction + sss;
-        oceanColor += caustics * lightColor * 0.3;
         
-        // Apply underwater fog
+        vec3 hitPos = ro + rd * t;
+        vec3 normal = -getOceanNormal(hitPos, 0.1);
+        vec3 viewDir = -rd;
+        
+        vec3 refraction = mix(uOceanColor, uOceanDeepColor, 0.5);
+        float caustics = getCaustics(hitPos, iTime) * uCausticsIntensity;
+        refraction += caustics * lightColor * 0.3;
+        
         vec4 underwater = renderUnderwater(ro, rd, sunDir, lightColor);
-        oceanColor = mix(oceanColor, underwater.rgb, underwater.a * 0.5);
-    } else {
-        // Above water view
-        oceanColor = mix(refraction, reflection, fresnel);
-        oceanColor += specular;
-        oceanColor += sss;
-        oceanColor = mix(oceanColor, vec3(1.0), foam);
+        vec3 oceanColor = mix(refraction, underwater.rgb, underwater.a * 0.5);
+        
+        return vec4(oceanColor, t);
     }
     
-    float cloudShadow = sampleCloudShadow(hitPos, sunDir);
-    oceanColor *= mix(0.5, 1.0, cloudShadow);
+    // Above water: raymarch the height field for proper wave geometry
+    // Only trace if looking somewhat downward toward ocean
+    if(rd.y > 0.3) return vec4(0.0);
+    
+    vec3 hitPoint;
+    float t = heightMapTracing(ro, rd, hitPoint);
+    
+    if(t > 1999.0) return vec4(0.0);
+    if(terrainDist > 0.0 && t > terrainDist) return vec4(0.0);
+    
+    // Get normal with distance-adaptive epsilon
+    float eps = max(0.01, t * 0.002);
+    vec3 normal = getOceanNormal(hitPoint, eps);
+    
+    // Full PBR ocean shading
+    vec3 oceanColor = getOceanColor(hitPoint, normal, sunDir, lightColor, rd, t);
     
     return vec4(oceanColor, t);
 }
