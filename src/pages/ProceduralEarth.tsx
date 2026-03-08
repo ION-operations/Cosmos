@@ -612,7 +612,7 @@ float sampleCloudDensity(vec3 p, bool cheap) {
         return density * edgeFade * uCloudDensity;
     }
     
-    vec3 detailCoord = (p + windOffset) * uCloudDetailScale * 0.001 + vec3(iTime * uCloudSpeed * 0.02, 0.0, 0.0);
+    vec3 detailCoord = (p + windOffset) * uCloudDetailScale * 0.001 + vec3(iTime * uCloudSpeed * 0.004, 0.0, 0.0);
     float detail = fbm(detailCoord, 3) * 0.3;
     
     density = remap(density, detail, 1.0, 0.0, 1.0);
