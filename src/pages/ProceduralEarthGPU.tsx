@@ -1652,7 +1652,7 @@ const ProceduralEarthGPU: React.FC = () => {
         context.configure({ device, format, alphaMode: 'premultiplied' });
 
         const noiseSize = 128;
-        const noiseTexture = device.createTexture({ size: [noiseSize, noiseSize, noiseSize], format: 'rgba8unorm', usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING });
+        const noiseTexture = device.createTexture({ size: [noiseSize, noiseSize, noiseSize], dimension: '3d', format: 'rgba8unorm', usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING });
         const computeModule = device.createShaderModule({ code: NOISE_COMPUTE_WGSL });
         const computePipeline = device.createComputePipeline({ layout: 'auto', compute: { module: computeModule, entryPoint: 'main' } });
         const computeBG = device.createBindGroup({ layout: computePipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: noiseTexture.createView() }] });
