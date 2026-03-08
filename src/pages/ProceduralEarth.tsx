@@ -739,27 +739,35 @@ float sampleCloudShadow(vec3 worldPos, vec3 sunDir) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 float getTerrainHeight(vec2 p) {
-    vec2 pos = p * uTerrainScale * 0.0001;
+    vec2 pos = p * uTerrainScale * 0.001;
     
-    float continent = fbm(vec3(pos * 0.5, 0.0), 2) * 0.5 + 0.5;
-    continent = smoothstep(0.3, 0.7, continent);
+    // Large-scale continent shape
+    float continent = fbm(vec3(pos * 0.3 + 7.3, 0.0), 3) * 0.5 + 0.5;
+    continent = smoothstep(0.25, 0.65, continent);
     
-    float mountains = ridgedFbm(vec3(pos * 2.0, 0.0), 5);
+    // Mountain ridges
+    float mountains = ridgedFbm(vec3(pos * 1.5 + 3.7, 0.5), 5);
     mountains = pow(mountains, uMountainSharpness) * uMountainHeight;
     
-    float hills = fbm(vec3(pos * 4.0, 1.0), 4) * uTerrainHeight * 0.3;
-    float detail = fbm(vec3(pos * 16.0, 2.0), 3) * uTerrainHeight * 0.05;
+    // Rolling hills
+    float hills = fbm(vec3(pos * 3.0 + 11.1, 1.0), 4) * uTerrainHeight * 0.4;
+    
+    // Fine detail
+    float detail = fbm(vec3(pos * 12.0 + 5.5, 2.0), 3) * uTerrainHeight * 0.08;
+    
+    // Domain-warped variation for organic look
+    float warp = warpedNoise(vec3(pos * 2.0, 0.3), 0.5, 3) * uTerrainHeight * 0.2;
     
     float erosion = 0.0;
     if(uErosionStrength > 0.0) {
-        vec3 erosionNoise = curlNoise(vec3(pos * 8.0, iTime * 0.01));
-        erosion = (erosionNoise.x + erosionNoise.y) * uErosionStrength * 50.0;
+        vec3 erosionNoise = curlNoise(vec3(pos * 5.0, 0.0));
+        erosion = (erosionNoise.x + erosionNoise.y) * uErosionStrength * 80.0;
         
-        float valleys = pow(1.0 - abs(gradientNoise(vec3(pos * 3.0, 0.5))), 3.0);
-        erosion += valleys * uErosionStrength * 100.0;
+        float valleys = pow(1.0 - abs(gradientNoise(vec3(pos * 2.0, 0.5))), 3.0);
+        erosion += valleys * uErosionStrength * 150.0;
     }
     
-    float height = continent * (mountains + hills + detail - erosion);
+    float height = continent * (mountains + hills + detail + warp - erosion);
     height += uOceanLevel;
     
     return height;
