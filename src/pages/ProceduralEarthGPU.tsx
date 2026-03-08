@@ -346,8 +346,6 @@ fn gradientNoise(p: vec3f) -> f32 {
   let f = fract(p);
   let u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
 
-  let h = func_hash3v;
-
   let n000 = dot(hash33(i) * 2.0 - 1.0, f);
   let n100 = dot(hash33(i + vec3f(1.0, 0.0, 0.0)) * 2.0 - 1.0, f - vec3f(1.0, 0.0, 0.0));
   let n010 = dot(hash33(i + vec3f(0.0, 1.0, 0.0)) * 2.0 - 1.0, f - vec3f(0.0, 1.0, 0.0));
