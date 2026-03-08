@@ -1573,7 +1573,7 @@ const ProceduralEarthGPU: React.FC = () => {
   const lightningTimeRef = useRef(0);
   const startTimeRef = useRef(0);
   const backendRef = useRef<RendererBackend>('webgl2');
-  const ctx2dRef = useRef<CanvasRenderingContext2D | null>(null);
+  
 
   // WebGPU state
   const gpuRef = useRef<{
