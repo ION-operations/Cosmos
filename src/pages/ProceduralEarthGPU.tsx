@@ -1728,6 +1728,13 @@ const ProceduralEarthGPU: React.FC = () => {
         const ok = await initWebGPU();
         if (ok) {
           console.log('✓ Using WebGPU backend');
+          // Listen for device loss
+          if (gpuRef.current) {
+            gpuRef.current.device.lost.then((info) => {
+              console.error(`[WebGPU] Device lost: ${info.reason} — ${info.message}`);
+              setGpuError(`WebGPU device lost: ${info.reason}. Reload to retry.`);
+            });
+          }
           setRendererType('webgpu');
         } else {
           // WebGPU context may have contaminated the canvas, try WebGL2 anyway
