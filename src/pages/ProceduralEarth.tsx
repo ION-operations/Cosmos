@@ -3106,6 +3106,15 @@ const ProceduralEarth: React.FC = () => {
                 
                 {/* OCEAN TAB */}
                 <TabsContent value="ocean" className="mt-0 space-y-4">
+                  <SettingSection title="Feature Toggles">
+                    <LayerToggle label="Waves" icon={<Waves className="w-4 h-4 text-primary" />} enabled={settings.enableWaves} onChange={(v) => updateSetting('enableWaves', v)} />
+                    <LayerToggle label="Fresnel" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableFresnel} onChange={(v) => updateSetting('enableFresnel', v)} />
+                    <LayerToggle label="Caustics" icon={<Sparkles className="w-4 h-4 text-primary" />} enabled={settings.enableCaustics} onChange={(v) => updateSetting('enableCaustics', v)} />
+                    <LayerToggle label="Foam" icon={<Cloud className="w-4 h-4 text-primary" />} enabled={settings.enableFoam} onChange={(v) => updateSetting('enableFoam', v)} />
+                    <LayerToggle label="Subsurface Scattering" icon={<Sun className="w-4 h-4 text-primary" />} enabled={settings.enableSSS} onChange={(v) => updateSetting('enableSSS', v)} />
+                    <LayerToggle label="Bubbles" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableBubbles} onChange={(v) => updateSetting('enableBubbles', v)} />
+                  </SettingSection>
+                  
                   <SettingSection title="Ocean Surface">
                     <SliderSetting
                       label="Sea Level (m)"
@@ -3145,7 +3154,7 @@ const ProceduralEarth: React.FC = () => {
                     />
                   </SettingSection>
                   
-                  <SettingSection title="FFT Ocean Effects">
+                  <SettingSection title="Effects">
                     <SliderSetting
                       label="Caustics"
                       value={settings.causticsIntensity}
@@ -3158,6 +3167,12 @@ const ProceduralEarth: React.FC = () => {
                       min={0} max={1} step={0.05}
                       onChange={(v) => updateSetting('sssIntensity', v)}
                     />
+                  </SettingSection>
+                  
+                  <SettingSection title="Underwater Toggles">
+                    <LayerToggle label="Underwater Caustics" icon={<Sparkles className="w-4 h-4 text-primary" />} enabled={settings.enableUnderwaterCaustics} onChange={(v) => updateSetting('enableUnderwaterCaustics', v)} />
+                    <LayerToggle label="Underwater God Rays" icon={<Sun className="w-4 h-4 text-primary" />} enabled={settings.enableUnderwaterGodRays} onChange={(v) => updateSetting('enableUnderwaterGodRays', v)} />
+                    <LayerToggle label="Underwater Bubbles" icon={<Droplets className="w-4 h-4 text-primary" />} enabled={settings.enableUnderwaterBubbles} onChange={(v) => updateSetting('enableUnderwaterBubbles', v)} />
                   </SettingSection>
                   
                   <SettingSection title="Underwater">
