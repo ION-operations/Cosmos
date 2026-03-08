@@ -1865,18 +1865,8 @@ const ProceduralEarthGPU: React.FC = () => {
           console.log('✓ Using WebGL2 backend');
           setRendererType('webgl2');
         } else {
-          // Last resort: Canvas 2D procedural fallback
-          console.warn('WebGL2 unavailable, falling back to Canvas 2D...');
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx2dRef.current = ctx;
-            backendRef.current = 'canvas2d';
-            setRendererType('canvas2d');
-            console.log('✓ Using Canvas 2D fallback backend');
-          } else {
-            setGpuError('No rendering context available. Try a different browser.');
-            return;
-          }
+          setGpuError('WebGL2 shader compilation failed. Try Chrome or Edge for full WebGPU support.');
+          return;
         }
       }
       startTimeRef.current = performance.now() / 1000;
