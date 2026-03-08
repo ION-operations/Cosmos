@@ -1675,7 +1675,7 @@ const ProceduralEarthGPU: React.FC = () => {
         const bindGroup0 = device.createBindGroup({ layout: bgl0, entries: uniformBuffers.map((buffer, i) => ({ binding: i, resource: { buffer } })) });
         const bindGroup1 = device.createBindGroup({ layout: bgl1, entries: [{ binding: 0, resource: noiseTexture.createView({ dimension: '3d' }) }, { binding: 1, resource: sampler }] });
 
-        gpuRef.current = { device, context, pipeline, uniformBuffers, bindGroup0, bindGroup1, noiseTexture };
+        gpuRef.current = { device, context, pipeline, uniformBuffers, bindGroup0, bindGroup1, noiseTexture, format, lastConfiguredWidth: canvas.width, lastConfiguredHeight: canvas.height };
         backendRef.current = 'webgpu';
         return true;
       } catch (e) { console.warn('WebGPU init failed:', e); return false; }
