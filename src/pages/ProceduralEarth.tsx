@@ -2272,6 +2272,17 @@ const ProceduralEarth: React.FC = () => {
         uShowWeather: { value: false },
         uShowFog: { value: false },
         uShowGodRays: { value: false },
+        
+        // Ocean sub-feature toggles
+        uEnableWaves: { value: settings.enableWaves },
+        uEnableFresnel: { value: settings.enableFresnel },
+        uEnableCaustics: { value: settings.enableCaustics },
+        uEnableFoam: { value: settings.enableFoam },
+        uEnableSSS: { value: settings.enableSSS },
+        uEnableBubbles: { value: settings.enableBubbles },
+        uEnableUnderwaterCaustics: { value: settings.enableUnderwaterCaustics },
+        uEnableUnderwaterGodRays: { value: settings.enableUnderwaterGodRays },
+        uEnableUnderwaterBubbles: { value: settings.enableUnderwaterBubbles },
       },
       vertexShader: VERTEX_SHADER,
       fragmentShader: EARTH_FRAGMENT_SHADER,
