@@ -1301,7 +1301,7 @@ vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float
 
 vec4 renderUnderwater(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
     float underwaterGodRays = 0.0;
-    if(uUnderwaterGodRayStrength > 0.0) {
+    if(uEnableUnderwaterGodRays && uUnderwaterGodRayStrength > 0.0) {
         float raySteps = 16.0;
         float stepSize = 50.0;
         float decay = 1.0;
