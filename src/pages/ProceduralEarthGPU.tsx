@@ -1558,6 +1558,126 @@ function setGL2Uniforms(gl: WebGL2RenderingContext, u: GL2Uniforms, s: EngineSet
   gl.uniform1i(u.u_layerGodRays, l.godRays ? 1 : 0);
 }
 
+// ─── Canvas 2D Procedural Fallback Renderer ───
+function renderCanvas2D(ctx: CanvasRenderingContext2D, w: number, h: number, time: number, s: EngineSettings, cam: { pos: [number, number, number]; yaw: number; pitch: number }) {
+  const horizon = h * (0.45 + cam.pitch * 0.3);
+  const sunElev = s.autoTime ? Math.sin(time * s.cycleSpeed * 0.1) * 0.8 : s.sunElevation;
+  const dayFactor = Math.max(0, Math.min(1, sunElev * 2 + 0.5));
+
+  // Sky
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, horizon);
+  skyGrad.addColorStop(0, `rgb(${Math.round(10 + dayFactor * 60)},${Math.round(15 + dayFactor * 100)},${Math.round(40 + dayFactor * 180)})`);
+  skyGrad.addColorStop(1, `rgb(${Math.round(30 + dayFactor * 200)},${Math.round(50 + dayFactor * 150)},${Math.round(80 + dayFactor * 100)})`);
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, w, Math.ceil(horizon));
+
+  // Sun glow
+  const sunAngle = s.autoTime ? time * s.cycleSpeed * 0.1 : s.sunAzimuth;
+  const sunX = w * 0.5 + Math.cos(sunAngle) * w * 0.3;
+  const sunY = horizon - Math.sin(Math.max(0, sunElev)) * horizon * 0.8;
+  if (dayFactor > 0.2) {
+    const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
+    sunGrad.addColorStop(0, `rgba(255,${Math.round(200 + dayFactor * 55)},${Math.round(100 + dayFactor * 100)},1)`);
+    sunGrad.addColorStop(0.3, `rgba(255,${Math.round(150 + dayFactor * 50)},50,0.3)`);
+    sunGrad.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = sunGrad;
+    ctx.fillRect(0, 0, w, Math.ceil(horizon));
+  }
+
+  // Stars
+  if (dayFactor < 0.5) {
+    const starAlpha = (1 - dayFactor * 2) * s.starIntensity;
+    ctx.fillStyle = `rgba(255,255,255,${starAlpha})`;
+    for (let i = 0; i < 200; i++) {
+      ctx.fillRect((i * 7919 + i * i * 13) % w, (i * 6271 + i * 17) % Math.max(1, horizon), ((i * 31) % 3) + 1, ((i * 31) % 3) + 1);
+    }
+  }
+
+  // Terrain
+  const gr = s.grassColor, rk = s.rockColor;
+  const terrainGrad = ctx.createLinearGradient(0, horizon, 0, h);
+  terrainGrad.addColorStop(0, `rgb(${Math.round(rk[0] * 255)},${Math.round(rk[1] * 255)},${Math.round(rk[2] * 255)})`);
+  terrainGrad.addColorStop(0.4, `rgb(${Math.round(gr[0] * 255)},${Math.round(gr[1] * 255)},${Math.round(gr[2] * 255)})`);
+  terrainGrad.addColorStop(1, `rgb(${Math.round(gr[0] * 200)},${Math.round(gr[1] * 200)},${Math.round(gr[2] * 200)})`);
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  for (let x = 0; x <= w; x += 2) {
+    const nx = (x / w + cam.yaw * 0.1 + time * 0.001) * s.terrainScale * 0.01;
+    const n1 = Math.sin(nx * 3.7) * 0.5 + Math.sin(nx * 7.3 + 1.3) * 0.25 + Math.sin(nx * 15.1 + 2.7) * 0.125;
+    ctx.lineTo(x, horizon + 20 - n1 * s.mountainHeight * 0.5 * (h - horizon) * 0.01);
+  }
+  ctx.lineTo(w, h);
+  ctx.closePath();
+  ctx.fillStyle = terrainGrad;
+  ctx.fill();
+
+  // Ocean
+  const oceanY = Math.max(horizon + 30, h * 0.65);
+  const oc = s.oceanColor, od = s.oceanDeepColor;
+  const oceanGrad = ctx.createLinearGradient(0, oceanY, 0, h);
+  oceanGrad.addColorStop(0, `rgba(${Math.round(oc[0] * 255)},${Math.round(oc[1] * 255)},${Math.round(oc[2] * 255)},0.85)`);
+  oceanGrad.addColorStop(1, `rgba(${Math.round(od[0] * 255)},${Math.round(od[1] * 255)},${Math.round(od[2] * 255)},0.95)`);
+  ctx.fillStyle = oceanGrad;
+  ctx.fillRect(0, oceanY, w, h - oceanY);
+
+  // Waves
+  ctx.strokeStyle = `rgba(255,255,255,${0.15 * s.foamIntensity})`;
+  ctx.lineWidth = 1;
+  for (let row = 0; row < 8; row++) {
+    const wy = oceanY + row * (h - oceanY) / 8;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 3) {
+      ctx.lineTo(x, wy + Math.sin(x * s.waveFrequency * 0.02 + time * s.waveSpeed + row * 2) * s.waveHeight * 2);
+    }
+    ctx.stroke();
+  }
+
+  // Clouds
+  if (s.cloudCoverage > 0.1) {
+    ctx.fillStyle = `rgba(255,255,255,${0.3 * s.cloudDensity * dayFactor + 0.05})`;
+    for (let i = 0; i < 15; i++) {
+      const cx = ((i * 1723 + time * s.cloudSpeed * 20) % (w + 400)) - 200;
+      const cy = horizon * 0.2 + (i * 137) % (horizon * 0.5);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, (80 + (i * 53) % 200) * 0.5, (20 + (i * 31) % 40) * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Fog
+  if (s.fogDensity > 0.05) {
+    const fc = s.fogColor;
+    const fogGrad = ctx.createLinearGradient(0, horizon - 50, 0, h);
+    fogGrad.addColorStop(0, `rgba(${Math.round(fc[0] * 255)},${Math.round(fc[1] * 255)},${Math.round(fc[2] * 255)},0)`);
+    fogGrad.addColorStop(1, `rgba(${Math.round(fc[0] * 255)},${Math.round(fc[1] * 255)},${Math.round(fc[2] * 255)},${Math.min(0.7, s.fogDensity * 0.3)})`);
+    ctx.fillStyle = fogGrad;
+    ctx.fillRect(0, horizon - 50, w, h - horizon + 50);
+  }
+
+  // Weather
+  if (s.weatherType > 0 && s.weatherIntensity > 0) {
+    const count = Math.round(s.weatherIntensity * 300);
+    if (s.weatherType === 1) {
+      ctx.strokeStyle = `rgba(180,200,255,${0.4 * s.weatherIntensity})`;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < count; i++) {
+        const rx = (i * 997 + time * 500 * s.windSpeed) % w, ry = (i * 1013 + time * 800) % h;
+        ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 2, ry + 15); ctx.stroke();
+      }
+    } else if (s.weatherType === 2) {
+      ctx.fillStyle = `rgba(255,255,255,${0.6 * s.weatherIntensity})`;
+      for (let i = 0; i < count * 0.5; i++) {
+        const sx = (i * 997 + time * 30 * s.windSpeed) % w, sy = (i * 1013 + time * 50) % h;
+        ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '11px monospace';
+  ctx.fillText('Canvas 2D fallback — open in Chrome/Edge for WebGPU/WebGL2', 10, h - 10);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
