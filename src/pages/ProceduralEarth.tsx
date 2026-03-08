@@ -2794,6 +2794,15 @@ const ProceduralEarth: React.FC = () => {
     u.uOceanFresnel.value = settings.oceanFresnel;
     u.uOceanRoughness.value = settings.oceanRoughness;
     u.uFoamIntensity.value = settings.foamIntensity;
+    u.uFoamJacobianStrength.value = settings.foamJacobianStrength;
+    u.uFoamShorelineStrength.value = settings.foamShorelineStrength;
+    u.uFoamTurbulentStrength.value = settings.foamTurbulentStrength;
+    u.uFoamWindstreakStrength.value = settings.foamWindstreakStrength;
+    u.uFoamSprayStrength.value = settings.foamSprayStrength;
+    u.uFoamVoronoiStrength.value = settings.foamVoronoiStrength;
+    u.uFoamShorelineWidth.value = settings.foamShorelineWidth;
+    u.uFoamDecay.value = settings.foamDecay;
+    u.uFoamScale.value = settings.foamScale;
     u.uCausticsIntensity.value = settings.causticsIntensity;
     u.uBubbleIntensity.value = settings.bubbleIntensity;
     u.uSSSIntensity.value = settings.sssIntensity;
