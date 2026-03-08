@@ -1297,7 +1297,7 @@ vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float
     color *= mix(0.5, 1.0, cloudShadow);
     
     // Atmospheric distance fade
-    float atten = max(1.0 - dot(dist, dist) * 0.000001, 0.0);
+    float atten = max(1.0 - dist * dist * 0.000001, 0.0);
     color = mix(getSkyColor(eye, sunDir), color, atten);
     
     return color;
