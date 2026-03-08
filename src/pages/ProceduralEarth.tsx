@@ -2091,6 +2091,8 @@ const ProceduralEarth: React.FC = () => {
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [activeTab, setActiveTab] = useState('atmosphere');
   const [webglError, setWebglError] = useState<string | null>(null);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
   const updateSetting = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
