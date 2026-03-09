@@ -1259,252 +1259,136 @@ float oceanSpecular(vec3 n, vec3 l, vec3 e, float s) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HYPER-REALISTIC FOAM SYSTEM — 6 DISTINCT TECHNIQUES
+// OPTIMIZED FOAM SYSTEM — 6 TECHNIQUES (GPU-friendly)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ─── 1. JACOBIAN WHITECAP FOAM ───────────────────────────────────────────
-// Real wave-breaking detection via surface curvature (Jacobian determinant).
-// When the wave surface folds (J < threshold), whitecaps form.
-// Based on Tessendorf's ocean simulation methodology.
-float foamJacobian(vec3 p, float eps) {
-    float h0 = oceanMapDetailed(p);
-    float hx = oceanMapDetailed(vec3(p.x + eps, p.y, p.z));
-    float hz = oceanMapDetailed(vec3(p.x, p.y, p.z + eps));
-    float hxx = oceanMapDetailed(vec3(p.x + eps * 2.0, p.y, p.z));
-    float hzz = oceanMapDetailed(vec3(p.x, p.y, p.z + eps * 2.0));
-    float hxz = oceanMapDetailed(vec3(p.x + eps, p.y, p.z + eps));
+// ─── 1. JACOBIAN WHITECAP FOAM (simplified) ──────────────────────────────
+// Detects wave-breaking via simplified curvature estimate
+float foamJacobian(vec3 p, vec3 normal) {
+    // Use normal steepness as proxy for wave folding (much cheaper than 6 samples)
+    float steepness = 1.0 - normal.y;
+    float curvature = smoothstep(0.2, 0.8, steepness);
     
-    // Approximate second derivatives (curvature)
-    float dxx = (hxx - 2.0 * hx + h0) / (eps * eps);
-    float dzz = (hzz - 2.0 * hz + h0) / (eps * eps);
-    float dxz = (hxz - hx - hz + h0) / (eps * eps);
+    // Add simple noise breakup
+    float noise = hash12(p.xz * uFoamScale * 3.0 + iTime * 0.5) * 0.5 + 0.5;
     
-    // Jacobian determinant — negative means wave folding
-    float J = dxx * dzz - dxz * dxz;
-    
-    // Whitecap where curvature is high (folding crests)
-    float curvature = abs(dxx + dzz);
-    float whitecap = smoothstep(0.3, 2.0, curvature) * smoothstep(-0.5, -0.01, J);
-    
-    // Add turbulent noise breakup
-    float noise = fbm(vec3(p.xz * uFoamScale * 3.0, iTime * 0.5), 3);
-    whitecap *= 0.6 + noise * 0.8;
-    
-    return saturate(whitecap * uFoamJacobianStrength);
+    return saturate(curvature * noise * uFoamJacobianStrength);
 }
 
 // ─── 2. SHORELINE / DEPTH-BASED FOAM ────────────────────────────────────
-// Foam that accumulates where waves meet shallow water.
-// Uses terrain proximity to generate realistic beach foam patterns
-// with bubble-like Voronoi structures at the water's edge.
 float foamShoreline(vec3 p) {
-    // Approximate depth by checking terrain height
     float terrainH = getTerrainHeight(p.xz);
     float depth = p.y - terrainH;
     
     if(depth > uFoamShorelineWidth * 2.0) return 0.0;
     
-    // Distance-based foam mask
     float shoreProximity = 1.0 - smoothstep(0.0, uFoamShorelineWidth, depth);
     
-    // Wave surge pattern - foam pulses with wave motion
+    // Simple wave surge pattern
     float surge = sin(p.x * 0.05 + iTime * uWaveSpeed * 2.0) * 0.5 + 0.5;
-    surge *= sin(p.z * 0.07 + iTime * uWaveSpeed * 1.5) * 0.5 + 0.5;
     
-    // Cellular foam pattern (bubble clusters)
-    float cellFoam = worleyNoise(vec3(p.xz * uFoamScale * 8.0, iTime * 0.3));
-    cellFoam = pow(cellFoam, 2.0);
+    // Simple cellular pattern
+    float cellFoam = hash12(floor(p.xz * uFoamScale * 8.0) + iTime * 0.1);
+    cellFoam = smoothstep(0.3, 0.8, cellFoam);
     
-    // Lace-like edge pattern
-    float lace = worleyNoise(vec3(p.xz * uFoamScale * 15.0, iTime * 0.1));
-    lace = smoothstep(0.3, 0.7, lace);
-    
-    float foam = shoreProximity * mix(cellFoam, lace, shoreProximity * 0.5);
-    foam *= 0.5 + surge * 0.5;
-    
-    return saturate(foam * uFoamShorelineStrength);
+    return saturate(shoreProximity * cellFoam * surge * uFoamShorelineStrength);
 }
 
 // ─── 3. TURBULENT BREAKWATER FOAM ───────────────────────────────────────
-// Dense, chaotic foam from wave collisions / breaking waves.
-// Uses curl noise for realistic turbulent advection patterns.
-// Simulates the churning white water seen in surf zones.
 float foamTurbulent(vec3 p, vec3 normal) {
-    // Foam at steep wave faces (about to break)
     float steepness = 1.0 - normal.y;
     float breakThreshold = smoothstep(0.3, 0.7, steepness);
     
-    // Curl noise for turbulent streaks
-    vec3 curl = curlNoise(vec3(p.xz * uFoamScale * 2.0, iTime * 0.4));
-    float turbulence = length(curl.xz) * 0.7;
+    // Simple multi-scale noise
+    float noise1 = hash12(p.xz * uFoamScale * 1.5 + iTime * 0.2);
+    float noise2 = hash12(p.xz * uFoamScale * 4.0 + iTime * 0.4);
     
-    // Multi-scale noise for irregular patches
-    float coarse = fbm(vec3(p.xz * uFoamScale * 1.5 + curl.xz * 0.5, iTime * 0.2), 4);
-    float fine = fbm(vec3(p.xz * uFoamScale * 6.0 + curl.xz, iTime * 0.6), 3);
-    
-    // Combine: steep waves get turbulent foam
-    float foam = breakThreshold * (coarse * 0.6 + fine * 0.4 + turbulence * 0.3);
-    
-    // Decay over time (foam dissolves)
-    float age = fract(iTime * uFoamDecay * 0.1 + hash12(floor(p.xz * 0.5)));
-    foam *= smoothstep(1.0, 0.0, age * 0.5);
+    float foam = breakThreshold * (noise1 * 0.6 + noise2 * 0.4);
     
     return saturate(foam * uFoamTurbulentStrength);
 }
 
 // ─── 4. WIND STREAK FOAM ────────────────────────────────────────────────
-// Long, thin foam streaks aligned with wind direction (Langmuir circulation).
-// These are the parallel white lines visible on open ocean surfaces
-// caused by wind-driven convergence zones.
 float foamWindstreak(vec3 p) {
     float windAngle = uWindDirection;
     vec2 windDir = vec2(cos(windAngle), sin(windAngle));
     vec2 perpDir = vec2(-windDir.y, windDir.x);
     
-    // Project position onto perpendicular to wind
     float perpDist = dot(p.xz, perpDir);
     float alongDist = dot(p.xz, windDir);
     
-    // Langmuir circulation spacing (~10-50m streaks)
+    // Simple streak pattern
     float streakFreq = uFoamScale * 0.3;
-    float streak = sin(perpDist * streakFreq + 
-                       gradientNoise(vec3(alongDist * 0.02, perpDist * 0.01, iTime * 0.1)) * 3.0);
+    float streak = sin(perpDist * streakFreq + hash12(vec2(alongDist * 0.02, 0.0)) * 3.0);
     streak = smoothstep(0.7, 1.0, streak);
     
-    // Vary streak intensity along length
-    float intensity = fbm(vec3(alongDist * 0.01, perpDist * streakFreq * 0.1, iTime * 0.05), 3);
-    intensity = smoothstep(0.3, 0.8, intensity);
-    
-    // Wind speed modulation (more wind = more streaks)
     float windFactor = smoothstep(0.2, 0.8, uWindSpeed);
     
-    return saturate(streak * intensity * windFactor * uFoamWindstreakStrength);
+    return saturate(streak * windFactor * uFoamWindstreakStrength);
 }
 
 // ─── 5. SPRAY / MIST FOAM ──────────────────────────────────────────────
-// Fine airborne spray particles torn from wave crests by wind.
-// Creates a misty, translucent white layer above wave peaks.
-// Based on the Beaufort scale spray generation physics.
 float foamSpray(vec3 p, vec3 normal, float waveHeight) {
-    // Only at wave crests pointing upward
     float crestFactor = smoothstep(0.0, 0.5, waveHeight) * smoothstep(0.5, 0.9, normal.y);
-    
-    // Wind tears spray from crests
     float windTear = smoothstep(0.3, 1.0, uWindSpeed);
     
-    // Particle-like noise (very fine, fast-moving)
+    // Simple particle noise
     float windAngle = uWindDirection;
     vec2 windOffset = vec2(cos(windAngle), sin(windAngle)) * iTime * uWindSpeed * 5.0;
-    float particles = fbm(vec3((p.xz + windOffset) * uFoamScale * 12.0, iTime * 2.0), 4);
-    particles = smoothstep(0.4, 0.9, particles);
+    float particles = hash12((p.xz + windOffset) * uFoamScale * 12.0);
+    particles = smoothstep(0.5, 0.9, particles);
     
-    // Stipple pattern for mist effect
-    float stipple = hash12(floor(p.xz * uFoamScale * 20.0 + windOffset));
-    stipple = smoothstep(0.6, 0.95, stipple);
-    
-    float spray = crestFactor * windTear * (particles * 0.7 + stipple * 0.3);
-    
-    return saturate(spray * uFoamSprayStrength);
+    return saturate(crestFactor * windTear * particles * uFoamSprayStrength);
 }
 
-// ─── 6. VORONOI CELLULAR FOAM ───────────────────────────────────────────
-// Physically accurate bubble-cluster foam using multi-layered Voronoi.
-// Simulates the actual cellular structure of sea foam (thin film bubbles).
-// Each cell represents a bubble, with bright edges where films meet.
+// ─── 6. VORONOI CELLULAR FOAM (simplified) ──────────────────────────────
 float foamVoronoi(vec3 p) {
-    float foam = 0.0;
+    vec2 uv = p.xz * uFoamScale * 5.0 + iTime * 0.1;
+    vec2 n = floor(uv);
+    vec2 f = fract(uv);
     
-    // Three scales of bubble clusters (macro → micro)
-    for(float layer = 0.0; layer < 3.0; layer++) {
-        float scale = uFoamScale * (3.0 + layer * 5.0);
-        float speed = 0.1 + layer * 0.05;
-        float weight = 1.0 - layer * 0.25;
-        
-        vec2 uv = p.xz * scale + vec2(iTime * speed, iTime * speed * 0.7);
-        
-        // Voronoi with edge detection
-        vec2 n = floor(uv);
-        vec2 f = fract(uv);
-        
-        float md = 8.0;
-        float md2 = 8.0;
-        
-        for(int j = -1; j <= 1; j++)
-        for(int i = -1; i <= 1; i++) {
-            vec2 g = vec2(float(i), float(j));
-            vec2 o = hash22(n + g);
-            // Animate cell centers
-            o = 0.5 + 0.5 * sin(iTime * (0.3 + layer * 0.1) + o * TAU);
-            
-            float d = length(g + o - f);
-            if(d < md) {
-                md2 = md;
-                md = d;
-            } else if(d < md2) {
-                md2 = d;
-            }
-        }
-        
-        // Edge detection: bright where two cells meet (bubble film)
-        float edge = md2 - md;
-        float cellFoam = smoothstep(0.0, 0.15, edge) * smoothstep(0.4, 0.15, edge);
-        
-        // Also add some interior brightness for thicker foam
-        cellFoam += smoothstep(0.3, 0.0, md) * 0.3;
-        
-        foam += cellFoam * weight;
+    float md = 8.0;
+    
+    for(int j = -1; j <= 1; j++)
+    for(int i = -1; i <= 1; i++) {
+        vec2 g = vec2(float(i), float(j));
+        vec2 o = hash22(n + g);
+        o = 0.5 + 0.5 * sin(iTime * 0.3 + o * TAU);
+        float d = length(g + o - f);
+        md = min(md, d);
     }
+    
+    float foam = smoothstep(0.3, 0.0, md);
     
     return saturate(foam * uFoamVoronoiStrength * 0.5);
 }
 
 // ─── MASTER FOAM COMPOSITOR ─────────────────────────────────────────────
-// Combines all foam techniques with physically-based shading.
-// Foam = bright, high-albedo, low-specular, slightly translucent material.
 vec3 computeAllFoam(vec3 p, vec3 normal, vec3 sunDir, vec3 lightColor, float dist, float waveHeight) {
     if(!uEnableFoam || uFoamIntensity <= 0.0) return vec3(0.0);
     
+    // Early distance cull
+    if(dist > 3000.0) return vec3(0.0);
+    
     float totalFoam = 0.0;
     
-    // Accumulate each foam type
-    if(uEnableFoamJacobian) {
-        float eps = max(0.5, dist * 0.005);
-        totalFoam += foamJacobian(p, eps);
-    }
-    if(uEnableFoamShoreline) {
-        totalFoam += foamShoreline(p);
-    }
-    if(uEnableFoamTurbulent) {
-        totalFoam += foamTurbulent(p, normal);
-    }
-    if(uEnableFoamWindstreak) {
-        totalFoam += foamWindstreak(p);
-    }
-    if(uEnableFoamSpray) {
-        totalFoam += foamSpray(p, normal, waveHeight);
-    }
-    if(uEnableFoamVoronoi) {
-        totalFoam += foamVoronoi(p);
-    }
+    if(uEnableFoamJacobian) totalFoam += foamJacobian(p, normal);
+    if(uEnableFoamShoreline) totalFoam += foamShoreline(p);
+    if(uEnableFoamTurbulent) totalFoam += foamTurbulent(p, normal);
+    if(uEnableFoamWindstreak) totalFoam += foamWindstreak(p);
+    if(uEnableFoamSpray) totalFoam += foamSpray(p, normal, waveHeight);
+    if(uEnableFoamVoronoi) totalFoam += foamVoronoi(p);
     
     totalFoam = saturate(totalFoam) * uFoamIntensity;
     
     if(totalFoam < 0.001) return vec3(0.0);
     
-    // Physically-based foam shading
-    // Foam is a high-albedo diffuse material (wet bubbles ≈ 0.7-0.9 albedo)
     vec3 foamAlbedo = vec3(0.85, 0.88, 0.9);
-    
-    // Diffuse lighting
     float NdotL = max(dot(normal, sunDir), 0.0) * 0.6 + 0.4;
-    
-    // Slight blue tint from sky ambient
     vec3 ambient = vec3(0.4, 0.45, 0.55) * 0.3;
-    
     vec3 foamColor = foamAlbedo * (lightColor * NdotL + ambient);
     
-    // Distance fade (foam detail dissolves at distance)
-    float distFade = smoothstep(2000.0, 500.0, dist);
+    float distFade = smoothstep(3000.0, 500.0, dist);
     totalFoam *= distFade;
     
     return foamColor * totalFoam;
