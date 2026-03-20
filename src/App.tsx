@@ -9,6 +9,12 @@ import NotFound from "./pages/NotFound";
 
 const ProceduralEarthGPU = lazy(() => import("./pages/ProceduralEarthGPU"));
 const SkyLab = lazy(() => import("./pages/SkyLab"));
+const CloudLab = lazy(() => import("./pages/CloudLab"));
+const TerrainLab = lazy(() => import("./pages/TerrainLab"));
+const OceanLab = lazy(() => import("./pages/OceanLab"));
+const VegetationLab = lazy(() => import("./pages/VegetationLab"));
+const WeatherLab = lazy(() => import("./pages/WeatherLab"));
+const EffectsLab = lazy(() => import("./pages/EffectsLab"));
 
 const queryClient = new QueryClient();
 
@@ -29,7 +35,12 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/gpu" element={<ProceduralEarthGPU />} />
             <Route path="/sky" element={<SkyLab />} />
-            {/* Future lab pages: /clouds, /terrain, /ocean, /vegetation, /weather, /effects */}
+            <Route path="/clouds" element={<CloudLab />} />
+            <Route path="/terrain" element={<TerrainLab />} />
+            <Route path="/ocean" element={<OceanLab />} />
+            <Route path="/vegetation" element={<VegetationLab />} />
+            <Route path="/weather" element={<WeatherLab />} />
+            <Route path="/effects" element={<EffectsLab />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
