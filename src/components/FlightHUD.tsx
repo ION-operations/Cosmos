@@ -122,7 +122,7 @@ const FlightHUD: React.FC<FlightHUDProps> = ({ stateRef, visible = true }) => {
             </div>
             <div className="h-1.5 bg-muted/40 rounded overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-primary to-cyan-300 transition-all"
+                className="h-full bg-primary transition-all"
                 style={{ width: `${s.throttle * 100}%` }}
               />
             </div>
