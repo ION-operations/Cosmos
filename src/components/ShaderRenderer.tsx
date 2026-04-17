@@ -88,14 +88,23 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
   const animationRef = useRef<number | null>(null);
   const frameRef = useRef(0);
   const webglErrorRef = useRef<string | null>(null);
-  
+
+  // Flight physics
+  const flight = useFlightPhysics(
+    options.flightConfig,
+    options.initialPosition ?? new THREE.Vector3(0, 1500, 0),
+  );
+
+  // Legacy camera ref (kept for backward compat — mirrors flight state)
   const cameraRef = useRef({
-    pos: new THREE.Vector3(0, 200, 0),
+    pos: flight.stateRef.current.position,
     yaw: 0,
     pitch: 0,
-    velocity: new THREE.Vector3(0, 0, 0),
+    velocity: flight.stateRef.current.velocity,
   });
+
   const keysRef = useRef<Set<string>>(new Set());
+  const mouseDeltaRef = useRef({ x: 0, y: 0 });
   const isPausedRef = useRef(options.isPaused ?? false);
   isPausedRef.current = options.isPaused ?? false;
   const renderScaleRef = useRef(options.renderScale ?? 1.0);
@@ -159,12 +168,11 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
     scene.add(quad);
 
-    // Mouse look
+    // Mouse look — accumulates deltas, consumed by physics step
     const handleMouseMove = (e: MouseEvent) => {
       if (document.pointerLockElement === renderer.domElement) {
-        cameraRef.current.yaw += e.movementX * 0.002;
-        cameraRef.current.pitch -= e.movementY * 0.002;
-        cameraRef.current.pitch = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, cameraRef.current.pitch));
+        mouseDeltaRef.current.x += e.movementX;
+        mouseDeltaRef.current.y += e.movementY;
       }
     };
 
@@ -173,7 +181,16 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysRef.current.add(e.key.toLowerCase());
+      const k = e.key.toLowerCase();
+      keysRef.current.add(k);
+      // F toggles free-cam
+      if (k === 'f') {
+        flight.controlsRef.current.freeCam = !flight.controlsRef.current.freeCam;
+      }
+      // R resets aircraft
+      if (k === 'r') flight.reset();
+      // Prevent page scroll on space
+      if (k === ' ') e.preventDefault();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -182,14 +199,11 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const cam = cameraRef.current;
-      const zoomAmount = -e.deltaY * 5;
-      const forward = new THREE.Vector3(
-        Math.cos(cam.pitch) * Math.sin(cam.yaw),
-        Math.sin(cam.pitch),
-        Math.cos(cam.pitch) * Math.cos(cam.yaw)
+      // Wheel adjusts throttle in flight mode
+      const delta = -Math.sign(e.deltaY) * 0.05;
+      flight.stateRef.current.throttle = THREE.MathUtils.clamp(
+        flight.stateRef.current.throttle + delta, 0, 1,
       );
-      cam.pos.add(forward.multiplyScalar(zoomAmount));
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -200,54 +214,41 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
 
     const clock = new THREE.Clock();
     let lastTime = 0;
-    
+
     const animate = () => {
       animationRef.current = requestAnimationFrame(animate);
-      
+
       const time = clock.getElapsedTime();
       const deltaTime = time - lastTime;
       lastTime = time;
-      
+
       if (!isPausedRef.current) {
         frameRef.current++;
         material.uniforms.iTime.value = time;
         material.uniforms.iFrame.value = frameRef.current;
-        
-        // WASD camera
-        const keys = keysRef.current;
-        const speed = 100 * deltaTime;
-        const cam = cameraRef.current;
-        
-        const forward = new THREE.Vector3(
-          Math.cos(cam.pitch) * Math.sin(cam.yaw),
-          Math.sin(cam.pitch),
-          Math.cos(cam.pitch) * Math.cos(cam.yaw)
-        );
-        const right = new THREE.Vector3(Math.cos(cam.yaw), 0, -Math.sin(cam.yaw));
-        const up = new THREE.Vector3(0, 1, 0);
-        
-        const moveDir = new THREE.Vector3(0, 0, 0);
-        if (keys.has('w')) moveDir.add(forward);
-        if (keys.has('s')) moveDir.sub(forward);
-        if (keys.has('a')) moveDir.sub(right);
-        if (keys.has('d')) moveDir.add(right);
-        if (keys.has(' ')) moveDir.add(up);
-        if (keys.has('shift')) moveDir.sub(up);
-        
-        if (moveDir.length() > 0) {
-          moveDir.normalize();
-          cam.velocity.lerp(moveDir.multiplyScalar(speed * 10), 0.1);
-        } else {
-          cam.velocity.multiplyScalar(0.9);
+
+        // ── FLIGHT PHYSICS STEP ────────────────────────────────────────────
+        const md = mouseDeltaRef.current;
+        flight.step(deltaTime, keysRef.current, { x: md.x, y: md.y });
+        // Reset mouse delta accumulator
+        md.x = 0;
+        md.y = 0;
+
+        // Sync legacy camera ref + shader uniforms
+        const fs = flight.stateRef.current;
+        cameraRef.current.pos = fs.position;
+        cameraRef.current.yaw = fs.yaw;
+        cameraRef.current.pitch = fs.pitch;
+        cameraRef.current.velocity = fs.velocity;
+
+        material.uniforms.uCameraPos.value.copy(fs.position);
+        material.uniforms.uCameraYaw.value = fs.yaw;
+        material.uniforms.uCameraPitch.value = fs.pitch;
+        if (material.uniforms.uCameraRoll) {
+          material.uniforms.uCameraRoll.value = fs.roll;
         }
-        
-        cam.pos.add(cam.velocity.clone().multiplyScalar(deltaTime));
-        
-        material.uniforms.uCameraPos.value.copy(cam.pos);
-        material.uniforms.uCameraYaw.value = cam.yaw;
-        material.uniforms.uCameraPitch.value = cam.pitch;
       }
-      
+
       renderer.render(scene, camera);
     };
     animate();
