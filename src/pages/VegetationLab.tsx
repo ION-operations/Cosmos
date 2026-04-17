@@ -11,6 +11,7 @@ import { VEGETATION_UNIFORMS, VEGETATION_GLSL, VEGETATION_DEFAULTS } from '@/sha
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
 
 const VEG_FRAGMENT_SHADER = `
 precision highp float;
@@ -123,7 +124,7 @@ const VegetationLab: React.FC = () => {
     uLightningTime: { value: 0.0 },
   };
 
-  const { containerRef, rendererRef, materialRef } = useShaderRenderer({
+  const { containerRef, rendererRef, materialRef, flightStateRef } = useShaderRenderer({
     vertexShader: VERTEX_SHADER,
     fragmentShader: VEG_FRAGMENT_SHADER,
     uniforms,

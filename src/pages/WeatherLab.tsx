@@ -10,6 +10,7 @@ import { WEATHER_UNIFORMS, WEATHER_GLSL, WEATHER_DEFAULTS } from '@/shaders/weat
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
 
 const WEATHER_FRAGMENT_SHADER = `
 precision highp float;
@@ -76,7 +77,7 @@ const WeatherLab: React.FC = () => {
     uLightningTime: { value: 0.0 },
   };
 
-  const { containerRef, rendererRef, materialRef } = useShaderRenderer({
+  const { containerRef, rendererRef, materialRef, flightStateRef } = useShaderRenderer({
     vertexShader: VERTEX_SHADER,
     fragmentShader: WEATHER_FRAGMENT_SHADER,
     uniforms,

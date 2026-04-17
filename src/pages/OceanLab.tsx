@@ -11,6 +11,7 @@ import { OCEAN_UNIFORMS, OCEAN_GLSL, OCEAN_DEFAULTS } from '@/shaders/ocean.glsl
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
 
 const OCEAN_FRAGMENT_SHADER = `
 precision highp float;
@@ -144,7 +145,7 @@ const OceanLab: React.FC = () => {
     uEnableUnderwaterBubbles: { value: settings.enableUnderwaterBubbles },
   };
 
-  const { containerRef, rendererRef, materialRef } = useShaderRenderer({
+  const { containerRef, rendererRef, materialRef, flightStateRef } = useShaderRenderer({
     vertexShader: VERTEX_SHADER,
     fragmentShader: OCEAN_FRAGMENT_SHADER,
     uniforms,

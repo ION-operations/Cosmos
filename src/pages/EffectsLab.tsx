@@ -11,6 +11,7 @@ import { CLOUDS_UNIFORMS, CLOUDS_GLSL, CLOUDS_DEFAULTS } from '@/shaders/clouds.
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
 
 const EFFECTS_FRAGMENT_SHADER = `
 precision highp float;
@@ -124,7 +125,7 @@ const EffectsLab: React.FC = () => {
     uGodRaySteps: { value: settings.godRaySteps },
   };
 
-  const { containerRef, rendererRef, materialRef } = useShaderRenderer({
+  const { containerRef, rendererRef, materialRef, flightStateRef } = useShaderRenderer({
     vertexShader: VERTEX_SHADER,
     fragmentShader: EFFECTS_FRAGMENT_SHADER,
     uniforms,

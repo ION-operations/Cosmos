@@ -10,6 +10,7 @@ import { CLOUDS_UNIFORMS, CLOUDS_GLSL, CLOUDS_DEFAULTS } from '@/shaders/clouds.
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
 
 const CLOUD_FRAGMENT_SHADER = `
 precision highp float;
@@ -91,7 +92,7 @@ const CloudLab: React.FC = () => {
     uLightningTime: { value: 0.0 },
   };
 
-  const { containerRef, rendererRef, materialRef } = useShaderRenderer({
+  const { containerRef, rendererRef, materialRef, flightStateRef } = useShaderRenderer({
     vertexShader: VERTEX_SHADER,
     fragmentShader: CLOUD_FRAGMENT_SHADER,
     uniforms,

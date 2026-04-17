@@ -10,6 +10,7 @@ import { TERRAIN_UNIFORMS, TERRAIN_GLSL, TERRAIN_DEFAULTS } from '@/shaders/terr
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
 
 const TERRAIN_FRAGMENT_SHADER = `
 precision highp float;
@@ -93,7 +94,7 @@ const TerrainLab: React.FC = () => {
     uLightningTime: { value: 0.0 },
   };
 
-  const { containerRef, rendererRef, materialRef } = useShaderRenderer({
+  const { containerRef, rendererRef, materialRef, flightStateRef } = useShaderRenderer({
     vertexShader: VERTEX_SHADER,
     fragmentShader: TERRAIN_FRAGMENT_SHADER,
     uniforms,
