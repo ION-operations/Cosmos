@@ -11,6 +11,7 @@ import { VEGETATION_UNIFORMS, VEGETATION_GLSL, VEGETATION_DEFAULTS } from '@/sha
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
 
 const VEG_FRAGMENT_SHADER = `
 precision highp float;
@@ -123,7 +124,7 @@ const VegetationLab: React.FC = () => {
     uLightningTime: { value: 0.0 },
   };
 
-  const { containerRef, rendererRef, materialRef } = useShaderRenderer({
+  const { containerRef, rendererRef, materialRef, flightStateRef } = useShaderRenderer({
     vertexShader: VERTEX_SHADER,
     fragmentShader: VEG_FRAGMENT_SHADER,
     uniforms,
@@ -150,6 +151,7 @@ const VegetationLab: React.FC = () => {
     <div className="w-full h-screen relative overflow-hidden bg-background">
       <div ref={containerRef} className="w-full h-full" />
       <DiagnosticsOverlay renderer={rendererRef.current} visible={showDiagnostics} onToggle={() => setShowDiagnostics(false)} />
+      <FlightHUD stateRef={flightStateRef} />
 
       <div className="absolute top-5 left-1/2 -translate-x-1/2 panel-glow backdrop-blur-xl rounded-xl p-3 flex items-center gap-3">
         <TreePine className="w-5 h-5 text-primary" />

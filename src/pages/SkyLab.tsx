@@ -9,6 +9,7 @@ import { SKY_UNIFORMS, SKY_GLSL, SKY_DEFAULTS } from '@/shaders/sky.glsl';
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
 
 const SKY_FRAGMENT_SHADER = `
 precision highp float;
@@ -86,7 +87,7 @@ const SkyLab: React.FC = () => {
     uWindDirection: { value: settings.windDirection },
   };
 
-  const { containerRef, rendererRef, materialRef } = useShaderRenderer({
+  const { containerRef, rendererRef, materialRef, flightStateRef } = useShaderRenderer({
     vertexShader: VERTEX_SHADER,
     fragmentShader: SKY_FRAGMENT_SHADER,
     uniforms,
@@ -125,6 +126,7 @@ const SkyLab: React.FC = () => {
         visible={showDiagnostics}
         onToggle={() => setShowDiagnostics(false)}
       />
+      <FlightHUD stateRef={flightStateRef} />
 
       {/* Header */}
       <div className="absolute top-5 left-1/2 -translate-x-1/2 panel-glow backdrop-blur-xl rounded-xl p-3 flex items-center gap-3">
