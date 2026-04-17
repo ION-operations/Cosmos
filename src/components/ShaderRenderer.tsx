@@ -57,6 +57,7 @@ export interface ShaderRendererOptions {
   fragmentShader: string;
   uniforms: Record<string, THREE.IUniform>;
   isPaused?: boolean;
+  renderScale?: number;
 }
 
 export interface ShaderRendererResult {
@@ -90,6 +91,8 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
   const keysRef = useRef<Set<string>>(new Set());
   const isPausedRef = useRef(options.isPaused ?? false);
   isPausedRef.current = options.isPaused ?? false;
+  const renderScaleRef = useRef(options.renderScale ?? 1.0);
+  renderScaleRef.current = options.renderScale ?? 1.0;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -115,8 +118,9 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
       return;
     }
     
+    const baseScale = renderScaleRef.current;
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5) * baseScale);
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
