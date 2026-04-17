@@ -292,6 +292,10 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
     rendererRef: rendererRef as React.RefObject<THREE.WebGLRenderer | null>,
     materialRef: materialRef as React.RefObject<THREE.ShaderMaterial | null>,
     cameraRef,
+    flightStateRef: flight.stateRef,
+    flightConfigRef: flight.configRef,
+    flightControlsRef: flight.controlsRef,
+    resetFlight: flight.reset,
     frameRef,
     webglError: webglErrorRef.current,
   };
