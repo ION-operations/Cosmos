@@ -162,6 +162,7 @@ const EffectsLab: React.FC = () => {
     <div className="w-full h-screen relative overflow-hidden bg-background">
       <div ref={containerRef} className="w-full h-full" />
       <DiagnosticsOverlay renderer={rendererRef.current} visible={showDiagnostics} onToggle={() => setShowDiagnostics(false)} />
+      <FlightHUD stateRef={flightStateRef} />
 
       <div className="absolute top-5 left-1/2 -translate-x-1/2 panel-glow backdrop-blur-xl rounded-xl p-3 flex items-center gap-3">
         <Sparkles className="w-5 h-5 text-primary" />
