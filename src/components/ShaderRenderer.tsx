@@ -271,6 +271,14 @@ export function useShaderRenderer(options: ShaderRendererOptions): ShaderRendere
     };
   }, []);
 
+  // React to renderScale prop changes
+  useEffect(() => {
+    const r = rendererRef.current;
+    if (!r) return;
+    const scale = options.renderScale ?? 1.0;
+    r.setPixelRatio(Math.min(window.devicePixelRatio, 1.5) * scale);
+  }, [options.renderScale]);
+
   return {
     containerRef: containerRef as React.RefObject<HTMLDivElement>,
     rendererRef: rendererRef as React.RefObject<THREE.WebGLRenderer | null>,
