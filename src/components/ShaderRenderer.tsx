@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
+import { useFlightPhysics, type FlightState, type FlightConfig } from '@/hooks/useFlightPhysics';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BLUE NOISE TEXTURE GENERATOR
@@ -58,6 +59,8 @@ export interface ShaderRendererOptions {
   uniforms: Record<string, THREE.IUniform>;
   isPaused?: boolean;
   renderScale?: number;
+  flightConfig?: Partial<FlightConfig>;
+  initialPosition?: THREE.Vector3;
 }
 
 export interface ShaderRendererResult {
@@ -70,6 +73,10 @@ export interface ShaderRendererResult {
     pitch: number;
     velocity: THREE.Vector3;
   }>;
+  flightStateRef: React.MutableRefObject<FlightState>;
+  flightConfigRef: React.MutableRefObject<FlightConfig>;
+  flightControlsRef: React.MutableRefObject<{ freeCam: boolean; mouseSensitivity: number }>;
+  resetFlight: () => void;
   frameRef: React.MutableRefObject<number>;
   webglError: string | null;
 }
