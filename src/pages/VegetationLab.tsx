@@ -119,6 +119,8 @@ const VegetationLab: React.FC = () => {
     uTreeColor: { value: new THREE.Color(...settings.treeColor) },
     uFlowerColors: { value: settings.flowerColors.map((c: [number, number, number]) => new THREE.Color(...c)) },
     uShowVegetation: { value: true },
+    uLightningIntensity: { value: 0.0 },
+    uLightningTime: { value: 0.0 },
   };
 
   const { containerRef, rendererRef, materialRef } = useShaderRenderer({
