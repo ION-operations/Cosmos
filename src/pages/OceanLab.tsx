@@ -17,8 +17,19 @@ precision highp float;
 ${SHARED_UNIFORMS}
 ${SKY_UNIFORMS}
 ${OCEAN_UNIFORMS}
+// Stub terrain uniforms (foamShoreline references getTerrainHeight)
+uniform float uTerrainScale;
+uniform float uTerrainHeight;
+uniform float uMountainHeight;
+uniform float uMountainSharpness;
+uniform float uErosionStrength;
+uniform bool uShowTerrain;
 ${SHARED_GLSL}
 ${SKY_GLSL}
+// Inline a minimal getTerrainHeight stub so foamShoreline compiles
+float getTerrainHeight(vec2 p) {
+    return uOceanLevel - 100.0; // always below ocean → no shoreline interference
+}
 ${OCEAN_GLSL}
 
 void main() {
@@ -36,7 +47,7 @@ void main() {
     vec3 finalColor = skyColor;
     
     if(uShowOcean) {
-        vec4 oceanHit = raymarchOcean(ro, rd, sunDir, lightColor, skyColor);
+        vec4 oceanHit = renderOcean(ro, rd, sunDir, lightColor, skyColor, -1.0);
         if(oceanHit.a > 0.0) {
             finalColor = oceanHit.rgb;
         }
@@ -84,6 +95,12 @@ const OceanLab: React.FC = () => {
     uWindSpeed: { value: settings.windSpeed },
     uWindDirection: { value: settings.windDirection },
     uOceanLevel: { value: settings.oceanLevel },
+    uTerrainScale: { value: 1.0 },
+    uTerrainHeight: { value: 100 },
+    uMountainHeight: { value: 1000 },
+    uMountainSharpness: { value: 2.0 },
+    uErosionStrength: { value: 0.0 },
+    uShowTerrain: { value: false },
     uOceanColor: { value: new THREE.Color(...settings.oceanColor) },
     uOceanDeepColor: { value: new THREE.Color(...settings.oceanDeepColor) },
     uWaveHeight: { value: settings.waveHeight },

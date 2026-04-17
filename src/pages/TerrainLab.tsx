@@ -89,6 +89,8 @@ const TerrainLab: React.FC = () => {
     uErosionStrength: { value: settings.erosionStrength },
     uOceanLevel: { value: settings.oceanLevel },
     uShowTerrain: { value: settings.showTerrain },
+    uLightningIntensity: { value: 0.0 },
+    uLightningTime: { value: 0.0 },
   };
 
   const { containerRef, rendererRef, materialRef } = useShaderRenderer({

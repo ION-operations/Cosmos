@@ -105,11 +105,11 @@ vec4 getTerrainMaterial(vec3 worldPos, vec3 normal, float height) {
     return vec4(color, 1.0);
 }
 
-vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float hitDist) {
-    hitDist = -1.0;
-    if(!uShowTerrain) return vec4(0.0);
+// Returns vec4(color.rgb, hitDistance) — hitDistance = -1.0 if no hit
+vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
+    if(!uShowTerrain) return vec4(0.0, 0.0, 0.0, -1.0);
     
-    if(rd.y > 0.1 && ro.y > uMountainHeight + uOceanLevel + 500.0) return vec4(0.0);
+    if(rd.y > 0.1 && ro.y > uMountainHeight + uOceanLevel + 500.0) return vec4(0.0, 0.0, 0.0, -1.0);
     
     float t = 0.0;
     float maxDist = 80000.0;
@@ -139,8 +139,6 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
             pos = ro + rd * t;
             terrainHeight = getTerrainHeight(pos.xz);
             
-            hitDist = t;
-            
             vec3 normal = getTerrainNormal(pos.xz, terrainHeight);
             vec4 material = getTerrainMaterial(pos, normal, terrainHeight);
             
@@ -157,7 +155,7 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
             
             vec3 color = ambient + diffuse + lightning;
             
-            return vec4(color, 1.0);
+            return vec4(color, t);
         }
         
         lastH = terrainHeight;
@@ -169,7 +167,7 @@ vec4 raymarchTerrain(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor, out float h
         if(t > maxDist) break;
     }
     
-    return vec4(0.0);
+    return vec4(0.0, 0.0, 0.0, -1.0);
 }
 `;
 
