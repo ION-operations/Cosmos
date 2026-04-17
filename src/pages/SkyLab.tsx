@@ -126,6 +126,7 @@ const SkyLab: React.FC = () => {
         visible={showDiagnostics}
         onToggle={() => setShowDiagnostics(false)}
       />
+      <FlightHUD stateRef={flightStateRef} />
 
       {/* Header */}
       <div className="absolute top-5 left-1/2 -translate-x-1/2 panel-glow backdrop-blur-xl rounded-xl p-3 flex items-center gap-3">
