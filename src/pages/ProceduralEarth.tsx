@@ -2246,15 +2246,25 @@ const ProceduralEarth: React.FC = () => {
   const frameRef = useRef(0);
   const lightningTimeRef = useRef(0);
   
-  // Camera state for WASD controls
+  // Legacy camera ref kept for compat (mirrors flight state)
   const cameraRef = useRef({
-    pos: new THREE.Vector3(0, 200, 0),
+    pos: new THREE.Vector3(0, 5, 0),
     yaw: 0,
     pitch: 0,
     velocity: new THREE.Vector3(0, 0, 0),
   });
   const keysRef = useRef<Set<string>>(new Set());
-  
+  const mouseDeltaRef = useRef({ x: 0, y: 0 });
+
+  // ── FLIGHT PHYSICS ────────────────────────────────────────────────────────
+  // Start at 5 m above sea level, free-cam ON by default so the world is
+  // explorable without hitting stall on first paint. Toggle with the HUD button.
+  const flight = useFlightPhysics({}, new THREE.Vector3(0, 5, 0));
+  // Start in free-cam mode; user toggles flight on
+  flight.controlsRef.current.freeCam = true;
+  const [flightModeOn, setFlightModeOn] = useState(false);
+  const [showHUD, setShowHUD] = useState(false);
+
   const [showSettings, setShowSettings] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -2265,6 +2275,16 @@ const ProceduralEarth: React.FC = () => {
   const [webglError, setWebglError] = useState<string | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+
+  // Toggle flight mode: on = aircraft physics, off = free WASD camera
+  const toggleFlightMode = useCallback(() => {
+    setFlightModeOn(prev => {
+      const next = !prev;
+      flight.controlsRef.current.freeCam = !next;
+      if (next) setShowHUD(true);
+      return next;
+    });
+  }, [flight]);
 
   const updateSetting = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
