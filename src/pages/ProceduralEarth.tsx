@@ -54,6 +54,7 @@ uniform int iFrame;
 uniform vec3 uCameraPos;
 uniform float uCameraYaw;
 uniform float uCameraPitch;
+uniform float uCameraRoll;
 uniform float uCameraFOV;
 
 // Celestial
@@ -1802,7 +1803,21 @@ void main() {
         cos(pitch) * cos(yaw)
     );
     
-    vec3 rd = getRayDirection(uv, ro, ro + lookDir, uCameraFOV);
+    // Build basis with roll for banking turns
+    vec3 worldUp = vec3(0.0, 1.0, 0.0);
+    vec3 camRight = normalize(cross(lookDir, worldUp));
+    vec3 camUp = normalize(cross(camRight, lookDir));
+    float cr = cos(uCameraRoll);
+    float sr = sin(uCameraRoll);
+    vec3 rolledRight = camRight * cr + camUp * sr;
+    vec3 rolledUp = camUp * cr - camRight * sr;
+    
+    // Custom ray direction with rolled basis
+    vec2 ndc = (uv - 0.5) * 2.0;
+    ndc.x *= iResolution.x / iResolution.y;
+    float fovRad = radians(uCameraFOV) * 0.5;
+    float tanFov = tan(fovRad);
+    vec3 rd = normalize(lookDir + rolledRight * ndc.x * tanFov + rolledUp * ndc.y * tanFov);
     
     vec3 sunDir = getSunDirection();
     vec3 moonDir = getMoonDirection();
