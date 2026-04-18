@@ -7,17 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import { VERTEX_SHADER, SHARED_UNIFORMS, SHARED_GLSL } from '@/shaders/shared.glsl';
 import { SKY_UNIFORMS, SKY_GLSL, SKY_DEFAULTS } from '@/shaders/sky.glsl';
 import { TERRAIN_UNIFORMS, TERRAIN_GLSL, TERRAIN_DEFAULTS } from '@/shaders/terrain.glsl';
-import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
-import { useShaderRenderer } from '@/components/ShaderRenderer';
-import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
-import FlightHUD from '@/components/FlightHUD';
-
-const TERRAIN_FRAGMENT_SHADER = `
-precision highp float;
-${SHARED_UNIFORMS}
-${SKY_UNIFORMS}
+import { ATMOSPHERE_GLSL } from '@/shaders/atmosphere.glsl';
+// ... keep existing code (other imports)
 ${TERRAIN_UNIFORMS}
 ${SHARED_GLSL}
+${ATMOSPHERE_GLSL}
 ${SKY_GLSL}
 ${TERRAIN_GLSL}
 
