@@ -9,13 +9,22 @@ import { SKY_UNIFORMS, SKY_GLSL, SKY_DEFAULTS } from '@/shaders/sky.glsl';
 import { TERRAIN_UNIFORMS, TERRAIN_GLSL, TERRAIN_DEFAULTS } from '@/shaders/terrain.glsl';
 import { VEGETATION_UNIFORMS, VEGETATION_GLSL, VEGETATION_DEFAULTS } from '@/shaders/vegetation.glsl';
 import { ATMOSPHERE_GLSL } from '@/shaders/atmosphere.glsl';
-// ... keep existing code (other imports)
-${VEGETATION_UNIFORMS}
-${SHARED_GLSL}
-${ATMOSPHERE_GLSL}
-${SKY_GLSL}
-${TERRAIN_GLSL}
-${VEGETATION_GLSL}
+import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
+import { useShaderRenderer } from '@/components/ShaderRenderer';
+import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
+import FlightHUD from '@/components/FlightHUD';
+
+const VEGETATION_FRAGMENT_SHADER = `
+precision highp float;
+${'$'}{SHARED_UNIFORMS}
+${'$'}{SKY_UNIFORMS}
+${'$'}{TERRAIN_UNIFORMS}
+${'$'}{VEGETATION_UNIFORMS}
+${'$'}{SHARED_GLSL}
+${'$'}{ATMOSPHERE_GLSL}
+${'$'}{SKY_GLSL}
+${'$'}{TERRAIN_GLSL}
+${'$'}{VEGETATION_GLSL}
 
 void main() {
     vec2 uv = vUv;
