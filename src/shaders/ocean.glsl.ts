@@ -273,10 +273,10 @@ float foamVoronoi(vec3 p) {
     return saturate(foam * uFoamVoronoiStrength * 0.5);
 }
 
-vec3 computeAllFoam(vec3 p, vec3 normal, vec3 sunDir, vec3 lightColor, float dist, float waveHeight) {
+vec3 computeAllFoam(vec3 p, vec3 normal, vec3 sunDir, vec3 lightColorUnused, float dist, float waveHeight) {
     if(!uEnableFoam || uFoamIntensity <= 0.0) return vec3(0.0);
     if(dist > 3000.0) return vec3(0.0);
-    
+
     float totalFoam = 0.0;
     if(uEnableFoamJacobian) totalFoam += foamJacobian(p, normal);
     if(uEnableFoamShoreline) totalFoam += foamShoreline(p);
@@ -284,62 +284,72 @@ vec3 computeAllFoam(vec3 p, vec3 normal, vec3 sunDir, vec3 lightColor, float dis
     if(uEnableFoamWindstreak) totalFoam += foamWindstreak(p);
     if(uEnableFoamSpray) totalFoam += foamSpray(p, normal, waveHeight);
     if(uEnableFoamVoronoi) totalFoam += foamVoronoi(p);
-    
+
     totalFoam = saturate(totalFoam) * uFoamIntensity;
     if(totalFoam < 0.001) return vec3(0.0);
-    
+
+    vec3 sunLight = getSunLight(p, sunDir);
+    vec3 ambient = getSkyAmbient(p, sunDir) * 0.6;
     vec3 foamAlbedo = vec3(0.85, 0.88, 0.9);
     float NdotL = max(dot(normal, sunDir), 0.0) * 0.6 + 0.4;
-    vec3 ambient = vec3(0.4, 0.45, 0.55) * 0.3;
-    vec3 foamColor = foamAlbedo * (lightColor * NdotL + ambient);
-    
+    vec3 foamColor = foamAlbedo * (sunLight * NdotL + ambient);
+
     float distFade = smoothstep(3000.0, 500.0, dist);
     totalFoam *= distFade;
-    
+
     return foamColor * totalFoam;
 }
 
-vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColor, vec3 eye, float dist) {
+vec3 getOceanColor(vec3 p, vec3 n, vec3 sunDir, vec3 lightColorUnused, vec3 eye, float dist) {
+    // Physical sun reaching this water point (handles Earth shadow + sunset color)
+    vec3 sunLight = getSunLight(p, sunDir);
+    vec3 ambient  = getSkyAmbient(p, sunDir);
+
     float fresnel = 0.0;
     if(uEnableFresnel) {
         fresnel = clamp(1.0 - dot(n, -eye), 0.0, 1.0);
         fresnel = pow(fresnel, 3.0) * 0.5;
     }
-    
-    vec3 reflected = getSkyColor(reflect(eye, n), sunDir);
-    
-    vec3 seaBase = uOceanDeepColor;
+
+    // Reflected sky (already physically correct: includes Rayleigh/Mie/sunset)
+    vec3 reflectedDir = reflect(eye, n);
+    vec3 reflected = getSkyColor(reflectedDir, sunDir);
+
+    // Deep water absorption — modulated by ambient so it goes near-black at night
+    vec3 seaBase = uOceanDeepColor * (ambient * 1.5 + 0.05);
     vec3 seaWaterColor = uOceanColor * 1.5 + vec3(0.0, 0.1, 0.05);
-    vec3 refracted = seaBase + oceanDiffuse(n, sunDir, 80.0) * seaWaterColor * 0.12;
-    
+    vec3 refracted = seaBase + oceanDiffuse(n, sunDir, 80.0) * seaWaterColor * 0.12 * (sunLight * 0.5 + ambient);
+
     vec3 color = mix(refracted, reflected, fresnel);
-    
+
     float waveHeight = oceanMapDetailed(p);
     float heightBoost = max(p.y - waveHeight, 0.0);
     float atten = max(1.0 - dist * dist * 0.0000015, 0.0);
-    color += seaWaterColor * heightBoost * 0.18 * atten;
-    
+    color += seaWaterColor * heightBoost * 0.18 * atten * (sunLight * 0.4 + ambient * 0.6);
+
     if(uEnableSSS) {
         float sss = pow(saturate(dot(-eye, sunDir + n * 0.4)), 3.0);
-        vec3 sssColor = vec3(0.0, 0.15, 0.1) * sss * uSSSIntensity * atten;
+        vec3 sssColor = vec3(0.0, 0.15, 0.1) * sss * uSSSIntensity * atten * sunLight;
         color += sssColor;
     }
-    
+
+    // Specular sun glitter — uses physical sun color so it reddens at sunset, vanishes at night
     float spec = oceanSpecular(n, sunDir, eye, 60.0);
-    color += vec3(spec) * lightColor;
-    
+    color += spec * sunLight;
+
     if(uEnableCaustics) {
         float caustics = getCaustics(p, iTime) * uCausticsIntensity * 0.08;
-        color += caustics * lightColor * atten;
+        color += caustics * sunLight * atten;
     }
-    
+
     float waveH = oceanMapDetailed(p);
-    vec3 foamContribution = computeAllFoam(p, n, sunDir, lightColor, dist, max(p.y - waveH, 0.0));
+    vec3 foamContribution = computeAllFoam(p, n, sunDir, vec3(0.0), dist, max(p.y - waveH, 0.0));
     color += foamContribution;
-    
-    float atmosphereFade = 1.0 - saturate(dist * 0.0003);
-    color = mix(getSkyColor(eye, sunDir) * 0.8, color, atmosphereFade);
-    
+
+    // Aerial perspective: distant water blends with sky
+    vec3 inscatterColor = getSkyColor(eye, sunDir);
+    color = applyAerialPerspective(color, uCameraPos, eye, dist, sunDir, inscatterColor);
+
     return color;
 }
 
