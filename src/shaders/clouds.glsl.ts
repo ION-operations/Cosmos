@@ -131,51 +131,59 @@ vec3 cloudScattering(vec3 pos, vec3 rd, float density, vec3 sunDir, vec3 lightCo
     return ambient + direct + silver;
 }
 
-vec4 raymarchClouds(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColor) {
+vec4 raymarchClouds(vec3 ro, vec3 rd, vec3 sunDir, vec3 lightColorUnused) {
     if(!uShowClouds) return vec4(0.0);
-    
+
     float cloudBase = uCloudHeight;
     float cloudTop = uCloudHeight + uCloudThickness;
-    
+
     vec3 cloudMin = vec3(-CLOUD_EXTENT, cloudBase, -CLOUD_EXTENT);
     vec3 cloudMax = vec3(CLOUD_EXTENT, cloudTop, CLOUD_EXTENT);
-    
+
     vec2 boxHit = rayBoxIntersect(ro, rd, cloudMin, cloudMax);
     if(boxHit.y <= 0.0) return vec4(0.0);
-    
+
     float noise = texture2D(blueNoise, gl_FragCoord.xy / 128.0).r;
     noise = fract(noise + goldenRatio * float(iFrame % 100));
-    
+
     float stepSize = boxHit.y / float(uCloudSteps);
     float t = boxHit.x + stepSize * noise;
-    
+
     vec3 totalLight = vec3(0.0);
     float totalTransmittance = 1.0;
-    
+    float firstHitDist = -1.0;
+
     for(int i = 0; i < 128; i++) {
         if(i >= uCloudSteps) break;
         if(totalTransmittance < 0.01) break;
-        
+
         vec3 pos = ro + rd * t;
-        
+
         if(pos.y >= cloudBase && pos.y <= cloudTop) {
             float density = sampleCloudDensity(pos, false);
-            
+
             if(density > 0.001) {
-                vec3 luminance = cloudScattering(pos, rd, density, sunDir, lightColor);
-                
+                if(firstHitDist < 0.0) firstHitDist = t;
+                vec3 luminance = cloudScattering(pos, rd, density, sunDir, vec3(0.0));
+
                 float stepTransmit = exp(-density * stepSize);
                 vec3 scatter = luminance * (1.0 - stepTransmit);
-                
+
                 totalLight += totalTransmittance * scatter;
                 totalTransmittance *= stepTransmit;
             }
         }
-        
+
         t += stepSize;
         if(t > boxHit.x + boxHit.y) break;
     }
-    
+
+    // Aerial perspective: distant clouds blend toward sky color
+    if(firstHitDist > 0.0) {
+        vec3 inscatterColor = getSkyColor(rd, sunDir);
+        totalLight = applyAerialPerspective(totalLight, ro, rd, firstHitDist, sunDir, inscatterColor * 0.5);
+    }
+
     return vec4(totalLight, 1.0 - totalTransmittance);
 }
 
