@@ -9,9 +9,11 @@ import { Label } from '@/components/ui/label';
 import { 
   Settings, X, Sun, Moon, Cloud, Waves, Mountain, Wind, 
   Sparkles, Pause, Play, RotateCcw, Maximize2, CloudRain, CloudSnow, Zap,
-  Eye, EyeOff, TreePine, Droplets, Plane, Layers
+  Eye, EyeOff, TreePine, Droplets, Plane, Layers, Camera
 } from 'lucide-react';
 import AnimatedLogo from '@/components/AnimatedLogo';
+import { useFlightPhysics } from '@/hooks/useFlightPhysics';
+import FlightHUD from '@/components/FlightHUD';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PROCEDURAL EARTH ENGINE V4.0
@@ -54,6 +56,7 @@ uniform int iFrame;
 uniform vec3 uCameraPos;
 uniform float uCameraYaw;
 uniform float uCameraPitch;
+uniform float uCameraRoll;
 uniform float uCameraFOV;
 
 // Celestial
@@ -1802,7 +1805,21 @@ void main() {
         cos(pitch) * cos(yaw)
     );
     
-    vec3 rd = getRayDirection(uv, ro, ro + lookDir, uCameraFOV);
+    // Build basis with roll for banking turns
+    vec3 worldUp = vec3(0.0, 1.0, 0.0);
+    vec3 camRight = normalize(cross(lookDir, worldUp));
+    vec3 camUp = normalize(cross(camRight, lookDir));
+    float cr = cos(uCameraRoll);
+    float sr = sin(uCameraRoll);
+    vec3 rolledRight = camRight * cr + camUp * sr;
+    vec3 rolledUp = camUp * cr - camRight * sr;
+    
+    // Custom ray direction with rolled basis
+    vec2 ndc = (uv - 0.5) * 2.0;
+    ndc.x *= iResolution.x / iResolution.y;
+    float fovRad = radians(uCameraFOV) * 0.5;
+    float tanFov = tan(fovRad);
+    vec3 rd = normalize(lookDir + rolledRight * ndc.x * tanFov + rolledUp * ndc.y * tanFov);
     
     vec3 sunDir = getSunDirection();
     vec3 moonDir = getMoonDirection();
@@ -1993,7 +2010,7 @@ const DEFAULT_SETTINGS = {
   dayNightCycleSpeed: 1.0,
   
   // Camera
-  cameraHeight: 200,
+  cameraHeight: 5,
   cameraFOV: 75,
   cameraYaw: 0,
   cameraPitch: 0,
@@ -2229,15 +2246,25 @@ const ProceduralEarth: React.FC = () => {
   const frameRef = useRef(0);
   const lightningTimeRef = useRef(0);
   
-  // Camera state for WASD controls
+  // Legacy camera ref kept for compat (mirrors flight state)
   const cameraRef = useRef({
-    pos: new THREE.Vector3(0, 200, 0),
+    pos: new THREE.Vector3(0, 5, 0),
     yaw: 0,
     pitch: 0,
     velocity: new THREE.Vector3(0, 0, 0),
   });
   const keysRef = useRef<Set<string>>(new Set());
-  
+  const mouseDeltaRef = useRef({ x: 0, y: 0 });
+
+  // ── FLIGHT PHYSICS ────────────────────────────────────────────────────────
+  // Start at 5 m above sea level, free-cam ON by default so the world is
+  // explorable without hitting stall on first paint. Toggle with the HUD button.
+  const flight = useFlightPhysics({}, new THREE.Vector3(0, 5, 0));
+  // Start in free-cam mode; user toggles flight on
+  flight.controlsRef.current.freeCam = true;
+  const [flightModeOn, setFlightModeOn] = useState(false);
+  const [showHUD, setShowHUD] = useState(false);
+
   const [showSettings, setShowSettings] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -2248,6 +2275,16 @@ const ProceduralEarth: React.FC = () => {
   const [webglError, setWebglError] = useState<string | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+
+  // Toggle flight mode: on = aircraft physics, off = free WASD camera
+  const toggleFlightMode = useCallback(() => {
+    setFlightModeOn(prev => {
+      const next = !prev;
+      flight.controlsRef.current.freeCam = !next;
+      if (next) setShowHUD(true);
+      return next;
+    });
+  }, [flight]);
 
   const updateSetting = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -2323,6 +2360,7 @@ const ProceduralEarth: React.FC = () => {
         uCameraPos: { value: new THREE.Vector3(0, settings.cameraHeight, 0) },
         uCameraYaw: { value: 0 },
         uCameraPitch: { value: 0 },
+        uCameraRoll: { value: 0 },
         uCameraFOV: { value: settings.cameraFOV },
         
         uTimeOfDay: { value: settings.timeOfDay },
@@ -2464,12 +2502,11 @@ const ProceduralEarth: React.FC = () => {
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
     scene.add(quad);
 
-    // Mouse look controls
+    // Mouse look — accumulates deltas, consumed by the physics step
     const handleMouseMove = (e: MouseEvent) => {
       if (document.pointerLockElement === renderer.domElement) {
-        cameraRef.current.yaw += e.movementX * 0.002;
-        cameraRef.current.pitch -= e.movementY * 0.002;
-        cameraRef.current.pitch = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, cameraRef.current.pitch));
+        mouseDeltaRef.current.x += e.movementX;
+        mouseDeltaRef.current.y += e.movementY;
       }
     };
 
@@ -2477,26 +2514,46 @@ const ProceduralEarth: React.FC = () => {
       renderer.domElement.requestPointerLock();
     };
 
-    // WASD keyboard controls
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysRef.current.add(e.key.toLowerCase());
+      const k = e.key.toLowerCase();
+      keysRef.current.add(k);
+      // F = toggle free-cam (handled inside flight hook controls)
+      if (k === 'f') {
+        flight.controlsRef.current.freeCam = !flight.controlsRef.current.freeCam;
+        setFlightModeOn(!flight.controlsRef.current.freeCam);
+      }
+      // R = reset aircraft + camera
+      if (k === 'r') {
+        flight.reset();
+        flight.stateRef.current.position.set(0, 5, 0);
+      }
+      // H = toggle HUD
+      if (k === 'h') setShowHUD(prev => !prev);
+      if (k === ' ') e.preventDefault();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current.delete(e.key.toLowerCase());
     };
 
-    // Scroll wheel zoom - infinite range
+    // Wheel: in flight mode adjusts throttle, in free-cam zooms forward
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const cam = cameraRef.current;
-      const zoomAmount = -e.deltaY * settingsRef.current.zoomSpeed * 0.1;
-      const forward = new THREE.Vector3(
-        Math.cos(cam.pitch) * Math.sin(cam.yaw),
-        Math.sin(cam.pitch),
-        Math.cos(cam.pitch) * Math.cos(cam.yaw)
-      );
-      cam.pos.add(forward.multiplyScalar(zoomAmount));
+      if (flight.controlsRef.current.freeCam) {
+        const cam = cameraRef.current;
+        const zoomAmount = -e.deltaY * settingsRef.current.zoomSpeed * 0.1;
+        const forward = new THREE.Vector3(
+          Math.cos(cam.pitch) * Math.sin(cam.yaw),
+          Math.sin(cam.pitch),
+          Math.cos(cam.pitch) * Math.cos(cam.yaw)
+        );
+        flight.stateRef.current.position.add(forward.multiplyScalar(zoomAmount));
+      } else {
+        const delta = -Math.sign(e.deltaY) * 0.05;
+        flight.stateRef.current.throttle = THREE.MathUtils.clamp(
+          flight.stateRef.current.throttle + delta, 0, 1,
+        );
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -2519,47 +2576,28 @@ const ProceduralEarth: React.FC = () => {
         frameRef.current++;
         material.uniforms.iTime.value = time;
         material.uniforms.iFrame.value = frameRef.current;
-        
-        // WASD camera movement
-        const keys = keysRef.current;
-        const speed = settings.cameraSpeed * deltaTime;
-        const cam = cameraRef.current;
-        
-        const forward = new THREE.Vector3(
-          Math.cos(cam.pitch) * Math.sin(cam.yaw),
-          Math.sin(cam.pitch),
-          Math.cos(cam.pitch) * Math.cos(cam.yaw)
-        );
-        const right = new THREE.Vector3(
-          Math.cos(cam.yaw),
-          0,
-          -Math.sin(cam.yaw)
-        );
-        const up = new THREE.Vector3(0, 1, 0);
-        
-        const moveDir = new THREE.Vector3(0, 0, 0);
-        
-        if (keys.has('w')) moveDir.add(forward);
-        if (keys.has('s')) moveDir.sub(forward);
-        if (keys.has('a')) moveDir.sub(right);
-        if (keys.has('d')) moveDir.add(right);
-        if (keys.has(' ')) moveDir.add(up);
-        if (keys.has('shift')) moveDir.sub(up);
-        
-        if (moveDir.length() > 0) {
-          moveDir.normalize();
-          cam.velocity.lerp(moveDir.multiplyScalar(speed * 10), 0.1);
-        } else {
-          cam.velocity.multiplyScalar(0.9);
-        }
-        
-        cam.pos.add(cam.velocity.clone().multiplyScalar(deltaTime));
-        
-        // Update camera uniforms
-        material.uniforms.uCameraPos.value.copy(cam.pos);
-        material.uniforms.uCameraYaw.value = cam.yaw;
-        material.uniforms.uCameraPitch.value = cam.pitch;
-        
+
+        // ── FLIGHT PHYSICS STEP ───────────────────────────────────────────
+        // In free-cam mode the hook honors WASD+space/ctrl noclip and uses
+        // settings.cameraSpeed-equivalent base via throttle scalar. In flight
+        // mode it runs full 6-DOF aero.
+        const md = mouseDeltaRef.current;
+        flight.step(deltaTime, keysRef.current, { x: md.x, y: md.y });
+        md.x = 0;
+        md.y = 0;
+
+        // Sync legacy camera ref + shader uniforms
+        const fs = flight.stateRef.current;
+        cameraRef.current.pos = fs.position;
+        cameraRef.current.yaw = fs.yaw;
+        cameraRef.current.pitch = fs.pitch;
+        cameraRef.current.velocity = fs.velocity;
+
+        material.uniforms.uCameraPos.value.copy(fs.position);
+        material.uniforms.uCameraYaw.value = fs.yaw;
+        material.uniforms.uCameraPitch.value = fs.pitch;
+        material.uniforms.uCameraRoll.value = fs.roll;
+
         // Random lightning for storms
         if (settings.weatherType === 3 && Math.random() < 0.002) {
           lightningTimeRef.current = time;
@@ -2804,11 +2842,13 @@ const ProceduralEarth: React.FC = () => {
     setSettings(DEFAULT_SETTINGS);
     setLayers(DEFAULT_LAYERS);
     cameraRef.current = {
-      pos: new THREE.Vector3(0, 200, 0),
+      pos: new THREE.Vector3(0, 5, 0),
       yaw: 0,
       pitch: 0,
       velocity: new THREE.Vector3(0, 0, 0),
     };
+    flight.reset();
+    flight.stateRef.current.position.set(0, 5, 0);
   };
 
   const toggleFullscreen = () => {
@@ -2872,21 +2912,108 @@ const ProceduralEarth: React.FC = () => {
       <div ref={containerRef} className="w-full h-full" />
       
       <AnimatedLogo />
+
+      {/* Flight HUD overlay (only when enabled) */}
+      <FlightHUD stateRef={flight.stateRef} visible={showHUD} />
       
       {/* Header */}
       <div className="absolute top-5 left-20 panel-glow backdrop-blur-xl rounded-xl p-4">
         <h1 className="text-xl font-bold text-primary text-glow">Procedural Earth V4</h1>
-        <p className="text-xs text-muted-foreground">Vegetation • Day/Night • Underwater • WASD Flight</p>
+        <p className="text-xs text-muted-foreground">Vegetation • Day/Night • Underwater • Flight Sim</p>
+      </div>
+
+      {/* Flight mode controls — top-right cluster */}
+      <div className="absolute top-5 right-5 flex flex-col gap-2 items-end">
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={flightModeOn ? 'default' : 'outline'}
+            onClick={toggleFlightMode}
+            className="panel-glow backdrop-blur-md"
+            title="Toggle aircraft flight physics (F)"
+          >
+            <Plane className="w-3.5 h-3.5 mr-1.5" />
+            {flightModeOn ? 'Flight ON' : 'Free Cam'}
+          </Button>
+          <Button
+            size="sm"
+            variant={showHUD ? 'default' : 'outline'}
+            onClick={() => setShowHUD(s => !s)}
+            className="panel-glow backdrop-blur-md"
+            title="Toggle flight HUD (H)"
+          >
+            <Camera className="w-3.5 h-3.5 mr-1.5" />
+            HUD
+          </Button>
+        </div>
+
+        {/* Quick altitude + throttle sliders */}
+        <div className="panel-glow backdrop-blur-xl rounded-xl p-3 w-64 space-y-2">
+          <div>
+            <div className="flex justify-between text-[10px] mb-1">
+              <span className="text-muted-foreground uppercase tracking-wider">Altitude</span>
+              <span className="text-primary font-mono">{flight.stateRef.current.altitude.toFixed(0)} m</span>
+            </div>
+            <Slider
+              defaultValue={[5]}
+              min={2}
+              max={15000}
+              step={1}
+              onValueChange={([v]) => {
+                flight.stateRef.current.position.y = v;
+                if (!flightModeOn) {
+                  flight.stateRef.current.velocity.y = 0;
+                }
+              }}
+            />
+          </div>
+          <div>
+            <div className="flex justify-between text-[10px] mb-1">
+              <span className="text-muted-foreground uppercase tracking-wider">
+                {flightModeOn ? 'Throttle' : 'Move Speed'}
+              </span>
+              <span className="text-primary font-mono">
+                {flightModeOn
+                  ? `${(flight.stateRef.current.throttle * 100).toFixed(0)}%`
+                  : `${(flight.stateRef.current.throttle * 100).toFixed(0)}%`}
+              </span>
+            </div>
+            <Slider
+              defaultValue={[60]}
+              min={0}
+              max={100}
+              step={1}
+              onValueChange={([v]) => {
+                flight.stateRef.current.throttle = v / 100;
+              }}
+            />
+          </div>
+        </div>
       </div>
       
       {/* Instructions */}
-      <div className="absolute bottom-5 left-5 panel-glow backdrop-blur-xl rounded-xl p-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-4">
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Click</kbd> to enable flight</span>
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">WASD</kbd> Move</span>
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Space/Shift</kbd> Up/Down</span>
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Mouse</kbd> Look</span>
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Scroll</kbd> Zoom</span>
+      <div className="absolute bottom-5 left-5 panel-glow backdrop-blur-xl rounded-xl p-3 text-xs text-muted-foreground max-w-[680px]">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Click</kbd> lock mouse</span>
+          {flightModeOn ? (
+            <>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">W/S</kbd> Pitch</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">A/D</kbd> Roll/Bank</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Q/E</kbd> Rudder</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">⇧/Ctrl</kbd> Throttle</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Z/X</kbd> Full/Cut</span>
+            </>
+          ) : (
+            <>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">WASD</kbd> Move</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Space/Ctrl</kbd> Up/Down</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">⇧</kbd> Boost</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Scroll</kbd> Zoom</span>
+            </>
+          )}
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">F</kbd> Toggle Flight</span>
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">H</kbd> HUD</span>
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">R</kbd> Reset</span>
         </div>
       </div>
       
