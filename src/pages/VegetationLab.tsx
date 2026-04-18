@@ -14,7 +14,7 @@ import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
 import FlightHUD from '@/components/FlightHUD';
 
-const VEGETATION_FRAGMENT_SHADER = `
+const VEG_FRAGMENT_SHADER = `
 precision highp float;
 ${'$'}{SHARED_UNIFORMS}
 ${'$'}{SKY_UNIFORMS}
