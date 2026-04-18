@@ -9,9 +9,11 @@ import { Label } from '@/components/ui/label';
 import { 
   Settings, X, Sun, Moon, Cloud, Waves, Mountain, Wind, 
   Sparkles, Pause, Play, RotateCcw, Maximize2, CloudRain, CloudSnow, Zap,
-  Eye, EyeOff, TreePine, Droplets, Plane, Layers
+  Eye, EyeOff, TreePine, Droplets, Plane, Layers, Camera
 } from 'lucide-react';
 import AnimatedLogo from '@/components/AnimatedLogo';
+import { useFlightPhysics } from '@/hooks/useFlightPhysics';
+import FlightHUD from '@/components/FlightHUD';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PROCEDURAL EARTH ENGINE V4.0
