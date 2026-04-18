@@ -2912,21 +2912,108 @@ const ProceduralEarth: React.FC = () => {
       <div ref={containerRef} className="w-full h-full" />
       
       <AnimatedLogo />
+
+      {/* Flight HUD overlay (only when enabled) */}
+      <FlightHUD stateRef={flight.stateRef} visible={showHUD} />
       
       {/* Header */}
       <div className="absolute top-5 left-20 panel-glow backdrop-blur-xl rounded-xl p-4">
         <h1 className="text-xl font-bold text-primary text-glow">Procedural Earth V4</h1>
-        <p className="text-xs text-muted-foreground">Vegetation • Day/Night • Underwater • WASD Flight</p>
+        <p className="text-xs text-muted-foreground">Vegetation • Day/Night • Underwater • Flight Sim</p>
+      </div>
+
+      {/* Flight mode controls — top-right cluster */}
+      <div className="absolute top-5 right-5 flex flex-col gap-2 items-end">
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={flightModeOn ? 'default' : 'outline'}
+            onClick={toggleFlightMode}
+            className="panel-glow backdrop-blur-md"
+            title="Toggle aircraft flight physics (F)"
+          >
+            <Plane className="w-3.5 h-3.5 mr-1.5" />
+            {flightModeOn ? 'Flight ON' : 'Free Cam'}
+          </Button>
+          <Button
+            size="sm"
+            variant={showHUD ? 'default' : 'outline'}
+            onClick={() => setShowHUD(s => !s)}
+            className="panel-glow backdrop-blur-md"
+            title="Toggle flight HUD (H)"
+          >
+            <Camera className="w-3.5 h-3.5 mr-1.5" />
+            HUD
+          </Button>
+        </div>
+
+        {/* Quick altitude + throttle sliders */}
+        <div className="panel-glow backdrop-blur-xl rounded-xl p-3 w-64 space-y-2">
+          <div>
+            <div className="flex justify-between text-[10px] mb-1">
+              <span className="text-muted-foreground uppercase tracking-wider">Altitude</span>
+              <span className="text-primary font-mono">{flight.stateRef.current.altitude.toFixed(0)} m</span>
+            </div>
+            <Slider
+              defaultValue={[5]}
+              min={2}
+              max={15000}
+              step={1}
+              onValueChange={([v]) => {
+                flight.stateRef.current.position.y = v;
+                if (!flightModeOn) {
+                  flight.stateRef.current.velocity.y = 0;
+                }
+              }}
+            />
+          </div>
+          <div>
+            <div className="flex justify-between text-[10px] mb-1">
+              <span className="text-muted-foreground uppercase tracking-wider">
+                {flightModeOn ? 'Throttle' : 'Move Speed'}
+              </span>
+              <span className="text-primary font-mono">
+                {flightModeOn
+                  ? `${(flight.stateRef.current.throttle * 100).toFixed(0)}%`
+                  : `${(flight.stateRef.current.throttle * 100).toFixed(0)}%`}
+              </span>
+            </div>
+            <Slider
+              defaultValue={[60]}
+              min={0}
+              max={100}
+              step={1}
+              onValueChange={([v]) => {
+                flight.stateRef.current.throttle = v / 100;
+              }}
+            />
+          </div>
+        </div>
       </div>
       
       {/* Instructions */}
-      <div className="absolute bottom-5 left-5 panel-glow backdrop-blur-xl rounded-xl p-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-4">
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Click</kbd> to enable flight</span>
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">WASD</kbd> Move</span>
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Space/Shift</kbd> Up/Down</span>
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Mouse</kbd> Look</span>
-          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Scroll</kbd> Zoom</span>
+      <div className="absolute bottom-5 left-5 panel-glow backdrop-blur-xl rounded-xl p-3 text-xs text-muted-foreground max-w-[680px]">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Click</kbd> lock mouse</span>
+          {flightModeOn ? (
+            <>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">W/S</kbd> Pitch</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">A/D</kbd> Roll/Bank</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Q/E</kbd> Rudder</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">⇧/Ctrl</kbd> Throttle</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Z/X</kbd> Full/Cut</span>
+            </>
+          ) : (
+            <>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">WASD</kbd> Move</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Space/Ctrl</kbd> Up/Down</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">⇧</kbd> Boost</span>
+              <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">Scroll</kbd> Zoom</span>
+            </>
+          )}
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">F</kbd> Toggle Flight</span>
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">H</kbd> HUD</span>
+          <span><kbd className="px-1 py-0.5 bg-muted rounded text-primary">R</kbd> Reset</span>
         </div>
       </div>
       
