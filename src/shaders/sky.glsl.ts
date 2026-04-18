@@ -96,7 +96,9 @@ vec3 getSunDisk(vec3 rd, vec3 sunDir) {
     float disk = smoothstep(0.9997, 0.9999, sunDot);
     float corona = pow(saturate(sunDot), 256.0) * 2.0;
     corona += pow(saturate(sunDot), 8.0) * 0.5;
-    return uSunColor * (disk * 50.0 + corona) * uSunIntensity;
+    // Apply atmospheric extinction so sun reddens at sunset and disappears below horizon
+    vec3 sunLight = getSunLightAtSeaLevel(sunDir);
+    return sunLight * (disk * 50.0 + corona);
 }
 
 vec3 getMoonDisk(vec3 rd, vec3 moonDir) {
@@ -128,39 +130,42 @@ float dualLobePhase(float cosTheta, float g1, float g2, float blend) {
 vec3 getSkyColor(vec3 rd, vec3 sunDir) {
     float sunDot = dot(rd, sunDir);
     float horizonFactor = 1.0 - pow(saturate(rd.y), 0.4);
-    
+
     float sunElev = getAutoSunElevation();
+
+    // Base zenith/horizon palette, modulated by sun elevation so it tracks dusk/dawn
     vec3 zenith = uSkyZenithColor;
     vec3 horizon = uSkyHorizonColor;
-    
-    if(sunElev < 0.1) {
-        float t = smoothstep(-0.2, 0.1, sunElev);
-        zenith = mix(vec3(0.02, 0.03, 0.08), zenith, t);
-        horizon = mix(vec3(0.1, 0.05, 0.15), horizon, t);
-        
-        if(sunElev > -0.1 && sunElev < 0.1) {
-            vec3 sunsetColor = vec3(1.0, 0.4, 0.1);
-            float sunsetBlend = 1.0 - abs(sunElev) * 10.0;
-            horizon = mix(horizon, sunsetColor, sunsetBlend * 0.7);
-        }
-    }
-    
+    float dayBlend = smoothstep(-0.05, 0.25, sunElev);
+    zenith  = mix(vec3(0.005, 0.008, 0.025), zenith,  dayBlend);
+    horizon = mix(vec3(0.04,  0.03,  0.06),  horizon, dayBlend);
+
+    // Sunset / sunrise warm horizon driven by physical sun transmittance
+    vec3 sunLight = getSunLightAtSeaLevel(sunDir);
+    float sunsetBand = smoothstep(0.25, 0.0, abs(sunElev));
+    // Reddened sun light bleeds along the horizon, strongest near sun azimuth
+    float horizonAzimuth = pow(saturate(dot(normalize(vec3(rd.x, 0.0, rd.z)),
+                                             normalize(vec3(sunDir.x, 0.0, sunDir.z)))), 4.0);
+    horizon = mix(horizon, sunLight * 0.8 + vec3(0.4, 0.18, 0.06), sunsetBand * (0.3 + 0.7 * horizonAzimuth));
+
     vec3 skyColor = mix(zenith, horizon, horizonFactor);
-    
+
+    // Rayleigh inscatter (blue), modulated by transmitted sun (so it fades at night)
     float rayleigh = rayleighPhase(sunDot) * uRayleighStrength;
-    vec3 rayleighColor = vec3(0.2, 0.4, 0.8) * rayleigh;
-    
+    vec3 rayleighColor = vec3(0.2, 0.4, 0.8) * rayleigh * (sunLight.b * 1.5 + 0.05);
+
+    // Mie inscatter (white-ish near sun, tinted by transmittance)
     float mie = miePhase(sunDot, uMieG) * uMieStrength;
-    vec3 mieColor = uSunColor * mie;
-    
+    vec3 mieColor = sunLight * mie;
+
     skyColor += rayleighColor + mieColor;
-    
+
     if(uWeatherType > 0) {
         float darkening = uWeatherIntensity * 0.5;
         skyColor *= (1.0 - darkening);
-        skyColor = mix(skyColor, vec3(0.4, 0.45, 0.5), uWeatherIntensity * 0.3);
+        skyColor = mix(skyColor, vec3(0.4, 0.45, 0.5) * dayBlend, uWeatherIntensity * 0.3);
     }
-    
+
     return skyColor;
 }
 `;

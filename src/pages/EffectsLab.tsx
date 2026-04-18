@@ -8,6 +8,7 @@ import { VERTEX_SHADER, SHARED_UNIFORMS, SHARED_GLSL } from '@/shaders/shared.gl
 import { SKY_UNIFORMS, SKY_GLSL, SKY_DEFAULTS } from '@/shaders/sky.glsl';
 import { POSTPROCESS_UNIFORMS, POSTPROCESS_GLSL, POSTPROCESS_DEFAULTS } from '@/shaders/postprocess.glsl';
 import { CLOUDS_UNIFORMS, CLOUDS_GLSL, CLOUDS_DEFAULTS } from '@/shaders/clouds.glsl';
+import { ATMOSPHERE_GLSL } from '@/shaders/atmosphere.glsl';
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
@@ -15,14 +16,15 @@ import FlightHUD from '@/components/FlightHUD';
 
 const EFFECTS_FRAGMENT_SHADER = `
 precision highp float;
-${SHARED_UNIFORMS}
-${SKY_UNIFORMS}
-${CLOUDS_UNIFORMS}
-${POSTPROCESS_UNIFORMS}
-${SHARED_GLSL}
-${SKY_GLSL}
-${CLOUDS_GLSL}
-${POSTPROCESS_GLSL}
+${'$'}{SHARED_UNIFORMS}
+${'$'}{SKY_UNIFORMS}
+${'$'}{CLOUDS_UNIFORMS}
+${'$'}{POSTPROCESS_UNIFORMS}
+${'$'}{SHARED_GLSL}
+${'$'}{ATMOSPHERE_GLSL}
+${'$'}{SKY_GLSL}
+${'$'}{CLOUDS_GLSL}
+${'$'}{POSTPROCESS_GLSL}
 
 void main() {
     vec2 uv = vUv;

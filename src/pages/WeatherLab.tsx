@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { VERTEX_SHADER, SHARED_UNIFORMS, SHARED_GLSL } from '@/shaders/shared.glsl';
 import { SKY_UNIFORMS, SKY_GLSL, SKY_DEFAULTS } from '@/shaders/sky.glsl';
 import { WEATHER_UNIFORMS, WEATHER_GLSL, WEATHER_DEFAULTS } from '@/shaders/weather.glsl';
+import { ATMOSPHERE_GLSL } from '@/shaders/atmosphere.glsl';
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
@@ -14,12 +15,13 @@ import FlightHUD from '@/components/FlightHUD';
 
 const WEATHER_FRAGMENT_SHADER = `
 precision highp float;
-${SHARED_UNIFORMS}
-${SKY_UNIFORMS}
-${WEATHER_UNIFORMS}
-${SHARED_GLSL}
-${SKY_GLSL}
-${WEATHER_GLSL}
+${'$'}{SHARED_UNIFORMS}
+${'$'}{SKY_UNIFORMS}
+${'$'}{WEATHER_UNIFORMS}
+${'$'}{SHARED_GLSL}
+${'$'}{ATMOSPHERE_GLSL}
+${'$'}{SKY_GLSL}
+${'$'}{WEATHER_GLSL}
 
 void main() {
     vec2 uv = vUv;

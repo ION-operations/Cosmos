@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { VERTEX_SHADER, SHARED_UNIFORMS, SHARED_GLSL } from '@/shaders/shared.glsl';
 import { SKY_UNIFORMS, SKY_GLSL, SKY_DEFAULTS } from '@/shaders/sky.glsl';
 import { CLOUDS_UNIFORMS, CLOUDS_GLSL, CLOUDS_DEFAULTS } from '@/shaders/clouds.glsl';
+import { ATMOSPHERE_GLSL } from '@/shaders/atmosphere.glsl';
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
@@ -18,6 +19,7 @@ ${SHARED_UNIFORMS}
 ${SKY_UNIFORMS}
 ${CLOUDS_UNIFORMS}
 ${SHARED_GLSL}
+${ATMOSPHERE_GLSL}
 ${SKY_GLSL}
 ${CLOUDS_GLSL}
 

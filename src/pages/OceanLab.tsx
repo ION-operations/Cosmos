@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { VERTEX_SHADER, SHARED_UNIFORMS, SHARED_GLSL } from '@/shaders/shared.glsl';
 import { SKY_UNIFORMS, SKY_GLSL, SKY_DEFAULTS } from '@/shaders/sky.glsl';
 import { OCEAN_UNIFORMS, OCEAN_GLSL, OCEAN_DEFAULTS } from '@/shaders/ocean.glsl';
+import { ATMOSPHERE_GLSL } from '@/shaders/atmosphere.glsl';
 import { SliderSetting, SettingSection } from '@/components/SettingsPanel';
 import { useShaderRenderer } from '@/components/ShaderRenderer';
 import DiagnosticsOverlay from '@/components/DiagnosticsOverlay';
@@ -26,6 +27,7 @@ uniform float uMountainSharpness;
 uniform float uErosionStrength;
 uniform bool uShowTerrain;
 ${SHARED_GLSL}
+${ATMOSPHERE_GLSL}
 ${SKY_GLSL}
 // Inline a minimal getTerrainHeight stub so foamShoreline compiles
 float getTerrainHeight(vec2 p) {
