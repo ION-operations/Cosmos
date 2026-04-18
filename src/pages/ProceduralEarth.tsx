@@ -2010,7 +2010,7 @@ const DEFAULT_SETTINGS = {
   dayNightCycleSpeed: 1.0,
   
   // Camera
-  cameraHeight: 200,
+  cameraHeight: 5,
   cameraFOV: 75,
   cameraYaw: 0,
   cameraPitch: 0,
@@ -2360,6 +2360,7 @@ const ProceduralEarth: React.FC = () => {
         uCameraPos: { value: new THREE.Vector3(0, settings.cameraHeight, 0) },
         uCameraYaw: { value: 0 },
         uCameraPitch: { value: 0 },
+        uCameraRoll: { value: 0 },
         uCameraFOV: { value: settings.cameraFOV },
         
         uTimeOfDay: { value: settings.timeOfDay },
@@ -2501,12 +2502,11 @@ const ProceduralEarth: React.FC = () => {
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
     scene.add(quad);
 
-    // Mouse look controls
+    // Mouse look — accumulates deltas, consumed by the physics step
     const handleMouseMove = (e: MouseEvent) => {
       if (document.pointerLockElement === renderer.domElement) {
-        cameraRef.current.yaw += e.movementX * 0.002;
-        cameraRef.current.pitch -= e.movementY * 0.002;
-        cameraRef.current.pitch = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, cameraRef.current.pitch));
+        mouseDeltaRef.current.x += e.movementX;
+        mouseDeltaRef.current.y += e.movementY;
       }
     };
 
@@ -2514,26 +2514,46 @@ const ProceduralEarth: React.FC = () => {
       renderer.domElement.requestPointerLock();
     };
 
-    // WASD keyboard controls
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysRef.current.add(e.key.toLowerCase());
+      const k = e.key.toLowerCase();
+      keysRef.current.add(k);
+      // F = toggle free-cam (handled inside flight hook controls)
+      if (k === 'f') {
+        flight.controlsRef.current.freeCam = !flight.controlsRef.current.freeCam;
+        setFlightModeOn(!flight.controlsRef.current.freeCam);
+      }
+      // R = reset aircraft + camera
+      if (k === 'r') {
+        flight.reset();
+        flight.stateRef.current.position.set(0, 5, 0);
+      }
+      // H = toggle HUD
+      if (k === 'h') setShowHUD(prev => !prev);
+      if (k === ' ') e.preventDefault();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current.delete(e.key.toLowerCase());
     };
 
-    // Scroll wheel zoom - infinite range
+    // Wheel: in flight mode adjusts throttle, in free-cam zooms forward
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const cam = cameraRef.current;
-      const zoomAmount = -e.deltaY * settingsRef.current.zoomSpeed * 0.1;
-      const forward = new THREE.Vector3(
-        Math.cos(cam.pitch) * Math.sin(cam.yaw),
-        Math.sin(cam.pitch),
-        Math.cos(cam.pitch) * Math.cos(cam.yaw)
-      );
-      cam.pos.add(forward.multiplyScalar(zoomAmount));
+      if (flight.controlsRef.current.freeCam) {
+        const cam = cameraRef.current;
+        const zoomAmount = -e.deltaY * settingsRef.current.zoomSpeed * 0.1;
+        const forward = new THREE.Vector3(
+          Math.cos(cam.pitch) * Math.sin(cam.yaw),
+          Math.sin(cam.pitch),
+          Math.cos(cam.pitch) * Math.cos(cam.yaw)
+        );
+        flight.stateRef.current.position.add(forward.multiplyScalar(zoomAmount));
+      } else {
+        const delta = -Math.sign(e.deltaY) * 0.05;
+        flight.stateRef.current.throttle = THREE.MathUtils.clamp(
+          flight.stateRef.current.throttle + delta, 0, 1,
+        );
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -2556,47 +2576,28 @@ const ProceduralEarth: React.FC = () => {
         frameRef.current++;
         material.uniforms.iTime.value = time;
         material.uniforms.iFrame.value = frameRef.current;
-        
-        // WASD camera movement
-        const keys = keysRef.current;
-        const speed = settings.cameraSpeed * deltaTime;
-        const cam = cameraRef.current;
-        
-        const forward = new THREE.Vector3(
-          Math.cos(cam.pitch) * Math.sin(cam.yaw),
-          Math.sin(cam.pitch),
-          Math.cos(cam.pitch) * Math.cos(cam.yaw)
-        );
-        const right = new THREE.Vector3(
-          Math.cos(cam.yaw),
-          0,
-          -Math.sin(cam.yaw)
-        );
-        const up = new THREE.Vector3(0, 1, 0);
-        
-        const moveDir = new THREE.Vector3(0, 0, 0);
-        
-        if (keys.has('w')) moveDir.add(forward);
-        if (keys.has('s')) moveDir.sub(forward);
-        if (keys.has('a')) moveDir.sub(right);
-        if (keys.has('d')) moveDir.add(right);
-        if (keys.has(' ')) moveDir.add(up);
-        if (keys.has('shift')) moveDir.sub(up);
-        
-        if (moveDir.length() > 0) {
-          moveDir.normalize();
-          cam.velocity.lerp(moveDir.multiplyScalar(speed * 10), 0.1);
-        } else {
-          cam.velocity.multiplyScalar(0.9);
-        }
-        
-        cam.pos.add(cam.velocity.clone().multiplyScalar(deltaTime));
-        
-        // Update camera uniforms
-        material.uniforms.uCameraPos.value.copy(cam.pos);
-        material.uniforms.uCameraYaw.value = cam.yaw;
-        material.uniforms.uCameraPitch.value = cam.pitch;
-        
+
+        // ── FLIGHT PHYSICS STEP ───────────────────────────────────────────
+        // In free-cam mode the hook honors WASD+space/ctrl noclip and uses
+        // settings.cameraSpeed-equivalent base via throttle scalar. In flight
+        // mode it runs full 6-DOF aero.
+        const md = mouseDeltaRef.current;
+        flight.step(deltaTime, keysRef.current, { x: md.x, y: md.y });
+        md.x = 0;
+        md.y = 0;
+
+        // Sync legacy camera ref + shader uniforms
+        const fs = flight.stateRef.current;
+        cameraRef.current.pos = fs.position;
+        cameraRef.current.yaw = fs.yaw;
+        cameraRef.current.pitch = fs.pitch;
+        cameraRef.current.velocity = fs.velocity;
+
+        material.uniforms.uCameraPos.value.copy(fs.position);
+        material.uniforms.uCameraYaw.value = fs.yaw;
+        material.uniforms.uCameraPitch.value = fs.pitch;
+        material.uniforms.uCameraRoll.value = fs.roll;
+
         // Random lightning for storms
         if (settings.weatherType === 3 && Math.random() < 0.002) {
           lightningTimeRef.current = time;
@@ -2841,11 +2842,13 @@ const ProceduralEarth: React.FC = () => {
     setSettings(DEFAULT_SETTINGS);
     setLayers(DEFAULT_LAYERS);
     cameraRef.current = {
-      pos: new THREE.Vector3(0, 200, 0),
+      pos: new THREE.Vector3(0, 5, 0),
       yaw: 0,
       pitch: 0,
       velocity: new THREE.Vector3(0, 0, 0),
     };
+    flight.reset();
+    flight.stateRef.current.position.set(0, 5, 0);
   };
 
   const toggleFullscreen = () => {
