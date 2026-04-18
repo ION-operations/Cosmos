@@ -108,23 +108,26 @@ float beerPowder(float depth) {
     return beer * mix(1.0, powder, uCloudPowder);
 }
 
-vec3 cloudScattering(vec3 pos, vec3 rd, float density, vec3 sunDir, vec3 lightColor) {
+vec3 cloudScattering(vec3 pos, vec3 rd, float density, vec3 sunDir, vec3 lightColorUnused) {
+    // PHYSICAL direct light at this cloud point — handles Earth shadow + sunset reddening
+    vec3 sunLight = getSunLight(pos, sunDir);
     float lightTransmit = cloudLightMarch(pos, sunDir);
-    
+
     float cosTheta = dot(rd, sunDir);
     float phase = dualLobePhase(cosTheta, 0.8, -0.5, 0.2);
-    
-    vec3 ambient = vec3(0.5, 0.6, 0.7) * uCloudAmbient;
-    vec3 direct = lightColor * lightTransmit * phase;
-    
+
+    // Sky-driven ambient — clouds darken at night, blue/warm during day
+    vec3 ambient = getSkyAmbient(pos, sunDir) * uCloudAmbient;
+    vec3 direct = sunLight * lightTransmit * phase;
+
     float silverLining = pow(1.0 - abs(cosTheta), 8.0) * uCloudSilverLining;
-    vec3 silver = lightColor * silverLining * lightTransmit;
-    
+    vec3 silver = sunLight * silverLining * lightTransmit;
+
     if(uWeatherType == 3 && uLightningIntensity > 0.0) {
         float lightning = uLightningIntensity * exp(-abs(iTime - uLightningTime) * 10.0);
         ambient += vec3(1.0) * lightning * 5.0;
     }
-    
+
     return ambient + direct + silver;
 }
 
