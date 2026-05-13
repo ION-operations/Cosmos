@@ -1,0 +1,142 @@
+{
+  "version": "0.1.0",
+  "project": "Cosmos",
+  "domains": [
+    {
+      "id": "D_RENDER_ATMOSPHERE",
+      "name": "Atmosphere and Space View",
+      "owns": [
+        "sky color",
+        "planet rim",
+        "aerosol/haze",
+        "solar angle",
+        "orbital readability",
+        "satellite surface colour moderation"
+      ],
+      "primary_files": [
+        "src/pages/ProceduralEarth.tsx",
+        "src/shaders/atmosphere.glsl.ts",
+        "src/shaders/sky.glsl.ts",
+        "src/pages/CosmosReview.tsx",
+        "src/cosmos/orbital/shaders/planet.ts"
+      ]
+    },
+    {
+      "id": "D_ORBITAL_COMPOSITION",
+      "name": "Orbital Ocean Composition and Review Route",
+      "owns": [
+        "cosmic-earth-view port",
+        "space-to-sea review camera",
+        "JONSWAP orbital ocean",
+        "fixed visual bookmarks",
+        "cinematic route shell",
+        "optional real surface overlay blending"
+      ],
+      "primary_files": [
+        "src/pages/CosmosReview.tsx",
+        "src/cosmos/orbital/WorldEngine.ts",
+        "src/cosmos/orbital/shaders/ocean.ts",
+        "src/cosmos/orbital/shaders/planet.ts",
+        "src/cosmos/gibs/gibsSurfaceOverlay.ts"
+      ]
+    },
+    {
+      "id": "D_CLOUD_WEATHER",
+      "name": "Clouds and Weather Macrostructure",
+      "owns": [
+        "weather atlas",
+        "cloud regimes",
+        "storm structure",
+        "cloud shadows",
+        "precipitation effects"
+      ],
+      "primary_files": [
+        "src/cosmos/weatherAtlas.ts",
+        "src/pages/ProceduralEarth.tsx",
+        "src/shaders/clouds.glsl.ts",
+        "src/shaders/weather.glsl.ts",
+        "src/cosmos/orbital/shaders/clouds.ts",
+        "src/cosmos/orbital/shaders/planet.ts",
+        "src/cosmos/orbital/shaders/common.ts"
+      ]
+    },
+    {
+      "id": "D_OCEAN_SURFACE",
+      "name": "Ocean Surface and Sea Level",
+      "owns": [
+        "wave response",
+        "whitecaps",
+        "foam",
+        "Fresnel",
+        "subsurface color",
+        "sun glitter"
+      ],
+      "primary_files": [
+        "src/pages/ProceduralEarth.tsx",
+        "src/shaders/ocean.glsl.ts",
+        "src/pages/OceanLab.tsx",
+        "src/cosmos/orbital/WorldEngine.ts",
+        "src/cosmos/orbital/shaders/ocean.ts"
+      ]
+    },
+    {
+      "id": "D_UNDERWATER",
+      "name": "Underwater and Bathymetry",
+      "owns": [
+        "absorption",
+        "turbidity",
+        "caustics",
+        "god rays",
+        "bubbles",
+        "future bathymetry textures"
+      ],
+      "primary_files": [
+        "src/pages/ProceduralEarth.tsx",
+        "src/shaders/ocean.glsl.ts"
+      ]
+    },
+    {
+      "id": "D_DATA_ASSIMILATION",
+      "name": "Earth Data and Forecast Providers",
+      "owns": [
+        "NASA GIBS",
+        "NOAA GFS",
+        "ERA5",
+        "Copernicus Marine",
+        "texture tiling",
+        "time metadata",
+        "GIBS WMS global surface atlas",
+        "local public raster manifests"
+      ],
+      "primary_files": [
+        "src/cosmos/weatherAtlas.ts",
+        "scripts/cosmos/fetch-gibs-capabilities.mjs",
+        "scripts/cosmos/build-gibs-catalog.mjs",
+        "scripts/cosmos/fetch-gibs-preview-tile.mjs",
+        "src/cosmos/gibs/gibsSurfaceOverlay.ts",
+        "scripts/cosmos/fetch-gibs-global-snapshot.mjs",
+        "public/cosmos/gibs/README.md",
+        "src/test/cosmos-gibs-surface-overlay.test.ts"
+      ]
+    },
+    {
+      "id": "D_VISUAL_REVIEW",
+      "name": "Hyperrealism Review",
+      "owns": [
+        "artist critique",
+        "screenshot review",
+        "artifact comparison",
+        "visual acceptance gates"
+      ],
+      "primary_files": [
+        "docs/cosmos/COSMOS_QUEUE.json",
+        "docs/cosmos/receipts",
+        "src/pages/CosmosReview.tsx",
+        "src/test/cosmos-review-bookmarks.test.ts",
+        "scripts/cosmos/capture-review-bookmarks.mjs",
+        "src/test/cosmos-weather-atlas.test.ts",
+        "docs/cosmos/CODEX_R0004_LOCAL_PROMPT.md"
+      ]
+    }
+  ]
+}

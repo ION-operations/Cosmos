@@ -1,0 +1,8 @@
+R-0003 screenshot automation was implemented but not executed in this sandbox.
+Reason: Playwright browser runtime is intentionally left for the local Codex CLI machine.
+Local command:
+  npm i -D playwright
+  npx playwright install chromium
+  npm run cosmos:review:screenshots
+Expected output:
+  docs/cosmos/validation/screenshots/R0003/{orbit,cloud-terminator,high-altitude,storm-zone,sun-glitter,sea-level,underwater}.png

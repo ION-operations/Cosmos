@@ -1,0 +1,23 @@
+
+> vite_react_shadcn_ts@0.0.0 cosmos:review:screenshots
+> node scripts/cosmos/capture-review-bookmarks.mjs
+
+[vite] 
+> vite_react_shadcn_ts@0.0.0 dev
+> vite --host 127.0.0.1 --port 8080
+
+Port 8080 is in use, trying another one...
+
+  VITE v5.4.19  ready in 138 ms
+
+  ➜  Local:   http://127.0.0.1:8081/
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 15000ms exceeded.
+    at /home/sev/Cosmos/earth-forge/scripts/cosmos/capture-review-bookmarks.mjs:66:16 {
+  name: 'TimeoutError'
+}
+
+Node.js v22.16.0

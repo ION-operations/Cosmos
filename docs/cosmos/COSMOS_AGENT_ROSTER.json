@@ -1,0 +1,105 @@
+{
+  "version": "0.1.0",
+  "agents": [
+    {
+      "id": "A_LEAD_DEV",
+      "role": "architecture and implementation owner",
+      "gates": [
+        "compiles",
+        "tests pass",
+        "patch is reviewable",
+        "next work is queued"
+      ]
+    },
+    {
+      "id": "A_LEAD_EYES",
+      "role": "hyperrealism artist review owner",
+      "gates": [
+        "detects visual fakeness",
+        "describes realism failure",
+        "approves/blocks visual direction"
+      ]
+    },
+    {
+      "id": "A_WEATHER_PHYSICS",
+      "role": "cloud/weather macrostructure specialist",
+      "gates": [
+        "clouds are not uniform FBM",
+        "regimes are meteorologically interpretable",
+        "storm belts and dry belts read from altitude"
+      ]
+    },
+    {
+      "id": "A_OCEAN_CINEMA",
+      "role": "water surface, color, foam, and underwater specialist",
+      "gates": [
+        "sea-level scale reads correctly",
+        "wave motion is stable",
+        "foam is physically motivated"
+      ]
+    },
+    {
+      "id": "A_DATA_PIPELINE",
+      "role": "external Earth/weather/ocean data ingestion specialist",
+      "gates": [
+        "sources are authoritative",
+        "timestamps are explicit",
+        "fallback data exists"
+      ]
+    },
+    {
+      "id": "A_VALIDATION",
+      "role": "build, tests, and receipt discipline",
+      "gates": [
+        "npm run build",
+        "npm run test",
+        "receipt created"
+      ]
+    },
+    {
+      "id": "A_ORBITAL_COMPOSITOR",
+      "role": "space-to-sea composition and cosmic-earth-view port owner",
+      "gates": [
+        "orbit route loads",
+        "camera bookmarks are deterministic",
+        "ocean/planet pass remains isolated from main shader regressions"
+      ]
+    },
+    {
+      "id": "A_CODEX_LOCAL_RUNNER",
+      "role": "local Codex CLI/dependency/data bootstrap operator",
+      "gates": [
+        "npm install or npm ci reproducible",
+        "local data scripts documented",
+        "receipts and validation logs preserved"
+      ]
+    },
+    {
+      "id": "A_VISUAL_CAPTURE",
+      "role": "Playwright bookmark capture and A/B screenshot artifact operator",
+      "gates": [
+        "all seven bookmarks captured at fixed viewport",
+        "panel-hidden captures are reproducible",
+        "lead-eyes notes map to exact bookmark ids"
+      ]
+    },
+    {
+      "id": "A_GIBS_SURFACE_CARTOGRAPHER",
+      "role": "NASA GIBS global surface atlas and manifest owner",
+      "gates": [
+        "WMS/WMTS source is explicit",
+        "texture and manifest are locally reproducible",
+        "fallback path remains safe when data is missing"
+      ]
+    },
+    {
+      "id": "A_SHADER_INTEGRATION",
+      "role": "surface/weather/ocean shader contract integration owner",
+      "gates": [
+        "new uniforms are synchronized",
+        "fallback rendering remains valid",
+        "data-driven blend controls are art-directable"
+      ]
+    }
+  ]
+}

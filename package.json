@@ -10,7 +10,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "cosmos:gibs:capabilities": "node scripts/cosmos/fetch-gibs-capabilities.mjs",
+    "cosmos:gibs:catalog": "node scripts/cosmos/build-gibs-catalog.mjs",
+    "cosmos:gibs:preview-tile": "node scripts/cosmos/fetch-gibs-preview-tile.mjs",
+    "cosmos:review:screenshots": "node scripts/cosmos/capture-review-bookmarks.mjs",
+    "cosmos:gibs:global-snapshot": "node scripts/cosmos/fetch-gibs-global-snapshot.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -84,6 +89,7 @@
     "globals": "^15.15.0",
     "jsdom": "^20.0.3",
     "lovable-tagger": "^1.1.13",
+    "playwright": "^1.60.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",

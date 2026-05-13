@@ -1,0 +1,29 @@
+
+> vite_react_shadcn_ts@0.0.0 cosmos:review:screenshots
+> node scripts/cosmos/capture-review-bookmarks.mjs
+
+[vite] 
+> vite_react_shadcn_ts@0.0.0 dev
+> vite --host 127.0.0.1 --port 8081 --strictPort
+
+[vite] 
+  VITE v5.4.19  ready in 153 ms
+
+[vite]   ➜  Local:   http://127.0.0.1:8081/
+[vite] Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+{"bookmarkId":"orbit","path":"/home/sev/Cosmos/earth-forge/docs/cosmos/validation/screenshots/R0004/orbit.png","gibsState":"loaded","gibsLayer":"MODIS_Terra_CorrectedReflectance_TrueColor","gibsTime":"2012-07-09"}
+{"bookmarkId":"cloud-terminator","path":"/home/sev/Cosmos/earth-forge/docs/cosmos/validation/screenshots/R0004/cloud-terminator.png","gibsState":"loaded","gibsLayer":"MODIS_Terra_CorrectedReflectance_TrueColor","gibsTime":"2012-07-09"}
+{"bookmarkId":"high-altitude","path":"/home/sev/Cosmos/earth-forge/docs/cosmos/validation/screenshots/R0004/high-altitude.png","gibsState":"loaded","gibsLayer":"MODIS_Terra_CorrectedReflectance_TrueColor","gibsTime":"2012-07-09"}
+{"bookmarkId":"storm-zone","path":"/home/sev/Cosmos/earth-forge/docs/cosmos/validation/screenshots/R0004/storm-zone.png","gibsState":"loaded","gibsLayer":"MODIS_Terra_CorrectedReflectance_TrueColor","gibsTime":"2012-07-09"}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 45000ms exceeded.
+    at /home/sev/Cosmos/earth-forge/scripts/cosmos/capture-review-bookmarks.mjs:117:18 {
+  name: 'TimeoutError'
+}
+
+Node.js v22.16.0

@@ -1593,7 +1593,7 @@ const ProceduralEarthGPU: React.FC = () => {
   const keysRef = useRef<Set<string>>(new Set());
 
   const [showSettings, setShowSettings] = useState(false);
-  const [showLayers, setShowLayers] = useState(false);
+  const [showLayers, setShowLayers] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [settings, setSettings] = useState<EngineSettings>(DEFAULT_SETTINGS);

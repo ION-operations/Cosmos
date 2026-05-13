@@ -1,0 +1,31 @@
+{
+  "receipt_id": "R-0001",
+  "title": "Weather atlas spine and ION-derived Cosmos operating system",
+  "date": "2026-05-12",
+  "summary": "Added a deterministic water-world weather atlas generator, wired it into the main ProceduralEarth shader, exposed controls, and created a Cosmos domain/agent/queue workflow adapted from the ION math sandbox.",
+  "changed_files": [
+    "src/cosmos/weatherAtlas.ts",
+    "src/pages/ProceduralEarth.tsx",
+    "src/components/DiagnosticsOverlay.tsx",
+    "src/components/ui/command.tsx",
+    "src/components/ui/textarea.tsx",
+    "tailwind.config.ts",
+    "docs/PROCEDURAL_EARTH_IMPLEMENTATION.tsx",
+    "docs/cosmos/ION_COSMOS_OPERATING_SYSTEM.md",
+    "docs/cosmos/COSMOS_DOMAIN_REGISTRY.json",
+    "docs/cosmos/COSMOS_AGENT_ROSTER.json",
+    "docs/cosmos/COSMOS_QUEUE.json",
+    "docs/cosmos/validation/VALIDATION_SUMMARY.md"
+  ],
+  "validation": {
+    "npm_run_build": "passed",
+    "npm_run_test": "passed",
+    "npm_run_lint": "passed_with_warnings"
+  },
+  "known_limits": [
+    "The atlas is still a deterministic procedural fallback, not yet live NOAA/NASA/Copernicus data.",
+    "The shader is build-validated but not browser screenshot-validated in this environment.",
+    "Cloud regime layer heights are still constrained by the existing local cloud volume box. Full orbital atmosphere/cloud LOD remains queued.",
+    "The current lint warnings are non-blocking React hook/fast-refresh warnings retained from the existing application structure."
+  ]
+}

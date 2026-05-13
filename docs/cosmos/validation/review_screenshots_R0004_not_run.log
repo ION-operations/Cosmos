@@ -1,0 +1,1 @@
+Playwright screenshot capture was implemented previously and output path was advanced to R0004. It was not run in this sandbox because browser/GPU review should be performed on the local Codex machine after npm i -D playwright && npx playwright install chromium.

@@ -1,0 +1,43 @@
+{
+  "receipt_id": "R-0003_weather_atlas_unification",
+  "project": "Cosmos Water World",
+  "patch_version": "v0.3",
+  "created_utc": "2026-05-13T00:00:00Z",
+  "summary": "Unified the R-0001 Cosmos weather atlas with the R-0002 orbital review route. Orbital planet, volumetric cloud, and ocean shaders now sample the shared weather/terrain-forcing atlas. Added fixed per-bookmark weather anchors, weather atlas controls, GIBS catalog/tile scripts, and Playwright screenshot automation path.",
+  "completed_queue_items": [
+    "Q-0006"
+  ],
+  "partial_queue_items": [
+    "Q-0007",
+    "Q-0008"
+  ],
+  "primary_files_changed": [
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/cosmos/orbital/shaders/common.ts",
+    "src/cosmos/orbital/shaders/clouds.ts",
+    "src/cosmos/orbital/shaders/planet.ts",
+    "src/cosmos/orbital/shaders/ocean.ts",
+    "src/pages/CosmosReview.tsx",
+    "src/test/cosmos-review-bookmarks.test.ts",
+    "src/test/cosmos-weather-atlas.test.ts",
+    "scripts/cosmos/fetch-gibs-capabilities.mjs",
+    "scripts/cosmos/build-gibs-catalog.mjs",
+    "scripts/cosmos/fetch-gibs-preview-tile.mjs",
+    "scripts/cosmos/capture-review-bookmarks.mjs"
+  ],
+  "validation": {
+    "npm_ci_dry_run": "passed",
+    "build": "passed",
+    "test": "passed_3_files_4_tests",
+    "lint": "passed_with_existing_warnings",
+    "gibs_capabilities": "failed_sandbox_dns_EAI_AGAIN",
+    "playwright_screenshots": "implemented_not_run_in_sandbox"
+  },
+  "known_limits": [
+    "The atlas is still the deterministic fallback, not live weather ingestion.",
+    "The GIBS endpoint could not be reached from this sandbox due DNS resolution failure; local Codex should retry.",
+    "Visual WebGL screenshots were not captured in this sandbox; Playwright automation is included for the local machine.",
+    "Underwater remains provisional until bathymetry/depth textures are wired."
+  ],
+  "next_recommended_patch": "R-0004: first real GIBS raster overlay plus local screenshot review artifacts"
+}

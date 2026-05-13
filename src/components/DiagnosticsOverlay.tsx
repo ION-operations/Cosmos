@@ -22,12 +22,19 @@ interface FrameStats {
 
 const HISTORY_SIZE = 120;
 
+interface DisjointTimerQueryExt {
+  TIME_ELAPSED_EXT: number;
+  GPU_DISJOINT_EXT: number;
+}
+
+type RendererRenderFn = THREE.WebGLRenderer['render'];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GPU TIMER QUERY (EXT_disjoint_timer_query_webgl2)
 // ─────────────────────────────────────────────────────────────────────────────
 class GPUTimer {
   private gl: WebGL2RenderingContext | null;
-  private ext: any;
+  private ext: DisjointTimerQueryExt | null;
   private queries: WebGLQuery[] = [];
   private active = false;
   private lastNs = 0;
@@ -39,7 +46,7 @@ class GPUTimer {
     const gl = renderer.getContext();
     if (!(gl instanceof WebGL2RenderingContext)) return;
     this.gl = gl;
-    this.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
+    this.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2') as DisjointTimerQueryExt | null;
   }
 
   begin() {
@@ -105,15 +112,15 @@ const DiagnosticsOverlay: React.FC<DiagnosticsOverlayProps> = ({
   // Wrap renderer.render to time GPU work
   useEffect(() => {
     if (!renderer || !gpuTimerRef.current?.available) return;
-    const originalRender = renderer.render.bind(renderer);
+    const originalRender: RendererRenderFn = renderer.render.bind(renderer);
     const timer = gpuTimerRef.current;
-    (renderer as any).render = (scene: THREE.Scene, cam: THREE.Camera) => {
+    renderer.render = (scene: THREE.Scene, cam: THREE.Camera): void => {
       timer.begin();
       originalRender(scene, cam);
       timer.end();
     };
     return () => {
-      (renderer as any).render = originalRender;
+      renderer.render = originalRender;
     };
   }, [renderer]);
 

@@ -1,0 +1,47 @@
+{
+  "receipt_id": "R-0004_gibs_surface_overlay_runtime",
+  "project": "Cosmos Water World",
+  "patch_version": "v0.4",
+  "created_utc": "2026-05-13T01:10:00Z",
+  "summary": "Added the first real-data surface raster overlay path for /cosmos-review: a local NASA GIBS global true-color atlas loader, WMS global snapshot fetch script, planet shader blending, runtime status panel, art-direction controls, and tests. The sandbox could not download the live image due DNS failure, but the local Codex workflow can fetch the atlas into public/cosmos/gibs and the renderer will consume it automatically.",
+  "completed_queue_items": [
+    "Q-0010"
+  ],
+  "advanced_queue_items": [
+    "Q-0003",
+    "Q-0007"
+  ],
+  "pending_queue_items": [
+    "Q-0011",
+    "Q-0012",
+    "Q-0013",
+    "Q-0014"
+  ],
+  "primary_files_changed": [
+    "src/cosmos/gibs/gibsSurfaceOverlay.ts",
+    "scripts/cosmos/fetch-gibs-global-snapshot.mjs",
+    "public/cosmos/gibs/README.md",
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/cosmos/orbital/shaders/planet.ts",
+    "src/pages/CosmosReview.tsx",
+    "src/test/cosmos-gibs-surface-overlay.test.ts",
+    "src/test/cosmos-review-bookmarks.test.ts",
+    "scripts/cosmos/capture-review-bookmarks.mjs",
+    "package.json"
+  ],
+  "validation": {
+    "npm_ci_dry_run": "passed",
+    "build": "passed",
+    "test": "passed_4_files_6_tests_single_thread_vitest",
+    "lint": "passed_with_existing_non_blocking_warnings",
+    "gibs_global_snapshot": "failed_sandbox_dns_EAI_AGAIN",
+    "playwright_screenshots": "not_run_in_sandbox_pending_local_codex"
+  },
+  "known_limits": [
+    "No live GIBS raster was downloaded in this environment because gibs.earthdata.nasa.gov failed DNS resolution.",
+    "The overlay currently targets a global WMS true-color surface atlas, not full time-dynamic cloud/weather ingestion.",
+    "The true-color GIBS source includes clouds; the shader includes a first-pass bright low-chroma cloud moderation heuristic, but lead-eyes screenshot review is needed.",
+    "Underwater and shallow-water realism still need bathymetry/depth textures."
+  ],
+  "next_recommended_patch": "R-0005: local real-data screenshot review plus bathymetry/depth raster interface."
+}

@@ -1026,7 +1026,7 @@ function createBlueNoiseTexture() {
   const size = 128;
   const data = new Uint8Array(size * size * 4);
   
-  const phi2 = 1.32471795724474602596;
+  const phi2 = 1.324717957244746;
   const a1 = 1.0 / phi2;
   const a2 = 1.0 / (phi2 * phi2);
   

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -14,6 +14,7 @@ import {
 import AnimatedLogo from '@/components/AnimatedLogo';
 import { useFlightPhysics } from '@/hooks/useFlightPhysics';
 import FlightHUD from '@/components/FlightHUD';
+import { createCosmosWeatherAtlas } from '@/cosmos/weatherAtlas';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PROCEDURAL EARTH ENGINE V4.0
@@ -32,6 +33,170 @@ void main() {
     vUv = uv;
     vPosition = position;
     gl_Position = vec4(position, 1.0);
+}
+`;
+
+const SKY_ONLY_FRAGMENT_SHADER = `
+precision highp float;
+
+varying vec2 vUv;
+
+uniform float iTime;
+uniform vec2 iResolution;
+
+uniform float uCameraYaw;
+uniform float uCameraPitch;
+uniform float uCameraFOV;
+
+uniform int uTimeOfDay;
+uniform float uSunAzimuth;
+uniform float uSunElevation;
+uniform vec3 uSunColor;
+uniform float uSunIntensity;
+uniform float uMoonIntensity;
+uniform float uStarIntensity;
+uniform float uDayNightCycleSpeed;
+uniform bool uAutoTimeEnabled;
+
+uniform vec3 uSkyZenithColor;
+uniform vec3 uSkyHorizonColor;
+uniform float uAtmosphereDensity;
+uniform float uRayleighStrength;
+uniform float uMieStrength;
+uniform float uMieG;
+
+uniform int uWeatherType;
+uniform float uWeatherIntensity;
+uniform float uExposure;
+uniform float uSaturation;
+uniform float uVignetteStrength;
+
+#define PI 3.14159265359
+#define TAU 6.28318530718
+
+float saturate(float x) { return clamp(x, 0.0, 1.0); }
+vec3 saturate3(vec3 x) { return clamp(x, 0.0, 1.0); }
+
+float hash12(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float getAutoSunElevation() {
+    if(!uAutoTimeEnabled) return uSunElevation;
+    float cycleTime = iTime * uDayNightCycleSpeed * 0.01;
+    return sin(cycleTime) * 0.5 + 0.1;
+}
+
+float getAutoSunAzimuth() {
+    if(!uAutoTimeEnabled) return uSunAzimuth;
+    float cycleTime = iTime * uDayNightCycleSpeed * 0.01;
+    return mod(cycleTime * 0.3, TAU);
+}
+
+vec3 getSunDirection() {
+    float azimuth = getAutoSunAzimuth();
+    float elevation = getAutoSunElevation();
+    return normalize(vec3(
+        cos(elevation) * sin(azimuth),
+        sin(elevation),
+        cos(elevation) * cos(azimuth)
+    ));
+}
+
+vec3 getMoonDirection(vec3 sunDir) {
+    return normalize(-sunDir + vec3(0.2, 0.3, 0.1));
+}
+
+vec3 getRayDirection() {
+    vec2 p = vUv * 2.0 - 1.0;
+    p.x *= iResolution.x / max(iResolution.y, 1.0);
+
+    float yaw = uCameraYaw;
+    float pitch = clamp(uCameraPitch, -PI * 0.45, PI * 0.45);
+    float fovScale = tan(radians(uCameraFOV) * 0.5);
+
+    vec3 forward = normalize(vec3(
+        cos(pitch) * sin(yaw),
+        sin(pitch),
+        cos(pitch) * cos(yaw)
+    ));
+    vec3 right = normalize(vec3(cos(yaw), 0.0, -sin(yaw)));
+    vec3 up = normalize(cross(right, forward));
+
+    return normalize(forward + right * p.x * fovScale + up * p.y * fovScale);
+}
+
+float rayleighPhase(float cosTheta) {
+    return (3.0 / (16.0 * PI)) * (1.0 + cosTheta * cosTheta);
+}
+
+float miePhase(float cosTheta, float g) {
+    float g2 = g * g;
+    return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5));
+}
+
+float getStars(vec3 rd, float sunElevation) {
+    if(rd.y < 0.0) return 0.0;
+    float visibility = smoothstep(0.12, -0.08, sunElevation);
+    if(visibility <= 0.0) return 0.0;
+
+    vec2 skyUv = rd.xz / max(rd.y + 0.35, 0.08);
+    vec2 cell = floor(skyUv * 180.0);
+    vec2 local = fract(skyUv * 180.0) - 0.5;
+    float seed = hash12(cell);
+    float star = smoothstep(0.03, 0.0, length(local - (vec2(hash12(cell + 7.1), hash12(cell + 19.7)) - 0.5)));
+    star *= step(0.992, seed);
+    return star * visibility * uStarIntensity;
+}
+
+vec3 applyGrade(vec3 color) {
+    color *= uExposure;
+    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    color = mix(vec3(luma), color, uSaturation);
+    if(uVignetteStrength > 0.0) {
+        vec2 vigUV = vUv * 2.0 - 1.0;
+        float vig = 1.0 - dot(vigUV, vigUV) * uVignetteStrength * 0.5;
+        color *= vig;
+    }
+    color = (color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14);
+    return saturate3(color);
+}
+
+void main() {
+    vec3 rd = getRayDirection();
+    vec3 sunDir = getSunDirection();
+    vec3 moonDir = getMoonDirection(sunDir);
+    float sunElevation = getAutoSunElevation();
+
+    float horizon = pow(saturate(rd.y * 0.5 + 0.5), 0.72);
+    vec3 sky = mix(uSkyHorizonColor, uSkyZenithColor, horizon);
+
+    float sunDot = dot(rd, sunDir);
+    float rayleigh = rayleighPhase(sunDot) * uRayleighStrength * uAtmosphereDensity;
+    float mie = miePhase(sunDot, uMieG) * uMieStrength * uAtmosphereDensity;
+    sky += vec3(0.18, 0.35, 0.78) * rayleigh;
+    sky += uSunColor * mie * uSunIntensity;
+
+    if(sunElevation < 0.15 && uWeatherType == 0) {
+        sky += vec3(getStars(rd, sunElevation));
+    }
+
+    if(uWeatherType == 0) {
+        float disk = smoothstep(0.99965, 0.99988, sunDot);
+        float corona = pow(saturate(sunDot), 192.0) * 1.8 + pow(saturate(sunDot), 8.0) * 0.25;
+        sky += uSunColor * (disk * 18.0 + corona) * uSunIntensity;
+
+        float moonDot = dot(rd, moonDir);
+        float moonDisk = smoothstep(0.999, 0.99955, moonDot);
+        sky += vec3(0.86, 0.88, 0.82) * moonDisk * uMoonIntensity * smoothstep(0.15, -0.05, sunElevation);
+    } else {
+        sky *= 1.0 - uWeatherIntensity * 0.45;
+        sky = mix(sky, vec3(0.42, 0.46, 0.52), uWeatherIntensity * 0.28);
+    }
+
+    gl_FragColor = vec4(applyGrade(sky), 1.0);
 }
 `;
 
@@ -164,6 +329,14 @@ uniform float uWindSpeed;
 uniform float uWindDirection;
 uniform float uLightningIntensity;
 uniform float uLightningTime;
+uniform sampler2D uCosmosWeatherAtlasA;
+uniform sampler2D uCosmosWeatherAtlasB;
+uniform sampler2D uCosmosTerrainForcingA;
+uniform sampler2D uCosmosTerrainForcingB;
+uniform vec2 uCosmosWeatherTexel;
+uniform float uWeatherAtlasStrength;
+uniform float uMacroWeatherScale;
+uniform float uCloudRegimeContrast;
 
 // Post-Processing
 uniform float uTAAStrength;
@@ -611,20 +784,102 @@ float getCloudEdgeFade(vec3 p, float extent) {
            smoothstep(1.0, 0.9, edgeCoord.y);
 }
 
+
+struct CosmosWeatherState {
+    float cover;
+    float liquid;
+    float ice;
+    float precip;
+    vec2 wind;
+    float humidity;
+    float temperature;
+    float elevation;
+    float landMask;
+    float coast;
+    float orographic;
+    float leeShadow;
+    float instability;
+    float stratusWeight;
+    float streetWeight;
+    float squallWeight;
+    float cirrusWeight;
+};
+
+vec2 cosmosWeatherUv(vec3 p) {
+    vec2 uv = p.xz * 0.000014 * max(uMacroWeatherScale, 0.01);
+    uv += vec2(0.37, 0.61);
+    uv += vec2(iTime * 0.000018 * (0.3 + uWindSpeed), sin(iTime * 0.00007) * 0.012);
+    return fract(uv);
+}
+
+CosmosWeatherState sampleCosmosWeather(vec3 p) {
+    vec2 uv = cosmosWeatherUv(p);
+    vec4 a = texture2D(uCosmosWeatherAtlasA, uv);
+    vec4 b = texture2D(uCosmosWeatherAtlasB, uv);
+    vec4 ta = texture2D(uCosmosTerrainForcingA, uv);
+    vec4 tb = texture2D(uCosmosTerrainForcingB, uv);
+
+    CosmosWeatherState wx;
+    wx.cover = a.r;
+    wx.liquid = a.g;
+    wx.ice = a.b;
+    wx.precip = a.a;
+    wx.wind = b.rg * 2.0 - 1.0;
+    wx.humidity = b.b;
+    wx.temperature = b.a;
+    wx.elevation = ta.r;
+    wx.landMask = ta.g;
+    wx.coast = ta.b;
+    wx.orographic = tb.b;
+    wx.leeShadow = tb.a;
+    wx.instability = saturate(wx.humidity * wx.temperature + wx.precip * 0.65 + wx.orographic * 0.25 - wx.leeShadow * 0.18);
+
+    float marineLayer = smoothstep(0.35, 0.75, wx.humidity) * (1.0 - smoothstep(0.55, 0.92, wx.temperature));
+    float coastFog = smoothstep(0.15, 0.75, wx.coast) * (1.0 - wx.landMask) * wx.humidity;
+    wx.stratusWeight = saturate((marineLayer + coastFog * 0.75) * wx.cover);
+    wx.streetWeight = saturate(wx.cover * (0.35 + length(wx.wind) * 0.55) * (1.0 - wx.precip * 0.45));
+    wx.squallWeight = saturate(wx.precip * 1.25 + wx.instability * wx.cover * 0.35);
+    wx.cirrusWeight = saturate(wx.ice * 1.15 + wx.squallWeight * 0.38);
+    return wx;
+}
+
+float cosmosCloudRegimeMask(float hFrac, CosmosWeatherState wx, vec3 p) {
+    float lowDeck = (1.0 - smoothstep(0.16, 0.36, hFrac)) * wx.stratusWeight;
+    float midDeck = smoothstep(0.18, 0.36, hFrac) * (1.0 - smoothstep(0.52, 0.74, hFrac)) * (wx.cover * 0.55 + wx.squallWeight * 0.38 + wx.orographic * 0.25);
+    float tower = (1.0 - smoothstep(0.12, 0.46, hFrac)) * wx.squallWeight;
+    float anvil = smoothstep(0.50, 0.72, hFrac) * (1.0 - smoothstep(0.88, 1.0, hFrac)) * wx.squallWeight;
+    float cirrus = smoothstep(0.58, 0.82, hFrac) * wx.cirrusWeight;
+
+    // Wind-aligned streaking for trade cumulus streets / cirrus shields.
+    vec2 dir = normalize(wx.wind + vec2(0.001, 0.0));
+    vec2 perp = vec2(-dir.y, dir.x);
+    float streakCoord = dot(p.xz * 0.00035, perp) + dot(p.xz * 0.00004, dir);
+    float streak = smoothstep(0.30, 0.78, 0.5 + 0.5 * sin(streakCoord * 22.0 + iTime * 0.03));
+    float streets = streak * wx.streetWeight * (1.0 - smoothstep(0.36, 0.62, hFrac));
+
+    float regime = max(max(lowDeck, midDeck), max(max(tower, anvil), max(cirrus, streets)));
+    return saturate(mix(wx.cover, regime, uCloudRegimeContrast));
+}
+
 float sampleCloudDensity(vec3 p, bool cheap) {
+    CosmosWeatherState wx = sampleCosmosWeather(p);
     float cloudBase = uCloudHeight;
     float cloudTop = uCloudHeight + uCloudThickness;
+    float hFrac = saturate((p.y - cloudBase) / max(cloudTop - cloudBase, 1.0));
     
     float heightGrad = getCloudHeightGradient(p.y, cloudBase, cloudTop);
+    float regimeMask = cosmosCloudRegimeMask(hFrac, wx, p);
+    heightGrad *= mix(1.0, mix(0.28, 1.45, regimeMask), uWeatherAtlasStrength);
     if(heightGrad <= 0.0) return 0.0;
     
     float edgeFade = getCloudEdgeFade(p, CLOUD_EXTENT);
     if(edgeFade <= 0.0) return 0.0;
     
+    vec2 macroWind = wx.wind * uWeatherAtlasStrength;
     vec3 windOffset = vec3(
-        cos(uWindDirection) * uWindSpeed * iTime * 10.0,
+        (cos(uWindDirection) * uWindSpeed + macroWind.x) * iTime * 10.0,
         0.0,
-        sin(uWindDirection) * uWindSpeed * iTime * 10.0
+        (sin(uWindDirection) * uWindSpeed + macroWind.y) * iTime * 10.0
     );
     
     vec3 shapeCoord = (p + windOffset) * uCloudScale * 0.0001 + vec3(iTime * uCloudSpeed * 0.002, 0.0, 0.0);
@@ -632,19 +887,22 @@ float sampleCloudDensity(vec3 p, bool cheap) {
     float shape = perlinWorley(shapeCoord, 4);
     
     float weatherCoverage = uCloudCoverage;
+    float atlasCoverage = mix(0.02, 0.96, wx.cover);
+    weatherCoverage = mix(weatherCoverage, atlasCoverage, uWeatherAtlasStrength);
     if(uWeatherType > 0) {
-        weatherCoverage = mix(uCloudCoverage, 0.9, uWeatherIntensity);
+        weatherCoverage = mix(weatherCoverage, 0.9, uWeatherIntensity);
     }
     
     float density = remap(shape * heightGrad, 1.0 - weatherCoverage, 1.0, 0.0, 1.0);
     density = saturate(density);
+    density *= mix(1.0, mix(0.55, 1.35, regimeMask) * mix(0.85, 1.20, wx.humidity), uWeatherAtlasStrength);
     
     if(cheap || density <= 0.0) {
         return density * edgeFade * uCloudDensity;
     }
     
     vec3 detailCoord = (p + windOffset) * uCloudDetailScale * 0.001 + vec3(iTime * uCloudSpeed * 0.004, 0.0, 0.0);
-    float detail = fbm(detailCoord, 3) * 0.3;
+    float detail = fbm(detailCoord, 3) * mix(0.18, 0.42, saturate(wx.precip + wx.instability));
     
     density = remap(density, detail, 1.0, 0.0, 1.0);
     density = saturate(density);
@@ -1135,9 +1393,11 @@ float sea_octave(vec2 uv, float choppy) {
 float oceanMap(vec3 p, int iterations) {
     if(!uEnableWaves) return p.y;
     
-    float SEA_FREQ = uWaveFrequency * 0.16;
-    float SEA_HEIGHT = uWaveHeight * 0.6;
-    float SEA_CHOPPY = 4.0 + uOceanRoughness * 4.0;
+    CosmosWeatherState wx = sampleCosmosWeather(vec3(p.x, uCloudHeight, p.z));
+    float macroSeaState = mix(1.0, 0.72 + wx.humidity * 0.35 + wx.precip * 1.15 + length(wx.wind) * 0.28, uWeatherAtlasStrength);
+    float SEA_FREQ = uWaveFrequency * 0.16 * mix(1.0, 1.0 + wx.precip * 0.25, uWeatherAtlasStrength);
+    float SEA_HEIGHT = uWaveHeight * 0.6 * macroSeaState;
+    float SEA_CHOPPY = 4.0 + uOceanRoughness * 4.0 + wx.precip * uWeatherAtlasStrength * 2.0;
     float SEA_TIME = iTime * uWaveSpeed * 0.8;
     
     float freq = SEA_FREQ;
@@ -1146,7 +1406,7 @@ float oceanMap(vec3 p, int iterations) {
     vec2 uv = p.xz;
     uv.x *= 0.75;
     
-    float windAngle = uWindDirection;
+    float windAngle = mix(uWindDirection, atan(wx.wind.y, wx.wind.x), uWeatherAtlasStrength * smoothstep(0.05, 0.6, length(wx.wind)));
     mat2 windRot = mat2(cos(windAngle), -sin(windAngle), sin(windAngle), cos(windAngle));
     uv = windRot * uv;
     
@@ -1166,6 +1426,8 @@ float oceanMap(vec3 p, int iterations) {
         choppy = mix(choppy, 1.0, 0.2);
     }
     
+    float atlasStormWave = sea_octave(p.xz * 0.045 + wx.wind * SEA_TIME * 0.55, 2.2);
+    h += atlasStormWave * uWeatherAtlasStrength * wx.precip * uWaveHeight * 1.25;
     if(uWeatherType == 3) {
         float stormWave = sea_octave(p.xz * 0.05 + SEA_TIME * 0.5, 2.0);
         h += stormWave * uWeatherIntensity * uWaveHeight * 1.5;
@@ -2114,6 +2376,9 @@ const DEFAULT_SETTINGS = {
   windSpeed: 0.5,
   windDirection: 0.5,
   lightningIntensity: 1.0,
+  weatherAtlasStrength: 0.78,
+  macroWeatherScale: 1.0,
+  cloudRegimeContrast: 0.82,
   
   // Post-Processing
   taaStrength: 0.3,
@@ -2147,7 +2412,7 @@ const DEFAULT_SETTINGS = {
 
 const DEFAULT_LAYERS: LayerVisibility = {
   sky: true,
-  clouds: false, // Default to sky only (no clouds)
+  clouds: false,
   terrain: false,
   ocean: false,
   vegetation: false,
@@ -2155,6 +2420,17 @@ const DEFAULT_LAYERS: LayerVisibility = {
   fog: false,
   godRays: false,
 };
+
+const isSkyOnlyLayerState = (value: LayerVisibility) => (
+  value.sky
+  && !value.clouds
+  && !value.terrain
+  && !value.ocean
+  && !value.vegetation
+  && !value.weather
+  && !value.fog
+  && !value.godRays
+);
 
 type Settings = typeof DEFAULT_SETTINGS;
 
@@ -2265,8 +2541,10 @@ const ProceduralEarth: React.FC = () => {
   const [flightModeOn, setFlightModeOn] = useState(false);
   const [showHUD, setShowHUD] = useState(false);
 
+  const weatherAtlas = useMemo(() => createCosmosWeatherAtlas({ preset: 'waterWorldV01' }), []);
+
   const [showSettings, setShowSettings] = useState(false);
-  const [showLayers, setShowLayers] = useState(false);
+  const [showLayers, setShowLayers] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -2275,6 +2553,8 @@ const ProceduralEarth: React.FC = () => {
   const [webglError, setWebglError] = useState<string | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+
+  useEffect(() => () => weatherAtlas.dispose(), [weatherAtlas]);
 
   // Toggle flight mode: on = aircraft physics, off = free WASD camera
   const toggleFlightMode = useCallback(() => {
@@ -2456,6 +2736,14 @@ const ProceduralEarth: React.FC = () => {
         uWindDirection: { value: settings.windDirection },
         uLightningIntensity: { value: settings.lightningIntensity },
         uLightningTime: { value: 0 },
+        uCosmosWeatherAtlasA: { value: weatherAtlas.weatherA },
+        uCosmosWeatherAtlasB: { value: weatherAtlas.weatherB },
+        uCosmosTerrainForcingA: { value: weatherAtlas.terrainForcingA },
+        uCosmosTerrainForcingB: { value: weatherAtlas.terrainForcingB },
+        uCosmosWeatherTexel: { value: new THREE.Vector2(1 / weatherAtlas.width, 1 / weatherAtlas.height) },
+        uWeatherAtlasStrength: { value: settings.weatherAtlasStrength },
+        uMacroWeatherScale: { value: settings.macroWeatherScale },
+        uCloudRegimeContrast: { value: settings.cloudRegimeContrast },
         
         uTAAStrength: { value: settings.taaStrength },
         uBloomIntensity: { value: settings.bloomIntensity },
@@ -2468,14 +2756,14 @@ const ProceduralEarth: React.FC = () => {
         uRenderScale: { value: 1.0 },
         
         // Layer visibility
-        uShowSky: { value: true },
-        uShowClouds: { value: false },
-        uShowTerrain: { value: false },
-        uShowOcean: { value: false },
-        uShowVegetation: { value: false },
-        uShowWeather: { value: false },
-        uShowFog: { value: false },
-        uShowGodRays: { value: false },
+        uShowSky: { value: layers.sky },
+        uShowClouds: { value: layers.clouds },
+        uShowTerrain: { value: layers.terrain },
+        uShowOcean: { value: layers.ocean },
+        uShowVegetation: { value: layers.vegetation },
+        uShowWeather: { value: layers.weather },
+        uShowFog: { value: layers.fog },
+        uShowGodRays: { value: layers.godRays },
         
         // Ocean sub-feature toggles
         uEnableWaves: { value: settings.enableWaves },
@@ -2495,7 +2783,7 @@ const ProceduralEarth: React.FC = () => {
         uEnableUnderwaterBubbles: { value: settings.enableUnderwaterBubbles },
       },
       vertexShader: VERTEX_SHADER,
-      fragmentShader: EARTH_FRAGMENT_SHADER,
+      fragmentShader: isSkyOnlyLayerState(layers) ? SKY_ONLY_FRAGMENT_SHADER : EARTH_FRAGMENT_SHADER,
     });
     materialRef.current = material;
 
@@ -2731,6 +3019,9 @@ const ProceduralEarth: React.FC = () => {
     u.uWeatherIntensity.value = settings.weatherIntensity;
     u.uWindSpeed.value = settings.windSpeed;
     u.uWindDirection.value = settings.windDirection;
+    u.uWeatherAtlasStrength.value = settings.weatherAtlasStrength;
+    u.uMacroWeatherScale.value = settings.macroWeatherScale;
+    u.uCloudRegimeContrast.value = settings.cloudRegimeContrast;
     
     u.uTAAStrength.value = settings.taaStrength;
     u.uBloomIntensity.value = settings.bloomIntensity;
@@ -2761,6 +3052,11 @@ const ProceduralEarth: React.FC = () => {
   // Update layer visibility uniforms
   useEffect(() => {
     if (!materialRef.current) return;
+    const nextFragmentShader = isSkyOnlyLayerState(layers) ? SKY_ONLY_FRAGMENT_SHADER : EARTH_FRAGMENT_SHADER;
+    if (materialRef.current.fragmentShader !== nextFragmentShader) {
+      materialRef.current.fragmentShader = nextFragmentShader;
+      materialRef.current.needsUpdate = true;
+    }
     const u = materialRef.current.uniforms;
     
     u.uShowSky.value = layers.sky;
@@ -2824,16 +3120,16 @@ const ProceduralEarth: React.FC = () => {
   const setWeatherPreset = (weather: 'clear' | 'rain' | 'snow' | 'storm') => {
     switch(weather) {
       case 'clear':
-        setSettings(prev => ({ ...prev, weatherType: 0, weatherIntensity: 0 }));
+        setSettings(prev => ({ ...prev, weatherType: 0, weatherIntensity: 0, weatherAtlasStrength: 0.78 }));
         break;
       case 'rain':
-        setSettings(prev => ({ ...prev, weatherType: 1, weatherIntensity: 0.7, cloudCoverage: 0.8 }));
+        setSettings(prev => ({ ...prev, weatherType: 1, weatherIntensity: 0.7, cloudCoverage: 0.8, weatherAtlasStrength: 0.88 }));
         break;
       case 'snow':
-        setSettings(prev => ({ ...prev, weatherType: 2, weatherIntensity: 0.6, cloudCoverage: 0.7 }));
+        setSettings(prev => ({ ...prev, weatherType: 2, weatherIntensity: 0.6, cloudCoverage: 0.7, weatherAtlasStrength: 0.82 }));
         break;
       case 'storm':
-        setSettings(prev => ({ ...prev, weatherType: 3, weatherIntensity: 1.0, cloudCoverage: 0.95, windSpeed: 1.5 }));
+        setSettings(prev => ({ ...prev, weatherType: 3, weatherIntensity: 1.0, cloudCoverage: 0.95, windSpeed: 1.5, weatherAtlasStrength: 0.95, cloudRegimeContrast: 0.95 }));
         break;
     }
   };
@@ -2918,8 +3214,8 @@ const ProceduralEarth: React.FC = () => {
       
       {/* Header */}
       <div className="absolute top-5 left-20 panel-glow backdrop-blur-xl rounded-xl p-4">
-        <h1 className="text-xl font-bold text-primary text-glow">Procedural Earth V4</h1>
-        <p className="text-xs text-muted-foreground">Vegetation • Day/Night • Underwater • Flight Sim</p>
+        <h1 className="text-xl font-bold text-primary text-glow">Cosmos Water World v0.1</h1>
+        <p className="text-xs text-muted-foreground">Macro weather atlas • cinematic ocean • flight/sea-level lab</p>
       </div>
 
       {/* Flight mode controls — top-right cluster */}
@@ -3218,7 +3514,7 @@ const ProceduralEarth: React.FC = () => {
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full grid grid-cols-6 p-1 mx-4 mt-2" style={{ width: 'calc(100% - 2rem)' }}>
+            <TabsList className="w-full grid grid-cols-7 p-1 mx-4 mt-2" style={{ width: 'calc(100% - 2rem)' }}>
               <TabsTrigger value="atmosphere" className="text-xs px-2">
                 <Sun className="w-3 h-3" />
               </TabsTrigger>
@@ -3233,6 +3529,9 @@ const ProceduralEarth: React.FC = () => {
               </TabsTrigger>
               <TabsTrigger value="vegetation" className="text-xs px-2">
                 <TreePine className="w-3 h-3" />
+              </TabsTrigger>
+              <TabsTrigger value="weather" className="text-xs px-2">
+                <CloudRain className="w-3 h-3" />
               </TabsTrigger>
               <TabsTrigger value="effects" className="text-xs px-2">
                 <Sparkles className="w-3 h-3" />
@@ -3627,6 +3926,55 @@ const ProceduralEarth: React.FC = () => {
                   </SettingSection>
                 </TabsContent>
                 
+                {/* WEATHER TAB */}
+                <TabsContent value="weather" className="mt-0 space-y-4">
+                  <SettingSection title="Macro Weather Atlas">
+                    <SliderSetting
+                      label="Atlas Strength"
+                      value={settings.weatherAtlasStrength}
+                      min={0} max={1} step={0.01}
+                      format={(v) => `${(v * 100).toFixed(0)}%`}
+                      onChange={(v) => updateSetting('weatherAtlasStrength', v)}
+                    />
+                    <SliderSetting
+                      label="Macro Scale"
+                      value={settings.macroWeatherScale}
+                      min={0.35} max={3} step={0.05}
+                      onChange={(v) => updateSetting('macroWeatherScale', v)}
+                    />
+                    <SliderSetting
+                      label="Regime Contrast"
+                      value={settings.cloudRegimeContrast}
+                      min={0} max={1} step={0.01}
+                      format={(v) => `${(v * 100).toFixed(0)}%`}
+                      onChange={(v) => updateSetting('cloudRegimeContrast', v)}
+                    />
+                  </SettingSection>
+
+                  <SettingSection title="Local Weather Effects">
+                    <SliderSetting
+                      label="Weather Intensity"
+                      value={settings.weatherIntensity}
+                      min={0} max={1} step={0.01}
+                      format={(v) => `${(v * 100).toFixed(0)}%`}
+                      onChange={(v) => updateSetting('weatherIntensity', v)}
+                    />
+                    <SliderSetting
+                      label="Wind Speed"
+                      value={settings.windSpeed}
+                      min={0} max={2.5} step={0.05}
+                      onChange={(v) => updateSetting('windSpeed', v)}
+                    />
+                    <SliderSetting
+                      label="Wind Direction"
+                      value={settings.windDirection}
+                      min={0} max={6.283} step={0.01}
+                      format={(v) => `${((v / 6.283) * 360).toFixed(0)}°`}
+                      onChange={(v) => updateSetting('windDirection', v)}
+                    />
+                  </SettingSection>
+                </TabsContent>
+
                 {/* EFFECTS TAB */}
                 <TabsContent value="effects" className="mt-0 space-y-4">
                   <SettingSection title="Post-Processing">

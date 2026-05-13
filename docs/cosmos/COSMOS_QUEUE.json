@@ -1,0 +1,126 @@
+{
+  "version": "0.1.0",
+  "queue": [
+    {
+      "id": "Q-0002",
+      "title": "Port cosmic-earth-view orbital camera/ocean composition into earth-forge shell",
+      "domains": [
+        "D_RENDER_ATMOSPHERE",
+        "D_OCEAN_SURFACE"
+      ],
+      "status": "completed_in_R-0002"
+    },
+    {
+      "id": "Q-0003",
+      "title": "Replace procedural weather atlas fallback with optional real raster provider interface",
+      "domains": [
+        "D_DATA_ASSIMILATION",
+        "D_CLOUD_WEATHER"
+      ],
+      "status": "advanced_in_R-0004_surface_raster_provider_interface_added_weather_provider_pending"
+    },
+    {
+      "id": "Q-0004",
+      "title": "Add visual review capture protocol: fixed camera bookmarks and A/B screenshots",
+      "domains": [
+        "D_VISUAL_REVIEW"
+      ],
+      "status": "completed_in_R-0002"
+    },
+    {
+      "id": "Q-0005",
+      "title": "Add bathymetry-driven shallow water color and shoreline foam mask",
+      "domains": [
+        "D_UNDERWATER",
+        "D_OCEAN_SURFACE",
+        "D_DATA_ASSIMILATION"
+      ],
+      "status": "next"
+    },
+    {
+      "id": "Q-0006",
+      "title": "Blend R-0001 weather atlas macrostructure into the orbital review cloud pass",
+      "domains": [
+        "D_ORBITAL_COMPOSITION",
+        "D_CLOUD_WEATHER"
+      ],
+      "status": "completed_in_R-0003"
+    },
+    {
+      "id": "Q-0007",
+      "title": "Turn GIBS capabilities bootstrap into a typed raster layer catalog and first static tile fetch",
+      "domains": [
+        "D_DATA_ASSIMILATION"
+      ],
+      "status": "advanced_in_R-0004_global_wms_snapshot_script_added_dns_pending"
+    },
+    {
+      "id": "Q-0008",
+      "title": "Add Playwright visual capture automation for fixed review bookmarks",
+      "domains": [
+        "D_VISUAL_REVIEW",
+        "D_ORBITAL_COMPOSITION"
+      ],
+      "status": "implemented_in_R-0003_pending_local_playwright_run"
+    },
+    {
+      "id": "Q-0009",
+      "title": "Add bathymetry/depth interface for underwater and shallow water review",
+      "domains": [
+        "D_UNDERWATER",
+        "D_OCEAN_SURFACE",
+        "D_DATA_ASSIMILATION"
+      ],
+      "status": "next"
+    },
+    {
+      "id": "Q-0010",
+      "title": "Wire first real GIBS true-color tile layer into orbital planet surface as optional raster overlay",
+      "domains": [
+        "D_DATA_ASSIMILATION",
+        "D_ORBITAL_COMPOSITION",
+        "D_RENDER_ATMOSPHERE"
+      ],
+      "status": "implemented_in_R-0004_optional_global_wms_overlay_runtime_pending_local_data_download"
+    },
+    {
+      "id": "Q-0011",
+      "title": "Run local Playwright bookmark captures and start lead-eyes A/B notes from screenshots",
+      "domains": [
+        "D_VISUAL_REVIEW",
+        "D_ORBITAL_COMPOSITION"
+      ],
+      "status": "next_local_codex"
+    },
+    {
+      "id": "Q-0012",
+      "title": "Run local GIBS global snapshot download, validate manifest, and capture orbit/terminator screenshots with real surface atlas",
+      "domains": [
+        "D_DATA_ASSIMILATION",
+        "D_VISUAL_REVIEW",
+        "D_ORBITAL_COMPOSITION"
+      ],
+      "status": "next_local_codex"
+    },
+    {
+      "id": "Q-0013",
+      "title": "Lead-eyes visual review pass: identify false-scale/fake-satellite cues in R-0004 screenshots",
+      "domains": [
+        "D_VISUAL_REVIEW",
+        "D_RENDER_ATMOSPHERE",
+        "D_OCEAN_SURFACE"
+      ],
+      "status": "next_after_local_screenshots"
+    },
+    {
+      "id": "Q-0014",
+      "title": "Add first bathymetry/depth raster interface for shallow-water color, shelf breaks, and underwater fog/caustics",
+      "domains": [
+        "D_UNDERWATER",
+        "D_OCEAN_SURFACE",
+        "D_DATA_ASSIMILATION"
+      ],
+      "status": "next"
+    }
+  ]
+}

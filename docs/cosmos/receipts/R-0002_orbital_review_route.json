@@ -1,0 +1,44 @@
+{
+  "receipt_id": "R-0002",
+  "title": "Cosmic orbital/ocean review route and fixed visual bookmarks",
+  "date": "2026-05-12",
+  "summary": "Ported the cosmic-earth-view orbital/ocean engine into earth-forge as a dedicated Cosmos Review route, added deterministic review camera bookmarks, stabilized the copied JONSWAP wave spectrum seed, added a bookmark integrity test, and created a local Codex handoff plus GIBS capabilities bootstrap script.",
+  "changed_files": [
+    "src/pages/CosmosReview.tsx",
+    "src/App.tsx",
+    "src/components/LabHub.tsx",
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/cosmos/orbital/shaders/common.ts",
+    "src/cosmos/orbital/shaders/index.ts",
+    "src/cosmos/orbital/shaders/ocean.ts",
+    "src/cosmos/orbital/shaders/planet.ts",
+    "src/cosmos/orbital/shaders/sky.ts",
+    "src/cosmos/orbital/shaders/clouds.ts",
+    "src/cosmos/orbital/shaders/terrain.ts",
+    "src/cosmos/orbital/shaders/particles.ts",
+    "src/test/cosmos-review-bookmarks.test.ts",
+    "scripts/cosmos/fetch-gibs-capabilities.mjs",
+    "package.json",
+    "package-lock.json",
+    "docs/cosmos/CODEX_LOCAL_WORKFLOW.md",
+    "docs/cosmos/COSMOS_DOMAIN_REGISTRY.json",
+    "docs/cosmos/COSMOS_AGENT_ROSTER.json",
+    "docs/cosmos/COSMOS_QUEUE.json",
+    "docs/cosmos/NEXT_SESSION_BOOTSTRAP.md",
+    "docs/cosmos/validation/VALIDATION_SUMMARY_R0002.md"
+  ],
+  "validation": {
+    "npm_install": "passed",
+    "npm_ci_dry_run": "passed",
+    "npm_run_build": "passed",
+    "npm_run_test": "passed_2_tests",
+    "npm_run_lint": "passed_with_warnings"
+  },
+  "known_limits": [
+    "The Cosmos Review route is a ported/isolation route, not yet merged with the R-0001 weather atlas shader path.",
+    "The new underwater bookmark is only a review placeholder; true underwater absorption still needs bathymetry/depth textures.",
+    "Visual screenshot validation was not captured in this environment; the route and bookmark integrity are build/test/lint validated.",
+    "NASA GIBS capability fetching is scripted but not yet integrated as runtime texture ingestion.",
+    "The GIBS capabilities command was not validated in this sandbox because DNS resolution failed with EAI_AGAIN; local Codex should retry on the project machine."
+  ]
+}

@@ -1,0 +1,36 @@
+
+> vite_react_shadcn_ts@0.0.0 build
+> vite build
+
+vite v5.4.19 building for production...
+transforming...
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 1720 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                               1.13 kB │ gzip:   0.48 kB
+dist/assets/index-Cd868yvQ.css               70.74 kB │ gzip:  12.23 kB
+dist/assets/terrain.glsl-DdK5OluW.js          0.26 kB │ gzip:   0.20 kB
+dist/assets/atmosphere.glsl-C3JCe2ql.js       5.63 kB │ gzip:   2.21 kB
+dist/assets/WeatherLab-PHujhErC.js            5.95 kB │ gzip:   2.07 kB
+dist/assets/SkyLab-8L2J-b05.js                6.57 kB │ gzip:   2.15 kB
+dist/assets/clouds.glsl-BKjwyR7O.js           7.19 kB │ gzip:   2.09 kB
+dist/assets/VegetationLab-cGln5zID.js         7.58 kB │ gzip:   2.53 kB
+dist/assets/TerrainLab-Bp-C7KR2.js            7.59 kB │ gzip:   2.40 kB
+dist/assets/CosmosLocalRun-DLwIKHFr.js        7.99 kB │ gzip:   2.39 kB
+dist/assets/CloudLab-IyLu5Qtc.js              8.13 kB │ gzip:   2.49 kB
+dist/assets/EffectsLab-DFA23jXu.js            8.76 kB │ gzip:   2.76 kB
+dist/assets/CosmosReview-Csr5vWzE.js         11.86 kB │ gzip:   3.60 kB
+dist/assets/DiagnosticsOverlay-C92Lq4rm.js   26.23 kB │ gzip:   8.58 kB
+dist/assets/OceanLab-BwoHJehF.js             29.20 kB │ gzip:   7.71 kB
+dist/assets/WorldEngine-D-KJvZe7.js          75.59 kB │ gzip:  23.29 kB
+dist/assets/ProceduralEarthGPU-BWHO6K4z.js   87.41 kB │ gzip:  24.98 kB
+dist/assets/index-CX0cRgPS.js               943.95 kB │ gzip: 262.47 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.75s

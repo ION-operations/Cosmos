@@ -1,0 +1,22 @@
+
+> vite_react_shadcn_ts@0.0.0 cosmos:gibs:capabilities
+> node scripts/cosmos/fetch-gibs-capabilities.mjs /tmp/gibs-wmts-capabilities.xml
+
+node:internal/deps/undici/undici:13510
+      Error.captureStackTrace(err);
+            ^
+
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///mnt/data/cosmos_next/Cosmos/earth-forge/scripts/cosmos/fetch-gibs-capabilities.mjs:9:18 {
+  [cause]: Error: getaddrinfo EAI_AGAIN gibs.earthdata.nasa.gov
+      at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+    errno: -3001,
+    code: 'EAI_AGAIN',
+    syscall: 'getaddrinfo',
+    hostname: 'gibs.earthdata.nasa.gov'
+  }
+}
+
+Node.js v22.16.0
