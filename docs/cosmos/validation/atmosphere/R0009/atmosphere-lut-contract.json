@@ -1,0 +1,102 @@
+{
+  "earthRadiusMeters": 6371000,
+  "planetCenter": {
+    "x": 0,
+    "y": -6371000,
+    "z": 0
+  },
+  "spec": {
+    "transmittance": {
+      "width": 256,
+      "height": 64,
+      "encoding": "RGB=solar transmittance, A=normalized optical depth"
+    },
+    "multiScattering": {
+      "width": 64,
+      "height": 32,
+      "encoding": "RGB=multiple-scattering tint, A=energy"
+    },
+    "skyView": {
+      "width": 192,
+      "height": 108,
+      "encoding": "RGB=sky-view radiance proxy, A=horizon/terminator"
+    },
+    "aerialPerspective": {
+      "width": 96,
+      "height": 64,
+      "encoding": "RGB=aerial-perspective tint, A=fog density"
+    }
+  },
+  "records": [
+    {
+      "bookmarkId": "orbit",
+      "altitudeMeters": 26470903.735928588,
+      "sample": {
+        "opticalDepth": 0,
+        "aerialPerspective": 0,
+        "localSky": 0,
+        "orbitalRim": 1
+      }
+    },
+    {
+      "bookmarkId": "cloud-terminator",
+      "altitudeMeters": 23582891.917412,
+      "sample": {
+        "opticalDepth": 0,
+        "aerialPerspective": 0,
+        "localSky": 0,
+        "orbitalRim": 1
+      }
+    },
+    {
+      "bookmarkId": "high-altitude",
+      "altitudeMeters": 8401.216415220872,
+      "sample": {
+        "opticalDepth": 0.5198386549702666,
+        "aerialPerspective": 0.692244807158985,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "storm-zone",
+      "altitudeMeters": 1200.1951366849244,
+      "sample": {
+        "opticalDepth": 1,
+        "aerialPerspective": 0.7196382414489951,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "sun-glitter",
+      "altitudeMeters": 260.0227584494278,
+      "sample": {
+        "opticalDepth": 1,
+        "aerialPerspective": 0.7198512058197509,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "sea-level",
+      "altitudeMeters": 4.200118348933756,
+      "sample": {
+        "opticalDepth": 1,
+        "aerialPerspective": 0.7198851843169872,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "underwater",
+      "altitudeMeters": -2.6999620152637362,
+      "sample": {
+        "opticalDepth": 1,
+        "aerialPerspective": 0.719885679433272,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    }
+  ]
+}

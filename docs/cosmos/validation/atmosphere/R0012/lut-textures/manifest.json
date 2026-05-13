@@ -1,0 +1,49 @@
+{
+  "release": "R-0012",
+  "model": "higher-fidelity-curved-path-lut-solver",
+  "generatedAtUtc": "2026-05-13T15:43:19.913Z",
+  "controls": {
+    "strength": 0.9,
+    "rayleighScale": 1.04,
+    "mieScale": 0.58,
+    "ozoneScale": 0.94,
+    "multiScatteringStrength": 0.68,
+    "aerialPerspectiveStrength": 0.62,
+    "skyViewStrength": 0.9,
+    "opticalDepthDebug": 0.1
+  },
+  "outputs": [
+    {
+      "key": "transmittance",
+      "filename": "transmittance.png",
+      "width": 320,
+      "height": 80,
+      "bytes": 102400
+    },
+    {
+      "key": "multiScattering",
+      "filename": "multiScattering.png",
+      "width": 96,
+      "height": 48,
+      "bytes": 18432
+    },
+    {
+      "key": "skyView",
+      "filename": "skyView.png",
+      "width": 240,
+      "height": 135,
+      "bytes": 129600
+    },
+    {
+      "key": "aerialPerspective",
+      "filename": "aerialPerspective.png",
+      "width": 128,
+      "height": 72,
+      "bytes": 36864
+    }
+  ],
+  "notes": [
+    "These PNGs are validation/debug exports of the CPU fallback atmosphere LUTs.",
+    "They are intended for lead-eyes inspection and shader/runtime diagnostics, not as final science-grade LUT precomputation."
+  ]
+}

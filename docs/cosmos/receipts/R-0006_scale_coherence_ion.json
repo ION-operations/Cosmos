@@ -1,0 +1,40 @@
+{
+  "id": "R-0006_scale_coherence_ion",
+  "project": "Cosmos",
+  "title": "Fixed-center Earth scale coherence and non-image diagnostics",
+  "status": "completed",
+  "summary": "Stabilized /cosmos-review around a fixed Earth center, introduced shared scale uniforms, converted clouds to spherical shell altitude logic, added ocean/cloud/planet pass alpha diagnostics, and added non-image scale contract scripts for ION-style validation, and replaced reversed-edge shader smoothsteps with explicit inverse fades for more deterministic WebGL behavior.",
+  "files_added": [
+    "src/cosmos/scale/cosmosScale.ts",
+    "src/test/cosmos-scale.test.ts",
+    "scripts/cosmos/report-bookmark-scale-contract.mjs",
+    "scripts/cosmos/capture-review-scale-state.mjs",
+    "docs/cosmos/SCALE_COHERENCE_R0006.md",
+    "docs/cosmos/CODEX_R0006_LOCAL_PROMPT.md",
+    "docs/cosmos/validation/VALIDATION_SUMMARY_R0006.md"
+  ],
+  "files_modified": [
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/cosmos/orbital/shaders/common.ts",
+    "src/cosmos/orbital/shaders/clouds.ts",
+    "src/cosmos/orbital/shaders/ocean.ts",
+    "src/cosmos/orbital/shaders/planet.ts",
+    "src/pages/CosmosReview.tsx",
+    "scripts/cosmos/capture-review-bookmarks.mjs",
+    "package.json",
+    "docs/cosmos/COSMOS_DOMAIN_REGISTRY.json",
+    "docs/cosmos/COSMOS_AGENT_ROSTER.json",
+    "docs/cosmos/COSMOS_QUEUE.json",
+    "docs/cosmos/NEXT_SESSION_BOOTSTRAP.md"
+  ],
+  "validation": {
+    "npm_ci_dry_run": "passed",
+    "npm_ci": "passed",
+    "build": "passed",
+    "test": "passed_7_files_17_tests",
+    "lint": "passed_with_existing_warnings",
+    "scale_contract": "passed",
+    "playwright_runtime_diagnostics": "not_run_in_sandbox"
+  },
+  "next": "Run local Playwright scale diagnostics/screenshots, then R-0007 atmosphere scattering continuity and cloud LOD refinement."
+}

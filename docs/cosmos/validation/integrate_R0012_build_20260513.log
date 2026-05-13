@@ -1,0 +1,37 @@
+
+> vite_react_shadcn_ts@0.0.0 build
+> vite build
+
+vite v5.4.19 building for production...
+transforming...
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 1731 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                               1.15 kB │ gzip:   0.51 kB
+dist/assets/index-BdBrFcBR.css               74.27 kB │ gzip:  12.89 kB
+dist/assets/terrain.glsl-DdK5OluW.js          0.26 kB │ gzip:   0.20 kB
+dist/assets/atmosphere.glsl-C3JCe2ql.js       5.63 kB │ gzip:   2.21 kB
+dist/assets/WeatherLab-7QDFmyX9.js            5.96 kB │ gzip:   2.07 kB
+dist/assets/SkyLab-C59JoI1F.js                6.57 kB │ gzip:   2.15 kB
+dist/assets/clouds.glsl-BKjwyR7O.js           7.19 kB │ gzip:   2.09 kB
+dist/assets/TerrainLab-Dkyw7JuY.js            7.59 kB │ gzip:   2.40 kB
+dist/assets/VegetationLab-Bj6ZqNJd.js         7.59 kB │ gzip:   2.53 kB
+dist/assets/CloudLab-BrT_ZPB7.js              8.13 kB │ gzip:   2.49 kB
+dist/assets/CosmosLocalRun-6Od433Is.js        8.38 kB │ gzip:   2.48 kB
+dist/assets/EffectsLab--MbBHhW4.js            8.76 kB │ gzip:   2.76 kB
+dist/assets/CosmosPage-jRjZBh0E.js           12.81 kB │ gzip:   4.01 kB
+dist/assets/CosmosReview-ngPlgy6v.js         24.83 kB │ gzip:   6.11 kB
+dist/assets/DiagnosticsOverlay-UkrSp-xm.js   26.24 kB │ gzip:   8.58 kB
+dist/assets/OceanLab-Brbmc0nQ.js             29.20 kB │ gzip:   7.71 kB
+dist/assets/ProceduralEarthGPU-CgHiDlN-.js   87.41 kB │ gzip:  24.98 kB
+dist/assets/WorldEngine-Y-63obH_.js         140.13 kB │ gzip:  39.21 kB
+dist/assets/index-Cn7XjxYD.js               947.85 kB │ gzip: 263.27 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.94s

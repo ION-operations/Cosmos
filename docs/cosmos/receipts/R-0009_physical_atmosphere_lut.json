@@ -1,0 +1,39 @@
+{
+  "id": "R-0009",
+  "title": "Physical atmosphere LUT interface",
+  "created_utc": "2026-05-13T00:00:00Z",
+  "status": "sandbox_build_validated",
+  "scope": [
+    "Added CPU fallback atmosphere LUT generator and state packet",
+    "Integrated transmittance, multi-scattering, sky-view, and aerial-perspective LUTs into orbital sky/ocean/planet/cloud passes",
+    "Added optical-depth LUT debug mode",
+    "Added Cosmos Review atmosphere LUT controls and status panel",
+    "Added static atmosphere LUT contract report and unit tests"
+  ],
+  "primary_files": [
+    "src/cosmos/atmosphere/atmosphereLut.ts",
+    "src/cosmos/orbital/shaders/common.ts",
+    "src/cosmos/orbital/shaders/sky.ts",
+    "src/cosmos/orbital/shaders/ocean.ts",
+    "src/cosmos/orbital/shaders/planet.ts",
+    "src/cosmos/orbital/shaders/clouds.ts",
+    "src/cosmos/orbital/shaders/debugOverlay.ts",
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/pages/CosmosReview.tsx",
+    "scripts/cosmos/report-atmosphere-lut-contract.mjs",
+    "src/test/cosmos-atmosphere-lut.test.ts",
+    "src/test/cosmos-debug-overlays.test.ts"
+  ],
+  "validation": {
+    "npm_ci": "passed",
+    "build": "passed",
+    "tests": "passed_10_files_28_tests",
+    "lint": "passed_warning_only",
+    "scale_contract": "passed",
+    "atmosphere_contract": "passed",
+    "debug_contract": "passed",
+    "atmosphere_lut_contract": "passed",
+    "playwright_runtime": "not_run_in_sandbox"
+  },
+  "next": "R-0010 runtime WebGL shader compile/log capture and twilight/terminator LUT calibration"
+}

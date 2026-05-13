@@ -15,7 +15,21 @@
     "cosmos:gibs:catalog": "node scripts/cosmos/build-gibs-catalog.mjs",
     "cosmos:gibs:preview-tile": "node scripts/cosmos/fetch-gibs-preview-tile.mjs",
     "cosmos:review:screenshots": "node scripts/cosmos/capture-review-bookmarks.mjs",
-    "cosmos:gibs:global-snapshot": "node scripts/cosmos/fetch-gibs-global-snapshot.mjs"
+    "cosmos:gibs:global-snapshot": "node scripts/cosmos/fetch-gibs-global-snapshot.mjs",
+    "cosmos:bathymetry:procedural": "node scripts/cosmos/build-procedural-depth-atlas.mjs",
+    "cosmos:bathymetry:etopo-wms": "node scripts/cosmos/fetch-etopo-wms-depth-preview.mjs",
+    "cosmos:review:scale-diagnostics": "node scripts/cosmos/capture-review-scale-state.mjs",
+    "cosmos:review:scale-contract": "node scripts/cosmos/report-bookmark-scale-contract.mjs",
+    "cosmos:review:atmosphere-contract": "node scripts/cosmos/report-atmosphere-continuity-contract.mjs",
+    "cosmos:review:debug-contract": "node scripts/cosmos/report-debug-overlay-contract.mjs",
+    "cosmos:review:debug-screenshots": "node scripts/cosmos/capture-review-debug-overlays.mjs",
+    "cosmos:review:atmosphere-lut-contract": "node scripts/cosmos/report-atmosphere-lut-contract.mjs",
+    "cosmos:review:runtime-contract": "node scripts/cosmos/report-runtime-diagnostics-contract.mjs",
+    "cosmos:review:runtime-diagnostics": "node scripts/cosmos/capture-review-runtime-diagnostics.mjs",
+    "cosmos:review:twilight-contract": "node scripts/cosmos/report-twilight-calibration-contract.mjs",
+    "cosmos:review:atmosphere-calibration": "node scripts/cosmos/report-atmosphere-calibration-contract.mjs",
+    "cosmos:review:atmosphere-lut-quality": "node scripts/cosmos/report-atmosphere-lut-quality-contract.mjs",
+    "cosmos:review:atmosphere-lut-export": "node scripts/cosmos/export-atmosphere-lut-textures.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

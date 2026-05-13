@@ -1,0 +1,288 @@
+{
+  "modes": [
+    {
+      "id": 0,
+      "key": "off",
+      "color": "none",
+      "target": "normal beauty render"
+    },
+    {
+      "id": 1,
+      "key": "scale-ownership",
+      "color": "R=ocean G=cloud B=planet",
+      "target": "pass handoff scale coherence"
+    },
+    {
+      "id": 2,
+      "key": "atmosphere-ownership",
+      "color": "R=local sky G=horizon fog B=orbital rim",
+      "target": "ground-to-space atmosphere handoff"
+    },
+    {
+      "id": 3,
+      "key": "cloud-lod",
+      "color": "R=micro G=meso B=macro",
+      "target": "cloud detail LOD handoff"
+    },
+    {
+      "id": 4,
+      "key": "physical-shells",
+      "color": "green=Earth cyan=cloud base magenta=cloud top amber=atmosphere",
+      "target": "fixed physical shell alignment"
+    },
+    {
+      "id": 5,
+      "key": "composite-diagnostic",
+      "color": "ownership tint plus physical shell line colors",
+      "target": "combined failure localization"
+    },
+    {
+      "id": 6,
+      "key": "optical-depth-lut",
+      "color": "R=optical depth G=aerial perspective B=multi-scattering/rim",
+      "target": "R-0010 atmosphere LUT diagnostics"
+    }
+  ],
+  "earthRadiusMeters": 6371000,
+  "planetCenter": {
+    "x": 0,
+    "y": -6371000,
+    "z": 0
+  },
+  "records": [
+    {
+      "bookmarkId": "orbit",
+      "position": [
+        0,
+        15500000,
+        24500000
+      ],
+      "debugState": {
+        "altitudeMeters": 26470903.735928588,
+        "scaleOwnership": {
+          "ocean": 0,
+          "cloud": 0,
+          "planet": 1
+        },
+        "atmosphereOwnership": {
+          "localSky": 0,
+          "horizonFog": 0,
+          "orbitalRim": 1
+        },
+        "cloudLod": {
+          "micro": 0,
+          "meso": 0,
+          "macro": 1
+        }
+      }
+    },
+    {
+      "bookmarkId": "cloud-terminator",
+      "position": [
+        -9000000,
+        13000000,
+        21000000
+      ],
+      "debugState": {
+        "altitudeMeters": 23582891.917412,
+        "scaleOwnership": {
+          "ocean": 0,
+          "cloud": 0,
+          "planet": 1
+        },
+        "atmosphereOwnership": {
+          "localSky": 0,
+          "horizonFog": 0,
+          "orbitalRim": 1
+        },
+        "cloudLod": {
+          "micro": 0,
+          "meso": 0,
+          "macro": 1
+        }
+      }
+    },
+    {
+      "bookmarkId": "twilight-limb",
+      "position": [
+        -14200000,
+        11800000,
+        21800000
+      ],
+      "debugState": {
+        "altitudeMeters": 25363291.247796915,
+        "scaleOwnership": {
+          "ocean": 0,
+          "cloud": 0,
+          "planet": 1
+        },
+        "atmosphereOwnership": {
+          "localSky": 0,
+          "horizonFog": 0,
+          "orbitalRim": 1
+        },
+        "cloudLod": {
+          "micro": 0,
+          "meso": 0,
+          "macro": 1
+        }
+      }
+    },
+    {
+      "bookmarkId": "high-altitude",
+      "position": [
+        1600,
+        8400,
+        3600
+      ],
+      "debugState": {
+        "altitudeMeters": 8401.216415220872,
+        "scaleOwnership": {
+          "ocean": 1,
+          "cloud": 1,
+          "planet": 0
+        },
+        "atmosphereOwnership": {
+          "localSky": 1,
+          "horizonFog": 1,
+          "orbitalRim": 0
+        },
+        "cloudLod": {
+          "micro": 0.9484534169992771,
+          "meso": 1,
+          "macro": 0.3840236205231613
+        }
+      }
+    },
+    {
+      "bookmarkId": "storm-zone",
+      "position": [
+        -620,
+        1200,
+        1450
+      ],
+      "debugState": {
+        "altitudeMeters": 1200.1951366849244,
+        "scaleOwnership": {
+          "ocean": 1,
+          "cloud": 1,
+          "planet": 0
+        },
+        "atmosphereOwnership": {
+          "localSky": 1,
+          "horizonFog": 1,
+          "orbitalRim": 0
+        },
+        "cloudLod": {
+          "micro": 1,
+          "meso": 1,
+          "macro": 0.35005981881939213
+        }
+      }
+    },
+    {
+      "bookmarkId": "sun-glitter",
+      "position": [
+        140,
+        260,
+        520
+      ],
+      "debugState": {
+        "altitudeMeters": 260.0227584494278,
+        "scaleOwnership": {
+          "ocean": 1,
+          "cloud": 1,
+          "planet": 0
+        },
+        "atmosphereOwnership": {
+          "localSky": 1,
+          "horizonFog": 1,
+          "orbitalRim": 0
+        },
+        "cloudLod": {
+          "micro": 1,
+          "meso": 1,
+          "macro": 0.35
+        }
+      }
+    },
+    {
+      "bookmarkId": "sea-level",
+      "position": [
+        8,
+        4.2,
+        38
+      ],
+      "debugState": {
+        "altitudeMeters": 4.200118348933756,
+        "scaleOwnership": {
+          "ocean": 1,
+          "cloud": 1,
+          "planet": 0
+        },
+        "atmosphereOwnership": {
+          "localSky": 1,
+          "horizonFog": 1,
+          "orbitalRim": 0
+        },
+        "cloudLod": {
+          "micro": 1,
+          "meso": 1,
+          "macro": 0.35
+        }
+      }
+    },
+    {
+      "bookmarkId": "low-twilight-horizon",
+      "position": [
+        -45,
+        7.5,
+        64
+      ],
+      "debugState": {
+        "altitudeMeters": 7.500480378977954,
+        "scaleOwnership": {
+          "ocean": 1,
+          "cloud": 1,
+          "planet": 0
+        },
+        "atmosphereOwnership": {
+          "localSky": 1,
+          "horizonFog": 1,
+          "orbitalRim": 0
+        },
+        "cloudLod": {
+          "micro": 1,
+          "meso": 1,
+          "macro": 0.35
+        }
+      }
+    },
+    {
+      "bookmarkId": "underwater",
+      "position": [
+        0,
+        -2.7,
+        22
+      ],
+      "debugState": {
+        "altitudeMeters": -2.6999620152637362,
+        "scaleOwnership": {
+          "ocean": 1,
+          "cloud": 1,
+          "planet": 0
+        },
+        "atmosphereOwnership": {
+          "localSky": 1,
+          "horizonFog": 1,
+          "orbitalRim": 0
+        },
+        "cloudLod": {
+          "micro": 1,
+          "meso": 1,
+          "macro": 0.35
+        }
+      }
+    }
+  ]
+}

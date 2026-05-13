@@ -1,0 +1,45 @@
+{
+  "id": "R-0010_runtime_shader_twilight",
+  "project": "Cosmos Water World",
+  "patch": "v0.10 / R-0010",
+  "title": "Runtime WebGL shader diagnostics and twilight/terminator calibration targets",
+  "status": "implemented_in_sandbox_static_validated_runtime_capture_local_pending",
+  "summary": "Adds browser runtime diagnostics, Three.js shader-error bridge, Playwright WebGL shader/program log capture, runtime diagnostics UI panel, and dedicated twilight/terminator review bookmarks and calibration contracts.",
+  "major_files": [
+    "src/cosmos/runtime/runtimeDiagnostics.ts",
+    "src/cosmos/atmosphere/twilightCalibration.ts",
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/pages/CosmosReview.tsx",
+    "scripts/cosmos/capture-review-runtime-diagnostics.mjs",
+    "scripts/cosmos/report-runtime-diagnostics-contract.mjs",
+    "scripts/cosmos/report-twilight-calibration-contract.mjs",
+    "docs/cosmos/RUNTIME_SHADER_DIAGNOSTICS_R0010.md",
+    "docs/cosmos/CODEX_R0010_LOCAL_PROMPT.md"
+  ],
+  "new_review_bookmarks": [
+    "twilight-limb",
+    "low-twilight-horizon"
+  ],
+  "preserved_review_bookmarks": [
+    "orbit",
+    "cloud-terminator",
+    "high-altitude",
+    "storm-zone",
+    "sun-glitter",
+    "sea-level",
+    "underwater"
+  ],
+  "validation": {
+    "build": "passed",
+    "tests": "passed_12_files_33_tests",
+    "lint": "passed_warning_only",
+    "scale_contract": "passed",
+    "atmosphere_contract": "passed",
+    "debug_contract": "passed",
+    "atmosphere_lut_contract": "passed",
+    "runtime_contract": "passed",
+    "twilight_contract": "passed",
+    "playwright_runtime_capture": "not_run_in_sandbox_local_codex_required"
+  },
+  "next": "R-0011 should tune twilight/terminator defaults only after local runtime diagnostics report zero shader compile errors, zero program link errors, zero page errors, and no WebGL context loss."
+}

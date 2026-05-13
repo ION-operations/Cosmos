@@ -39,11 +39,188 @@ vec3 atmosphere(vec3 rd, vec3 sd, float si, float alt){
   float pM=0.11937*(1.-g2)/pow(1.+g2-2.*g*mu,1.5);
   vec3 col=si*(pR*BR*sR+pM*BM*sM);
   float sunAng=0.00935;
-  float sunEdge=smoothstep(sunAng*1.1,sunAng*.9,acos(clamp(mu,-1.,1.)));
+  float sunEdge=1.0 - smoothstep(sunAng*.9, sunAng*1.1, acos(clamp(mu,-1.,1.)));
   vec3 sunT=exp(-(BR*oR+BM*1.1*oM));
   col+=sunT*sunEdge*si*0.5;
   return col;
 }`;
+
+
+
+// Cosmos physical scale uniforms shared by fullscreen and projected passes.
+// This keeps camera altitude, planet center, atmosphere radius, and pass cross-fades coherent
+// across sea-level, high-altitude, and orbital views.
+export const SCALE_GLSL = `
+uniform vec3 uCosmosPlanetCenter;
+uniform float uCosmosEarthRadius;
+uniform float uCosmosAtmosphereRadius;
+uniform float uCosmosCameraAltitudeMeters;
+uniform float uCosmosScaleLod;
+uniform float uCosmosOceanPassAlpha;
+uniform float uCosmosCloudPassAlpha;
+uniform float uCosmosPlanetPassAlpha;
+uniform float uCosmosLocalAtmosphereAlpha;
+uniform float uCosmosCloudMicroAlpha;
+uniform float uCosmosCloudMesoAlpha;
+uniform float uCosmosCloudMacroAlpha;
+uniform float uCosmosHorizonFogAlpha;
+uniform float uCosmosOrbitalRimAlpha;
+
+vec2 cosmosRaySphere(vec3 o, vec3 d, vec3 c, float r){
+  vec3 oc = o - c;
+  float b = dot(oc, d);
+  float c2 = dot(oc, oc) - r * r;
+  float disc = b * b - c2;
+  if(disc < 0.0) return vec2(1e20, -1e20);
+  float h = sqrt(disc);
+  return vec2(-b - h, -b + h);
+}
+
+float cosmosAltitudeMeters(vec3 p){
+  return length(p - uCosmosPlanetCenter) - uCosmosEarthRadius;
+}
+
+float cosmosPassFade(float alpha){
+  return clamp(alpha, 0.0, 1.0);
+}
+`;
+
+
+
+// Cosmos atmosphere/cloud continuity helpers.
+// These functions intentionally use the same fixed Earth scale uniforms as SCALE_GLSL so sky,
+// projected ocean, volumetric clouds, and orbital rim lighting do not drift apart while zooming.
+export const ATMOSPHERE_CONTINUITY_GLSL = `
+uniform float uAtmosphereContinuityStrength;
+uniform float uHorizonHazeStrength;
+uniform float uCloudLodBias;
+
+float cosmosInvSmoothstep(float edge0, float edge1, float value){
+  return 1.0 - smoothstep(edge0, edge1, value);
+}
+
+float cosmosLocalSkyContinuity(){
+  return clamp(uCosmosLocalAtmosphereAlpha * uAtmosphereContinuityStrength, 0.0, 1.0);
+}
+
+vec3 cosmosAtmosphereContinuityColor(float sunMu){
+  vec3 day = vec3(0.34, 0.52, 0.94);
+  vec3 lowSun = vec3(1.0, 0.45, 0.16);
+  vec3 twilight = vec3(0.22, 0.16, 0.34);
+  vec3 warm = mix(twilight, lowSun, smoothstep(-0.28, 0.14, sunMu));
+  return mix(warm, day, smoothstep(0.06, 0.55, sunMu));
+}
+
+float cosmosHorizonWeight(vec3 rd){
+  float y = abs(normalize(rd).y);
+  return pow(1.0 - clamp(y, 0.0, 1.0), 2.15);
+}
+
+float cosmosAerialPerspectiveFactor(float distanceMeters, float altitudeMeters){
+  float alt = max(altitudeMeters, 0.0);
+  float airDensity = exp(-alt / 38000.0);
+  float fog = 1.0 - exp(-distanceMeters * distanceMeters * 2.25e-10 * airDensity * max(uHorizonHazeStrength, 0.0));
+  return clamp(fog * uAtmosphereContinuityStrength * uCosmosHorizonFogAlpha, 0.0, 1.0);
+}
+
+float cosmosCloudMicroDetailAlpha(float rayDistanceMeters){
+  float distanceTerm = 1.0 - smoothstep(12000.0, 90000.0, rayDistanceMeters);
+  float altitudeTerm = uCosmosCloudMicroAlpha;
+  float bias = clamp(uCloudLodBias, 0.0, 1.0);
+  return clamp(mix(altitudeTerm * distanceTerm, max(altitudeTerm, distanceTerm) * altitudeTerm, bias), 0.0, 1.0);
+}
+
+float cosmosCloudMesoDetailAlpha(float rayDistanceMeters){
+  float distanceTerm = 1.0 - smoothstep(65000.0, 360000.0, rayDistanceMeters);
+  float altitudeTerm = uCosmosCloudMesoAlpha;
+  return clamp(max(distanceTerm * 0.45, altitudeTerm) * (0.55 + uCloudLodBias * 0.45), 0.0, 1.0);
+}
+
+float cosmosCloudMacroDetailAlpha(){
+  return clamp(uCosmosCloudMacroAlpha, 0.0, 1.0);
+}
+`;
+
+
+
+// Cosmos R-0009 atmosphere LUT interface.
+// This is a WebGL-safe lookup-table contract inspired by production sky models: generated
+// CPU fallback textures today, replaceable by compute/precomputed textures later.
+export const ATMOSPHERE_LUT_GLSL = `
+uniform sampler2D uCosmosTransmittanceLut;
+uniform sampler2D uCosmosMultiScatteringLut;
+uniform sampler2D uCosmosSkyViewLut;
+uniform sampler2D uCosmosAerialPerspectiveLut;
+uniform float uAtmosphereLutStrength;
+uniform float uRayleighScale;
+uniform float uMieScale;
+uniform float uOzoneScale;
+uniform float uMultiScatteringStrength;
+uniform float uAerialPerspectiveStrength;
+uniform float uSkyViewLutStrength;
+uniform float uOpticalDepthDebugStrength;
+
+float cosmosLutSat(float v){ return clamp(v, 0.0, 1.0); }
+
+vec2 cosmosTransmittanceLutUv(float altitudeMeters, float sunMu){
+  float x = cosmosLutSat((sunMu + 0.35) / 1.35);
+  float y = pow(cosmosLutSat(max(altitudeMeters, 0.0) / 100000.0), 1.0 / 1.65);
+  return vec2(x, y);
+}
+
+vec2 cosmosMultiScatteringLutUv(float altitudeMeters, float sunMu){
+  float x = cosmosLutSat((sunMu + 0.42) / 1.42);
+  float y = pow(cosmosLutSat(max(altitudeMeters, 0.0) / 100000.0), 1.0 / 1.35);
+  return vec2(x, y);
+}
+
+vec2 cosmosSkyViewLutUv(vec3 rd, vec3 sunDir){
+  float viewMu = cosmosLutSat((normalize(rd).y + 0.08) / 1.08);
+  float sunMu = cosmosLutSat((dot(normalize(rd), normalize(sunDir)) + 0.45) / 1.45);
+  return vec2(viewMu, sunMu);
+}
+
+vec2 cosmosAerialPerspectiveLutUv(float distanceMeters, float altitudeMeters){
+  float x = pow(cosmosLutSat(max(distanceMeters, 0.0) / 1000000.0), 1.0 / 1.45);
+  float y = pow(cosmosLutSat(max(altitudeMeters, 0.0) / 100000.0), 1.0 / 1.8);
+  return vec2(x, y);
+}
+
+vec3 cosmosLutSolarTransmittance(float altitudeMeters, float sunMu){
+  vec3 lut = texture2D(uCosmosTransmittanceLut, cosmosTransmittanceLutUv(altitudeMeters, sunMu)).rgb;
+  vec3 analytic = exp(-vec3(0.22, 0.34, 0.56) * (1.0 - sunMu) * max(uRayleighScale, 0.0));
+  return mix(analytic, lut, cosmosLutSat(uAtmosphereLutStrength));
+}
+
+float cosmosLutOpticalDepth(float altitudeMeters, float sunMu){
+  float lut = texture2D(uCosmosTransmittanceLut, cosmosTransmittanceLutUv(altitudeMeters, sunMu)).a;
+  float analytic = cosmosLutSat(exp(-max(altitudeMeters, 0.0) / 42000.0) * (1.0 - sunMu * 0.35));
+  return mix(analytic, lut, cosmosLutSat(uAtmosphereLutStrength));
+}
+
+vec3 cosmosLutMultiScattering(float altitudeMeters, float sunMu){
+  vec4 lut = texture2D(uCosmosMultiScatteringLut, cosmosMultiScatteringLutUv(altitudeMeters, sunMu));
+  return lut.rgb * lut.a * uMultiScatteringStrength * cosmosLutSat(uAtmosphereLutStrength);
+}
+
+vec3 cosmosLutSkyRadiance(vec3 rd, vec3 sunDir, float altitudeMeters){
+  float sunMu = dot(normalize(rd), normalize(sunDir));
+  vec4 sky = texture2D(uCosmosSkyViewLut, cosmosSkyViewLutUv(rd, sunDir));
+  vec3 trans = cosmosLutSolarTransmittance(altitudeMeters, max(dot(vec3(0.0, 1.0, 0.0), sunDir), sunMu * 0.45));
+  vec3 ms = cosmosLutMultiScattering(altitudeMeters, sunMu);
+  vec3 lutSky = sky.rgb * uSkyViewLutStrength + ms;
+  lutSky *= 0.48 + 0.52 * trans;
+  return lutSky * cosmosLutSat(uAtmosphereLutStrength);
+}
+
+vec3 cosmosLutAerialPerspectiveColor(float distanceMeters, float altitudeMeters, float sunMu, out float fogAlpha){
+  vec4 lut = texture2D(uCosmosAerialPerspectiveLut, cosmosAerialPerspectiveLutUv(distanceMeters, altitudeMeters));
+  float horizonLift = 1.0 - smoothstep(0.18, 0.82, abs(sunMu));
+  fogAlpha = cosmosLutSat(lut.a * uAerialPerspectiveStrength * uAtmosphereLutStrength);
+  vec3 twilight = vec3(0.94, 0.52, 0.24) * horizonLift * (1.0 - smoothstep(0.05, 0.42, sunMu));
+  return lut.rgb + twilight * fogAlpha * 0.28;
+}
+`;
 
 // FBM noise functions — used by terrain, clouds, ocean detail
 export const NOISE_GLSL = `
@@ -218,5 +395,61 @@ float cosmosCloudRegimeMask(float hFrac, CosmosWeatherState wx, vec2 p2, float t
 
   float regime = max(max(lowDeck, midDeck), max(max(tower, anvil), max(cirrus, streets)));
   return cosmosSat(mix(wx.cover, regime, uCloudRegimeContrast));
+}
+`;
+
+// Cosmos bathymetry atlas — RGBA contract:
+//   R: normalized water depth, 0=land/shore, 1=abyss/hadal
+//   G: continental shelf / shallow optical shelf
+//   B: coastal influence / runup adjacency
+//   A: land mask
+// If no real atlas is present, the runtime supplies a deterministic procedural fallback.
+export const BATHYMETRY_ATLAS_GLSL = `
+uniform sampler2D uCosmosBathymetryAtlas;
+uniform float uCosmosBathymetryReady;
+uniform float uBathymetryStrength;
+uniform float uShallowWaterOptics;
+uniform float uCoastalFoamStrength;
+uniform float uOneWaterOpticsStrength;
+
+struct CosmosBathymetryState {
+  float depth01;
+  float shelf;
+  float coast;
+  float landMask;
+  float depthMeters;
+  float shallow;
+  float abyss;
+  float shoalEnergy;
+};
+
+CosmosBathymetryState cosmosSampleBathymetryUv(vec2 uv, CosmosWeatherState wx){
+  vec4 raw = texture2D(uCosmosBathymetryAtlas, uv);
+  float fallbackShelf = cosmosSat(wx.coast * (1.0 - wx.landMask) + wx.evaporation * (1.0 - wx.landMask) * 0.16);
+  float fallbackDepth01 = cosmosSat(0.76 - fallbackShelf * 0.58 - wx.landMask * 0.84 + wx.leeShadow * 0.08);
+  float fallbackCoast = cosmosSat(wx.coast + fallbackShelf * 0.45);
+
+  float ready = cosmosSat(uCosmosBathymetryReady * uBathymetryStrength);
+  CosmosBathymetryState b;
+  b.depth01 = cosmosSat(mix(fallbackDepth01, raw.r, ready));
+  b.shelf = cosmosSat(mix(fallbackShelf, max(raw.g, (1.0 - smoothstep(0.10, 0.42, b.depth01)) * (1.0 - raw.a)), ready));
+  b.coast = cosmosSat(mix(fallbackCoast, max(raw.b, raw.g * 0.72), ready));
+  b.landMask = cosmosSat(mix(wx.landMask, max(wx.landMask, raw.a), ready));
+  b.depthMeters = mix(0.0, 11000.0, pow(b.depth01, 1.35)) * (1.0 - b.landMask);
+  b.shallow = cosmosSat((1.0 - smoothstep(0.06, 0.48, b.depth01)) * (1.0 - b.landMask) + b.shelf * 0.68);
+  b.abyss = smoothstep(0.70, 0.96, b.depth01) * (1.0 - b.landMask);
+  b.shoalEnergy = cosmosSat((b.shelf * 0.72 + b.coast * 0.42) * (1.0 - b.landMask));
+  return b;
+}
+
+CosmosBathymetryState cosmosSampleBathymetrySphere(vec3 n){
+  vec2 uv = cosmosSphereUv(n);
+  CosmosWeatherState wx = cosmosSampleWeatherUv(uv);
+  return cosmosSampleBathymetryUv(uv, wx);
+}
+
+CosmosBathymetryState cosmosSampleBathymetryPlanar(vec3 p, float timeSeconds, CosmosWeatherState wx){
+  vec2 uv = cosmosPlanarWeatherUv(p, timeSeconds * 0.17);
+  return cosmosSampleBathymetryUv(uv, wx);
 }
 `;

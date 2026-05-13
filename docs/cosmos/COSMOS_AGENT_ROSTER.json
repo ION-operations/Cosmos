@@ -100,6 +100,151 @@
         "fallback rendering remains valid",
         "data-driven blend controls are art-directable"
       ]
+    },
+    {
+      "id": "A_BATHYMETRY_DEPTH_ENGINEER",
+      "role": "depth atlas, shelf/coast masks, and NOAA/GEBCO conversion owner",
+      "gates": [
+        "depth atlas manifest is explicit",
+        "procedural fallback remains deterministic",
+        "shore/shelf/abyss channels are separable in shader"
+      ]
+    },
+    {
+      "id": "A_ONE_WATER_GOVERNOR",
+      "role": "base water, foam, caustics, underwater, and breach optics consistency owner",
+      "gates": [
+        "no pasted-on second water material",
+        "foam and caustics follow physical causes",
+        "above/below-water tone and tint remain coherent"
+      ]
+    },
+    {
+      "id": "A_BREAKER_EVENT_ENGINEER",
+      "role": "EBT top-K, SF0/SF1 spawn fields, and localized splash/breach routing owner",
+      "gates": [
+        "breaker events are local and budgeted",
+        "details spawn from steepness/curvature/impulse",
+        "fallback route preserves base water"
+      ]
+    },
+    {
+      "id": "A_SCALE_COHERENCE_GUARDIAN",
+      "role": "fixed Earth-center, altitude, pass-fade, and zoom continuity owner",
+      "gates": [
+        "camera altitude is distance-from-center minus Earth radius",
+        "planet center never follows camera x/z",
+        "clouds use shell altitude instead of flat slab at orbital scale",
+        "review reports include non-image scale-state alpha diagnostics"
+      ]
+    },
+    {
+      "id": "A_ATMOSPHERE_CONTINUITY_ENGINEER",
+      "role": "ground-to-space atmosphere ownership and cloud LOD transition owner",
+      "gates": [
+        "local sky fades before orbital rim takes over",
+        "aerial perspective uses fixed-Earth altitude state",
+        "cloud micro detail fades with distance/altitude without destroying macro weather placement",
+        "atmosphere contract report is generated for all review bookmarks"
+      ]
+    },
+    {
+      "id": "A_CLOUD_LOD_EDITOR",
+      "role": "micro/meso/macro cloud readability and anti-noise art-direction owner",
+      "gates": [
+        "orbit does not show noisy close-up cloud texture",
+        "high altitude preserves storm and deck structure",
+        "sea-level clouds retain cinematic microstructure",
+        "lead-eyes notes map to Cloud LOD Lock and continuity controls"
+      ]
+    },
+    {
+      "id": "A_VISUAL_DEBUG_OVERLAY_ENGINEER",
+      "role": "scale/atmosphere/cloud diagnostic overlay and screenshot-mode owner",
+      "gates": [
+        "debug modes are stable and documented",
+        "R/G/B colour ownership contracts are explicit",
+        "shell overlays use fixed Earth radius, cloud base/top radius, and atmosphere radius",
+        "debug screenshots can be captured per bookmark and per mode"
+      ]
+    },
+    {
+      "id": "A_LEAD_EYES_DIAGNOSTIC_TRANSLATOR",
+      "role": "maps artist visual notes to exact debug overlay failure domains",
+      "gates": [
+        "notes distinguish beauty failure from scale/ownership failure",
+        "each defect links to bookmark id plus debug mode",
+        "review artifacts include normal and diagnostic captures when possible"
+      ]
+    },
+    {
+      "id": "A_PHYSICAL_ATMOSPHERE_LUT_ENGINEER",
+      "role": "transmittance, multi-scattering, sky-view, aerial-perspective LUT interface owner",
+      "gates": [
+        "LUT textures are generated and exposed as stable uniforms",
+        "sky/ocean/planet/cloud passes share the same atmosphere controls",
+        "atmosphere LUT state is visible to review automation",
+        "tests cover LUT dimensions, optical depth direction, and diagnostics"
+      ]
+    },
+    {
+      "id": "A_TWILIGHT_VALIDATION_REVIEWER",
+      "role": "terminator, twilight, rim thickness, and horizon haze visual validation owner",
+      "gates": [
+        "orbit terminator does not show fake neon rim",
+        "sea-level horizon haze is coherent with sun angle",
+        "optical-depth debug mode explains visible color shifts",
+        "lead-eyes notes are tied to bookmark and debug mode"
+      ]
+    },
+    {
+      "id": "A_RUNTIME_SHADER_DIAGNOSTICS_ENGINEER",
+      "role": "browser console, WebGL shader/program log, and runtime diagnostics gate owner",
+      "gates": [
+        "runtime diagnostics contract passes",
+        "Playwright captures browser console and page errors",
+        "shader compile/program link error counts are reported",
+        "runtime failures block atmosphere tuning"
+      ]
+    },
+    {
+      "id": "A_TWILIGHT_TERMINATOR_CALIBRATOR",
+      "role": "twilight, terminator rim, ozone, horizon haze, and low-sun atmosphere tuning owner",
+      "gates": [
+        "twilight calibration contract passes",
+        "terminator bookmarks remain stable",
+        "mode 0 and mode 6 screenshots exist",
+        "visual tuning only begins after runtime shader logs are clean"
+      ]
+    },
+    {
+      "id": "A_SHADER_CLEAN_TWILIGHT_CALIBRATOR",
+      "role": "R-0011 shader-clean atmosphere calibration and optical-depth debug owner",
+      "gates": [
+        "static atmosphere calibration contract passes",
+        "mode-6 optical-depth overlay uses actual sun direction",
+        "runtime diagnostics strict gate is preserved",
+        "lead-eyes twilight review has orbit and sea-level target packets"
+      ]
+    },
+    {
+      "id": "A_ATMOSPHERE_LUT_SOLVER_ENGINEER",
+      "role": "curved-path optical-depth LUT solver and texture export owner",
+      "gates": [
+        "optical-depth integrator tests pass",
+        "LUT dimensions and exports are validated",
+        "twilight calibration ranges still pass",
+        "runtime shader diagnostics remains the visual tuning gate"
+      ]
+    },
+    {
+      "id": "A_LUT_TEXTURE_REVIEWER",
+      "role": "lead-eyes support agent for inspecting exported transmittance/multi-scattering/sky-view/aerial-perspective textures",
+      "gates": [
+        "exported LUT PNGs exist",
+        "manifest records dimensions and model",
+        "visual anomalies map to a specific LUT texture and channel"
+      ]
     }
   ]
 }

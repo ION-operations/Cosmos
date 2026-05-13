@@ -4,7 +4,7 @@
 // Sources: ATMOSPHERE_OCEAN, auroras.txt
 // ═══════════════════════════════════════════
 
-import { ATMOS_GLSL, NOISE_GLSL } from './common';
+import { ATMOS_GLSL, ATMOSPHERE_CONTINUITY_GLSL, ATMOSPHERE_LUT_GLSL, NOISE_GLSL, SCALE_GLSL } from './common';
 
 export const skyVS = `
 varying vec3 vDir;
@@ -20,6 +20,9 @@ uniform vec3 uSunDir;
 uniform float uSunI, uExpo, uAlt, uTime;
 varying vec3 vDir;
 ${ATMOS_GLSL}
+${SCALE_GLSL}
+${ATMOSPHERE_CONTINUITY_GLSL}
+${ATMOSPHERE_LUT_GLSL}
 ${NOISE_GLSL}
 
 // Multi-layer star field with twinkling
@@ -37,7 +40,7 @@ vec3 starField(vec3 rd, float night){
     stars += starColor * brightness * night * hFade;
   }
   // Milky way band
-  float mw = smoothstep(0.4, 0.0, abs(rd.x * 0.7 + rd.z * 0.3 - rd.y * 0.5));
+  float mw = 1.0 - smoothstep(0.0, 0.4, abs(rd.x * 0.7 + rd.z * 0.3 - rd.y * 0.5));
   mw *= smoothstep(0.0, 0.3, rd.y);
   stars += vec3(0.15, 0.12, 0.2) * mw * night * 0.3;
   return stars;
@@ -48,7 +51,7 @@ vec3 auroraRender(vec3 rd, float night){
   if(night < 0.01 || rd.y < 0.05) return vec3(0.0);
 
   vec3 aurora = vec3(0.0);
-  float hFade = smoothstep(0.05, 0.4, rd.y) * smoothstep(0.95, 0.7, rd.y);
+  float hFade = smoothstep(0.05, 0.4, rd.y) * (1.0 - smoothstep(0.7, 0.95, rd.y));
 
   // Ray march through aurora altitude band (100-300km)
   // Project ray onto aurora curtain heights
@@ -83,22 +86,34 @@ vec3 auroraRender(vec3 rd, float night){
 
 void main(){
   vec3 rd = normalize(vDir);
-  vec3 col = atmosphere(rd, uSunDir, uSunI, uAlt);
+  float localSky = cosmosLocalSkyContinuity();
+  vec3 analyticSky = atmosphere(rd, uSunDir, uSunI, uAlt);
+  vec3 lutSky = cosmosLutSkyRadiance(rd, uSunDir, max(uCosmosCameraAltitudeMeters, 0.0)) * uSunI * 0.085;
+  vec3 col = mix(analyticSky, analyticSky + lutSky, clamp(uAtmosphereLutStrength, 0.0, 1.0)) * localSky;
+
+  float sunMu = dot(rd, uSunDir);
+  float horizon = cosmosHorizonWeight(rd) * uHorizonHazeStrength * localSky;
+  float lutFogAlpha = 0.0;
+  vec3 lutHaze = cosmosLutAerialPerspectiveColor(260000.0 * (0.25 + horizon), max(uCosmosCameraAltitudeMeters, 0.0), sunMu, lutFogAlpha);
+  vec3 continuityHaze = mix(cosmosAtmosphereContinuityColor(sunMu), lutHaze, clamp(uAtmosphereLutStrength, 0.0, 1.0) * 0.62) * horizon * uSunI * 0.012;
+  continuityHaze *= 1.0 - smoothstep(160000.0, 1100000.0, uCosmosCameraAltitudeMeters);
+  col += continuityHaze;
 
   // Night sky
-  float night = smoothstep(-0.02, -0.25, uSunDir.y);
-  col += starField(rd, night);
-  col += auroraRender(rd, night);
+  float night = 1.0 - smoothstep(-0.25, -0.02, uSunDir.y);
+  float spaceStarBoost = 1.0 - localSky * 0.45;
+  col += starField(rd, night) * spaceStarBoost;
+  col += auroraRender(rd, night) * localSky;
 
   // Moon (simple disc for night scenes)
   if(night > 0.1){
     vec3 moonDir = normalize(vec3(-uSunDir.x, max(0.2, -uSunDir.y * 0.5 + 0.3), -uSunDir.z));
     float moonAngle = acos(clamp(dot(rd, moonDir), -1.0, 1.0));
-    float moonDisc = smoothstep(0.009, 0.007, moonAngle);
+    float moonDisc = 1.0 - smoothstep(0.007, 0.009, moonAngle);
     float moonPhase = clamp(dot(moonDir, uSunDir) * 0.5 + 0.5, 0.0, 1.0);
-    col += vec3(0.8, 0.85, 0.95) * moonDisc * night * 0.25 * moonPhase;
+    col += vec3(0.8, 0.85, 0.95) * moonDisc * night * 0.25 * moonPhase * spaceStarBoost;
     // Moon glow
-    col += vec3(0.3, 0.35, 0.5) * exp(-moonAngle * 15.0) * night * 0.05;
+    col += vec3(0.3, 0.35, 0.5) * exp(-moonAngle * 15.0) * night * 0.05 * spaceStarBoost;
   }
 
   col = 1.0 - exp(-col * uExpo);

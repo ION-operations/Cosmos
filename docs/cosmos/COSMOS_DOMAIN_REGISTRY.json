@@ -11,14 +11,37 @@
         "aerosol/haze",
         "solar angle",
         "orbital readability",
-        "satellite surface colour moderation"
+        "satellite surface colour moderation",
+        "atmosphere continuity controls",
+        "ground-to-space rim/haze ownership",
+        "cloud LOD-aware atmospheric integration",
+        "physical atmosphere LUT interface",
+        "transmittance/multi-scattering sampling",
+        "optical-depth debug review",
+        "runtime shader diagnostics gate",
+        "twilight/terminator calibration targets",
+        "WebGL optical-depth debug evidence",
+        "shader-clean twilight calibration defaults",
+        "representative atmosphere-path optical-depth samples"
       ],
       "primary_files": [
         "src/pages/ProceduralEarth.tsx",
         "src/shaders/atmosphere.glsl.ts",
         "src/shaders/sky.glsl.ts",
         "src/pages/CosmosReview.tsx",
-        "src/cosmos/orbital/shaders/planet.ts"
+        "src/cosmos/orbital/shaders/planet.ts",
+        "src/cosmos/atmosphere/atmosphereContinuity.ts",
+        "src/cosmos/orbital/shaders/sky.ts",
+        "scripts/cosmos/report-atmosphere-continuity-contract.mjs",
+        "src/cosmos/atmosphere/atmosphereLut.ts",
+        "scripts/cosmos/report-atmosphere-lut-contract.mjs",
+        "docs/cosmos/ATMOSPHERE_LUT_R0009.md",
+        "src/cosmos/runtime/runtimeDiagnostics.ts",
+        "src/cosmos/atmosphere/twilightCalibration.ts",
+        "scripts/cosmos/capture-review-runtime-diagnostics.mjs",
+        "src/cosmos/atmosphere/atmosphereCalibration.ts",
+        "scripts/cosmos/report-atmosphere-calibration-contract.mjs",
+        "docs/cosmos/ATMOSPHERE_CALIBRATION_R0011.md"
       ]
     },
     {
@@ -48,7 +71,9 @@
         "cloud regimes",
         "storm structure",
         "cloud shadows",
-        "precipitation effects"
+        "precipitation effects",
+        "micro/meso/macro cloud LOD fades",
+        "orbit-safe cloud macro placement"
       ],
       "primary_files": [
         "src/cosmos/weatherAtlas.ts",
@@ -57,7 +82,9 @@
         "src/shaders/weather.glsl.ts",
         "src/cosmos/orbital/shaders/clouds.ts",
         "src/cosmos/orbital/shaders/planet.ts",
-        "src/cosmos/orbital/shaders/common.ts"
+        "src/cosmos/orbital/shaders/common.ts",
+        "src/cosmos/atmosphere/atmosphereContinuity.ts",
+        "src/test/cosmos-atmosphere-continuity.test.ts"
       ]
     },
     {
@@ -69,14 +96,21 @@
         "foam",
         "Fresnel",
         "subsurface color",
-        "sun glitter"
+        "sun glitter",
+        "bathymetry-coupled shoaling cues",
+        "one-water optical composite",
+        "EBT breaker-event classifier helpers",
+        "Water.zip source-intake contract"
       ],
       "primary_files": [
         "src/pages/ProceduralEarth.tsx",
         "src/shaders/ocean.glsl.ts",
         "src/pages/OceanLab.tsx",
         "src/cosmos/orbital/WorldEngine.ts",
-        "src/cosmos/orbital/shaders/ocean.ts"
+        "src/cosmos/orbital/shaders/ocean.ts",
+        "src/cosmos/bathymetry/bathymetryOverlay.ts",
+        "src/cosmos/water/waterPhysics.ts",
+        "src/test/cosmos-water-physics.test.ts"
       ]
     },
     {
@@ -88,11 +122,19 @@
         "caustics",
         "god rays",
         "bubbles",
-        "future bathymetry textures"
+        "future bathymetry textures",
+        "depth atlas runtime",
+        "shelf/abyss water coloration",
+        "underwater fog depth response",
+        "one-water caustic continuity"
       ],
       "primary_files": [
         "src/pages/ProceduralEarth.tsx",
-        "src/shaders/ocean.glsl.ts"
+        "src/shaders/ocean.glsl.ts",
+        "src/cosmos/bathymetry/bathymetryOverlay.ts",
+        "src/cosmos/orbital/shaders/ocean.ts",
+        "src/cosmos/orbital/shaders/common.ts",
+        "src/test/cosmos-bathymetry-overlay.test.ts"
       ]
     },
     {
@@ -106,7 +148,10 @@
         "texture tiling",
         "time metadata",
         "GIBS WMS global surface atlas",
-        "local public raster manifests"
+        "local public raster manifests",
+        "NOAA ETOPO bathymetry preview path",
+        "GEBCO/ETOPO depth atlas manifest contract",
+        "bathymetry public raster manifests"
       ],
       "primary_files": [
         "src/cosmos/weatherAtlas.ts",
@@ -116,7 +161,11 @@
         "src/cosmos/gibs/gibsSurfaceOverlay.ts",
         "scripts/cosmos/fetch-gibs-global-snapshot.mjs",
         "public/cosmos/gibs/README.md",
-        "src/test/cosmos-gibs-surface-overlay.test.ts"
+        "src/test/cosmos-gibs-surface-overlay.test.ts",
+        "src/cosmos/bathymetry/bathymetryOverlay.ts",
+        "scripts/cosmos/build-procedural-depth-atlas.mjs",
+        "scripts/cosmos/fetch-etopo-wms-depth-preview.mjs",
+        "src/test/cosmos-bathymetry-overlay.test.ts"
       ]
     },
     {
@@ -126,7 +175,23 @@
         "artist critique",
         "screenshot review",
         "artifact comparison",
-        "visual acceptance gates"
+        "visual acceptance gates",
+        "one-water anti-cue review",
+        "bathymetry/status panel review",
+        "shoal/foam/underwater acceptance cues",
+        "scale-state diagnostics",
+        "bookmark alpha contract review",
+        "non-image failure reports",
+        "atmosphere continuity numeric diagnostics",
+        "cloud LOD review sliders",
+        "debug overlay review modes",
+        "physical shell colour contracts",
+        "diagnostic screenshot packets",
+        "physical atmosphere LUT interface",
+        "transmittance/multi-scattering sampling",
+        "optical-depth debug review",
+        "shader-clean twilight calibration defaults",
+        "representative atmosphere-path optical-depth samples"
       ],
       "primary_files": [
         "docs/cosmos/COSMOS_QUEUE.json",
@@ -135,7 +200,220 @@
         "src/test/cosmos-review-bookmarks.test.ts",
         "scripts/cosmos/capture-review-bookmarks.mjs",
         "src/test/cosmos-weather-atlas.test.ts",
-        "docs/cosmos/CODEX_R0004_LOCAL_PROMPT.md"
+        "docs/cosmos/CODEX_R0004_LOCAL_PROMPT.md",
+        "docs/cosmos/water/WATER_SOURCE_INTAKE_R0005.md",
+        "docs/cosmos/water/WATER_TO_COSMOS_CROSSWALK_R0005.md",
+        "docs/cosmos/CODEX_R0005_LOCAL_PROMPT.md",
+        "scripts/cosmos/report-bookmark-scale-contract.mjs",
+        "scripts/cosmos/capture-review-scale-state.mjs",
+        "docs/cosmos/SCALE_COHERENCE_R0006.md",
+        "scripts/cosmos/report-atmosphere-continuity-contract.mjs",
+        "docs/cosmos/ATMOSPHERE_CLOUD_LOD_R0007.md",
+        "docs/cosmos/CODEX_R0007_LOCAL_PROMPT.md",
+        "scripts/cosmos/report-debug-overlay-contract.mjs",
+        "scripts/cosmos/capture-review-debug-overlays.mjs",
+        "src/cosmos/debug/cosmosDebug.ts",
+        "docs/cosmos/DEBUG_OVERLAYS_R0008.md",
+        "src/cosmos/atmosphere/atmosphereLut.ts",
+        "scripts/cosmos/report-atmosphere-lut-contract.mjs",
+        "docs/cosmos/ATMOSPHERE_LUT_R0009.md",
+        "src/cosmos/atmosphere/atmosphereCalibration.ts",
+        "scripts/cosmos/report-atmosphere-calibration-contract.mjs",
+        "docs/cosmos/ATMOSPHERE_CALIBRATION_R0011.md"
+      ]
+    },
+    {
+      "id": "D_SCALE_COHERENCE",
+      "name": "Scale Coherence and Camera/LOD Transitions",
+      "owns": [
+        "fixed Earth-center model",
+        "camera altitude classification",
+        "ocean/cloud/planet pass cross-fades",
+        "zoom continuity",
+        "non-image scale diagnostics",
+        "atmosphere/cloud shell radius parity",
+        "local sky/orbital rim ownership",
+        "cloud detail altitude bands",
+        "atmosphere continuity contract diagnostics"
+      ],
+      "primary_files": [
+        "src/cosmos/scale/cosmosScale.ts",
+        "src/test/cosmos-scale.test.ts",
+        "src/cosmos/orbital/WorldEngine.ts",
+        "src/cosmos/orbital/shaders/common.ts",
+        "src/cosmos/orbital/shaders/clouds.ts",
+        "src/cosmos/orbital/shaders/planet.ts",
+        "src/cosmos/orbital/shaders/ocean.ts",
+        "scripts/cosmos/report-bookmark-scale-contract.mjs",
+        "scripts/cosmos/capture-review-scale-state.mjs",
+        "src/cosmos/atmosphere/atmosphereContinuity.ts",
+        "scripts/cosmos/report-atmosphere-continuity-contract.mjs"
+      ]
+    },
+    {
+      "id": "D_ATMOSPHERE_CONTINUITY",
+      "name": "Atmosphere Continuity and Cloud LOD",
+      "owns": [
+        "ground-to-space atmosphere ownership",
+        "orbital rim alpha continuity",
+        "horizon haze and aerial perspective fades",
+        "cloud micro/meso/macro detail LOD",
+        "altitude-derived sky/cloud transition diagnostics",
+        "physical atmosphere LUT interface",
+        "transmittance/multi-scattering sampling",
+        "optical-depth debug review"
+      ],
+      "primary_files": [
+        "src/cosmos/atmosphere/atmosphereContinuity.ts",
+        "src/cosmos/scale/cosmosScale.ts",
+        "src/cosmos/orbital/shaders/common.ts",
+        "src/cosmos/orbital/shaders/sky.ts",
+        "src/cosmos/orbital/shaders/clouds.ts",
+        "src/cosmos/orbital/shaders/planet.ts",
+        "src/cosmos/orbital/shaders/ocean.ts",
+        "scripts/cosmos/report-atmosphere-continuity-contract.mjs",
+        "src/test/cosmos-atmosphere-continuity.test.ts",
+        "src/cosmos/atmosphere/atmosphereLut.ts",
+        "scripts/cosmos/report-atmosphere-lut-contract.mjs",
+        "docs/cosmos/ATMOSPHERE_LUT_R0009.md"
+      ]
+    },
+    {
+      "id": "D_VISUAL_DEBUG_OVERLAYS",
+      "name": "Scale/Atmosphere/Cloud Visual Debug Overlays",
+      "owns": [
+        "fullscreen diagnostic tint overlays",
+        "Earth/cloud/atmosphere shell overlays",
+        "scale ownership color contracts",
+        "atmosphere ownership color contracts",
+        "cloud micro/meso/macro LOD color contracts",
+        "debug screenshot automation",
+        "physical atmosphere LUT interface",
+        "transmittance/multi-scattering sampling",
+        "optical-depth debug review"
+      ],
+      "primary_files": [
+        "src/cosmos/debug/cosmosDebug.ts",
+        "src/cosmos/orbital/shaders/debugOverlay.ts",
+        "src/pages/CosmosReview.tsx",
+        "scripts/cosmos/report-debug-overlay-contract.mjs",
+        "scripts/cosmos/capture-review-debug-overlays.mjs",
+        "src/test/cosmos-debug-overlays.test.ts",
+        "docs/cosmos/DEBUG_OVERLAYS_R0008.md",
+        "src/cosmos/atmosphere/atmosphereLut.ts",
+        "scripts/cosmos/report-atmosphere-lut-contract.mjs",
+        "docs/cosmos/ATMOSPHERE_LUT_R0009.md"
+      ]
+    },
+    {
+      "id": "D_PHYSICAL_ATMOSPHERE_LUT",
+      "name": "Physical Atmosphere LUT System",
+      "owns": [
+        "transmittance LUT contract",
+        "multi-scattering LUT contract",
+        "sky-view LUT contract",
+        "aerial-perspective LUT contract",
+        "Rayleigh/Mie/ozone tuning controls",
+        "optical-depth debug mode",
+        "ground-to-space atmosphere physicalization bridge",
+        "curved-path LUT fallback solver",
+        "LUT PNG debug exports",
+        "R-0012 LUT quality validation"
+      ],
+      "primary_files": [
+        "src/cosmos/atmosphere/atmosphereLut.ts",
+        "src/cosmos/orbital/shaders/common.ts",
+        "src/cosmos/orbital/shaders/sky.ts",
+        "src/cosmos/orbital/shaders/ocean.ts",
+        "src/cosmos/orbital/shaders/planet.ts",
+        "src/cosmos/orbital/shaders/clouds.ts",
+        "src/cosmos/orbital/shaders/debugOverlay.ts",
+        "src/cosmos/orbital/WorldEngine.ts",
+        "src/pages/CosmosReview.tsx",
+        "scripts/cosmos/report-atmosphere-lut-contract.mjs",
+        "src/test/cosmos-atmosphere-lut.test.ts",
+        "docs/cosmos/ATMOSPHERE_LUT_R0009.md",
+        "src/cosmos/atmosphere/atmospherePhysics.ts",
+        "scripts/cosmos/report-atmosphere-lut-quality-contract.mjs",
+        "scripts/cosmos/export-atmosphere-lut-textures.mjs"
+      ]
+    },
+    {
+      "id": "D_RUNTIME_SHADER_DIAGNOSTICS",
+      "name": "Runtime Shader and WebGL Diagnostics",
+      "owns": [
+        "browser console capture",
+        "WebGL shader compile log capture",
+        "program link/validation log capture",
+        "WebGL context loss/restoration receipts",
+        "runtime diagnostics UI state",
+        "shader-clean validation gate before visual tuning"
+      ],
+      "primary_files": [
+        "src/cosmos/runtime/runtimeDiagnostics.ts",
+        "src/cosmos/orbital/WorldEngine.ts",
+        "src/pages/CosmosReview.tsx",
+        "scripts/cosmos/capture-review-runtime-diagnostics.mjs",
+        "scripts/cosmos/report-runtime-diagnostics-contract.mjs",
+        "docs/cosmos/RUNTIME_SHADER_DIAGNOSTICS_R0010.md"
+      ]
+    },
+    {
+      "id": "D_TWILIGHT_TERMINATOR_CALIBRATION",
+      "name": "Twilight, Terminator, and Atmospheric Edge Calibration",
+      "owns": [
+        "terminator rim thickness",
+        "twilight colour transition targets",
+        "ozone/mie/rayleigh review ranges",
+        "low-horizon sunset continuity",
+        "dedicated twilight bookmarks"
+      ],
+      "primary_files": [
+        "src/cosmos/atmosphere/twilightCalibration.ts",
+        "src/cosmos/orbital/WorldEngine.ts",
+        "scripts/cosmos/report-twilight-calibration-contract.mjs",
+        "docs/cosmos/RUNTIME_SHADER_DIAGNOSTICS_R0010.md"
+      ]
+    },
+    {
+      "id": "D_SHADER_CLEAN_TWILIGHT_CALIBRATION",
+      "name": "Shader-Clean Twilight and Terminator Calibration",
+      "owns": [
+        "R-0011 atmosphere path sampling contract",
+        "twilight limb optical-depth target ranges",
+        "low-sun horizon haze defaults",
+        "runtime-gated Rayleigh/Mie/ozone tuning",
+        "mode-6 optical-depth debug alignment with actual sun direction"
+      ],
+      "primary_files": [
+        "src/cosmos/atmosphere/atmosphereCalibration.ts",
+        "src/cosmos/atmosphere/atmosphereLut.ts",
+        "src/cosmos/atmosphere/twilightCalibration.ts",
+        "src/cosmos/orbital/shaders/debugOverlay.ts",
+        "src/pages/CosmosReview.tsx",
+        "scripts/cosmos/report-atmosphere-calibration-contract.mjs",
+        "src/test/cosmos-atmosphere-calibration.test.ts",
+        "docs/cosmos/ATMOSPHERE_CALIBRATION_R0011.md"
+      ]
+    },
+    {
+      "id": "D_ATMOSPHERE_LUT_SOLVER",
+      "name": "Higher-Fidelity Atmosphere LUT Solver",
+      "owns": [
+        "curved-path optical-depth integration",
+        "Rayleigh/Mie phase helper validation",
+        "ozone band density gate",
+        "higher-resolution CPU fallback atmosphere LUTs",
+        "debug-exportable LUT PNG packets",
+        "R-0012 atmosphere LUT quality contract"
+      ],
+      "primary_files": [
+        "src/cosmos/atmosphere/atmospherePhysics.ts",
+        "src/cosmos/atmosphere/atmosphereLut.ts",
+        "src/test/cosmos-atmosphere-physics.test.ts",
+        "scripts/cosmos/report-atmosphere-lut-quality-contract.mjs",
+        "scripts/cosmos/export-atmosphere-lut-textures.mjs",
+        "docs/cosmos/ATMOSPHERE_LUT_SOLVER_R0012.md"
       ]
     }
   ]

@@ -1,0 +1,26 @@
+
+> vite_react_shadcn_ts@0.0.0 cosmos:review:atmosphere-calibration
+> node scripts/cosmos/report-atmosphere-calibration-contract.mjs
+
+# Cosmos R-0011 shader-clean twilight calibration contract
+
+R-0011 separates camera altitude from atmospheric optical path sampling. Orbital twilight views sample representative limb/ozone shell paths, while the sea-level twilight view samples a long near-horizon path.
+
+| Bookmark | Role | Sample role | Optical depth | Aerial perspective | Orbital rim α | Local sky α | Status |
+|---|---|---|---:|---:|---:|---:|---|
+| cloud-terminator | orbital-terminator | limb-shell-path | 0.228 | 0.156 | 0.960 | 0.000 | pass |
+| twilight-limb | orbital-limb | limb-shell-path | 0.289 | 0.081 | 0.960 | 0.000 | pass |
+| low-twilight-horizon | sea-level-horizon | low-horizon-path | 0.592 | 0.860 | 0.000 | 0.960 | pass |
+
+## Static shader-clean assertions
+
+| Assertion | Status |
+|---|---|
+| debug optical-depth overlay uses actual uSunDir | pass |
+| atmosphere optical-depth channel uses compressed response | pass |
+| runtime diagnostics remains available as local strict gate | pass |
+| all twilight calibration bookmarks exist | pass |
+
+Overall: pass
+
+Local visual gate remains: `COSMOS_RUNTIME_FAIL_ON_ERRORS=1 npm run cosmos:review:runtime-diagnostics`.

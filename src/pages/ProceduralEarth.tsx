@@ -36,170 +36,6 @@ void main() {
 }
 `;
 
-const SKY_ONLY_FRAGMENT_SHADER = `
-precision highp float;
-
-varying vec2 vUv;
-
-uniform float iTime;
-uniform vec2 iResolution;
-
-uniform float uCameraYaw;
-uniform float uCameraPitch;
-uniform float uCameraFOV;
-
-uniform int uTimeOfDay;
-uniform float uSunAzimuth;
-uniform float uSunElevation;
-uniform vec3 uSunColor;
-uniform float uSunIntensity;
-uniform float uMoonIntensity;
-uniform float uStarIntensity;
-uniform float uDayNightCycleSpeed;
-uniform bool uAutoTimeEnabled;
-
-uniform vec3 uSkyZenithColor;
-uniform vec3 uSkyHorizonColor;
-uniform float uAtmosphereDensity;
-uniform float uRayleighStrength;
-uniform float uMieStrength;
-uniform float uMieG;
-
-uniform int uWeatherType;
-uniform float uWeatherIntensity;
-uniform float uExposure;
-uniform float uSaturation;
-uniform float uVignetteStrength;
-
-#define PI 3.14159265359
-#define TAU 6.28318530718
-
-float saturate(float x) { return clamp(x, 0.0, 1.0); }
-vec3 saturate3(vec3 x) { return clamp(x, 0.0, 1.0); }
-
-float hash12(vec2 p) {
-    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-    p3 += dot(p3, p3.yzx + 33.33);
-    return fract((p3.x + p3.y) * p3.z);
-}
-
-float getAutoSunElevation() {
-    if(!uAutoTimeEnabled) return uSunElevation;
-    float cycleTime = iTime * uDayNightCycleSpeed * 0.01;
-    return sin(cycleTime) * 0.5 + 0.1;
-}
-
-float getAutoSunAzimuth() {
-    if(!uAutoTimeEnabled) return uSunAzimuth;
-    float cycleTime = iTime * uDayNightCycleSpeed * 0.01;
-    return mod(cycleTime * 0.3, TAU);
-}
-
-vec3 getSunDirection() {
-    float azimuth = getAutoSunAzimuth();
-    float elevation = getAutoSunElevation();
-    return normalize(vec3(
-        cos(elevation) * sin(azimuth),
-        sin(elevation),
-        cos(elevation) * cos(azimuth)
-    ));
-}
-
-vec3 getMoonDirection(vec3 sunDir) {
-    return normalize(-sunDir + vec3(0.2, 0.3, 0.1));
-}
-
-vec3 getRayDirection() {
-    vec2 p = vUv * 2.0 - 1.0;
-    p.x *= iResolution.x / max(iResolution.y, 1.0);
-
-    float yaw = uCameraYaw;
-    float pitch = clamp(uCameraPitch, -PI * 0.45, PI * 0.45);
-    float fovScale = tan(radians(uCameraFOV) * 0.5);
-
-    vec3 forward = normalize(vec3(
-        cos(pitch) * sin(yaw),
-        sin(pitch),
-        cos(pitch) * cos(yaw)
-    ));
-    vec3 right = normalize(vec3(cos(yaw), 0.0, -sin(yaw)));
-    vec3 up = normalize(cross(right, forward));
-
-    return normalize(forward + right * p.x * fovScale + up * p.y * fovScale);
-}
-
-float rayleighPhase(float cosTheta) {
-    return (3.0 / (16.0 * PI)) * (1.0 + cosTheta * cosTheta);
-}
-
-float miePhase(float cosTheta, float g) {
-    float g2 = g * g;
-    return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5));
-}
-
-float getStars(vec3 rd, float sunElevation) {
-    if(rd.y < 0.0) return 0.0;
-    float visibility = smoothstep(0.12, -0.08, sunElevation);
-    if(visibility <= 0.0) return 0.0;
-
-    vec2 skyUv = rd.xz / max(rd.y + 0.35, 0.08);
-    vec2 cell = floor(skyUv * 180.0);
-    vec2 local = fract(skyUv * 180.0) - 0.5;
-    float seed = hash12(cell);
-    float star = smoothstep(0.03, 0.0, length(local - (vec2(hash12(cell + 7.1), hash12(cell + 19.7)) - 0.5)));
-    star *= step(0.992, seed);
-    return star * visibility * uStarIntensity;
-}
-
-vec3 applyGrade(vec3 color) {
-    color *= uExposure;
-    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    color = mix(vec3(luma), color, uSaturation);
-    if(uVignetteStrength > 0.0) {
-        vec2 vigUV = vUv * 2.0 - 1.0;
-        float vig = 1.0 - dot(vigUV, vigUV) * uVignetteStrength * 0.5;
-        color *= vig;
-    }
-    color = (color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14);
-    return saturate3(color);
-}
-
-void main() {
-    vec3 rd = getRayDirection();
-    vec3 sunDir = getSunDirection();
-    vec3 moonDir = getMoonDirection(sunDir);
-    float sunElevation = getAutoSunElevation();
-
-    float horizon = pow(saturate(rd.y * 0.5 + 0.5), 0.72);
-    vec3 sky = mix(uSkyHorizonColor, uSkyZenithColor, horizon);
-
-    float sunDot = dot(rd, sunDir);
-    float rayleigh = rayleighPhase(sunDot) * uRayleighStrength * uAtmosphereDensity;
-    float mie = miePhase(sunDot, uMieG) * uMieStrength * uAtmosphereDensity;
-    sky += vec3(0.18, 0.35, 0.78) * rayleigh;
-    sky += uSunColor * mie * uSunIntensity;
-
-    if(sunElevation < 0.15 && uWeatherType == 0) {
-        sky += vec3(getStars(rd, sunElevation));
-    }
-
-    if(uWeatherType == 0) {
-        float disk = smoothstep(0.99965, 0.99988, sunDot);
-        float corona = pow(saturate(sunDot), 192.0) * 1.8 + pow(saturate(sunDot), 8.0) * 0.25;
-        sky += uSunColor * (disk * 18.0 + corona) * uSunIntensity;
-
-        float moonDot = dot(rd, moonDir);
-        float moonDisk = smoothstep(0.999, 0.99955, moonDot);
-        sky += vec3(0.86, 0.88, 0.82) * moonDisk * uMoonIntensity * smoothstep(0.15, -0.05, sunElevation);
-    } else {
-        sky *= 1.0 - uWeatherIntensity * 0.45;
-        sky = mix(sky, vec3(0.42, 0.46, 0.52), uWeatherIntensity * 0.28);
-    }
-
-    gl_FragColor = vec4(applyGrade(sky), 1.0);
-}
-`;
-
 // ─────────────────────────────────────────────────────────────────────────────
 // MASTER FRAGMENT SHADER V4.0 - Complete Earth System with All Features
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2412,25 +2248,14 @@ const DEFAULT_SETTINGS = {
 
 const DEFAULT_LAYERS: LayerVisibility = {
   sky: true,
-  clouds: false,
+  clouds: true,
   terrain: false,
-  ocean: false,
+  ocean: true,
   vegetation: false,
   weather: false,
-  fog: false,
-  godRays: false,
+  fog: true,
+  godRays: true,
 };
-
-const isSkyOnlyLayerState = (value: LayerVisibility) => (
-  value.sky
-  && !value.clouds
-  && !value.terrain
-  && !value.ocean
-  && !value.vegetation
-  && !value.weather
-  && !value.fog
-  && !value.godRays
-);
 
 type Settings = typeof DEFAULT_SETTINGS;
 
@@ -2544,7 +2369,7 @@ const ProceduralEarth: React.FC = () => {
   const weatherAtlas = useMemo(() => createCosmosWeatherAtlas({ preset: 'waterWorldV01' }), []);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [showLayers, setShowLayers] = useState(true);
+  const [showLayers, setShowLayers] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -2783,7 +2608,7 @@ const ProceduralEarth: React.FC = () => {
         uEnableUnderwaterBubbles: { value: settings.enableUnderwaterBubbles },
       },
       vertexShader: VERTEX_SHADER,
-      fragmentShader: isSkyOnlyLayerState(layers) ? SKY_ONLY_FRAGMENT_SHADER : EARTH_FRAGMENT_SHADER,
+      fragmentShader: EARTH_FRAGMENT_SHADER,
     });
     materialRef.current = material;
 
@@ -3052,11 +2877,6 @@ const ProceduralEarth: React.FC = () => {
   // Update layer visibility uniforms
   useEffect(() => {
     if (!materialRef.current) return;
-    const nextFragmentShader = isSkyOnlyLayerState(layers) ? SKY_ONLY_FRAGMENT_SHADER : EARTH_FRAGMENT_SHADER;
-    if (materialRef.current.fragmentShader !== nextFragmentShader) {
-      materialRef.current.fragmentShader = nextFragmentShader;
-      materialRef.current.needsUpdate = true;
-    }
     const u = materialRef.current.uniforms;
     
     u.uShowSky.value = layers.sky;

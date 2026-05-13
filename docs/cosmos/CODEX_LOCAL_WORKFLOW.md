@@ -1,4 +1,4 @@
-# Cosmos local Codex workflow — R-0004
+# Cosmos local Codex workflow — R-0005
 
 Use this when running the customized local Codex CLI on the project machine. Codex can install dependencies, fetch data, run browser captures, and preserve continuity artifacts.
 
@@ -42,22 +42,18 @@ The route exposes:
 window.__COSMOS_REVIEW_READY__
 window.__COSMOS_ACTIVE_BOOKMARK__
 window.__COSMOS_GIBS_SURFACE_OVERLAY_STATE__
+window.__COSMOS_BATHYMETRY_OVERLAY_STATE__
 document.documentElement.dataset.cosmosBookmark
 ```
 
 ## GIBS local data bootstrap
 
-Metadata/tile scripts from R-0003:
+Metadata/tile scripts from R-0003 and R-0004:
 
 ```bash
 npm run cosmos:gibs:capabilities
 npm run cosmos:gibs:catalog
 npm run cosmos:gibs:preview-tile
-```
-
-R-0004 global surface atlas script:
-
-```bash
 npm run cosmos:gibs:global-snapshot
 ```
 
@@ -68,7 +64,34 @@ public/cosmos/gibs/global-truecolor.jpg
 public/cosmos/gibs/global-truecolor.manifest.json
 ```
 
-The `/cosmos-review` planet shader consumes these automatically through `src/cosmos/gibs/gibsSurfaceOverlay.ts`. If the files are absent or fail to load, it uses a neutral safe fallback texture and keeps rendering.
+## Bathymetry/depth bootstrap
+
+Generate the deterministic fallback atlas:
+
+```bash
+npm run cosmos:bathymetry:procedural
+```
+
+Attempt the NOAA ETOPO WMS preview:
+
+```bash
+npm run cosmos:bathymetry:etopo-wms
+```
+
+Retry smaller if the service rejects a large WMS image:
+
+```bash
+COSMOS_BATHYMETRY_WIDTH=1024 COSMOS_BATHYMETRY_HEIGHT=512 npm run cosmos:bathymetry:etopo-wms
+```
+
+Expected runtime files:
+
+```text
+public/cosmos/bathymetry/global-depth.png
+public/cosmos/bathymetry/global-depth.manifest.json
+```
+
+The `/cosmos-review` ocean and planet shaders consume these automatically through `src/cosmos/bathymetry/bathymetryOverlay.ts`. If the files are absent or fail to load, the renderer uses the deterministic procedural fallback and keeps rendering.
 
 ## Playwright visual capture
 
@@ -85,10 +108,10 @@ Capture all review bookmarks:
 npm run cosmos:review:screenshots
 ```
 
-Output:
+Output currently defaults to the active script path. Keep R-0005 local captures under:
 
 ```text
-docs/cosmos/validation/screenshots/R0004/*.png
+docs/cosmos/validation/screenshots/R0005/*.png
 ```
 
 ## Codex handoff prompt
@@ -96,13 +119,14 @@ docs/cosmos/validation/screenshots/R0004/*.png
 Use:
 
 ```text
-docs/cosmos/CODEX_R0004_LOCAL_PROMPT.md
+docs/cosmos/CODEX_R0005_LOCAL_PROMPT.md
 ```
 
 ## Guardrails
 
 - Keep review bookmark IDs stable.
-- Do not remove the procedural atlas fallback.
+- Do not remove the procedural weather, GIBS, or bathymetry fallbacks.
 - Do not commit `node_modules`, `dist`, or Playwright browser binaries.
-- Preserve GIBS layer/time metadata in `global-truecolor.manifest.json`.
+- Preserve data layer metadata in `global-truecolor.manifest.json` and `global-depth.manifest.json`.
 - Do not overfit a single screenshot; improve repeated behavior across orbit, altitude, sea level, and underwater.
+- Treat Water.zip as a physical/visual contract: one water body, causal foam/breach, and localized high-detail simulation.

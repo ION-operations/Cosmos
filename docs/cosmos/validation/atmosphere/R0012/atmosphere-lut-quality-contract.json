@@ -1,0 +1,79 @@
+{
+  "release": "R-0012",
+  "spec": {
+    "transmittance": {
+      "width": 320,
+      "height": 80
+    },
+    "multiScattering": {
+      "width": 96,
+      "height": 48
+    },
+    "skyView": {
+      "width": 240,
+      "height": 135
+    },
+    "aerialPerspective": {
+      "width": 128,
+      "height": 72
+    }
+  },
+  "probes": {
+    "surfaceGrazing": {
+      "rayleigh": 42.75896792286191,
+      "mie": 122.72979523548315,
+      "ozone": 11.587412232038046,
+      "opticalDepth": 1,
+      "aerialPerspective": 0.86
+    },
+    "stratosphericLimb": {
+      "rayleigh": 1.990211645849895,
+      "mie": 1.4455732816098183e-7,
+      "ozone": 25.224962595311684,
+      "opticalDepth": 0.4351545825510692,
+      "aerialPerspective": 0.0813847772372286
+    },
+    "highZenith": {
+      "rayleigh": 0.000020140478131576846,
+      "mie": 1.702241699611974e-33,
+      "ozone": 0,
+      "opticalDepth": 4.894135200805839e-7,
+      "aerialPerspective": 0.00006076933723521583
+    }
+  },
+  "assertions": [
+    {
+      "name": "LUT dimensions upgraded beyond R-0011 fallback",
+      "pass": true
+    },
+    {
+      "name": "curved optical-depth integrator present",
+      "pass": true
+    },
+    {
+      "name": "ozone band gate present",
+      "pass": true
+    },
+    {
+      "name": "phase functions present",
+      "pass": true
+    },
+    {
+      "name": "debug LUT export script registered",
+      "pass": true
+    },
+    {
+      "name": "surface grazing has stronger optical depth than stratospheric limb",
+      "pass": true
+    },
+    {
+      "name": "stratospheric limb has stronger optical depth than high zenith",
+      "pass": true
+    },
+    {
+      "name": "low horizon remains aerial-perspective heavy",
+      "pass": true
+    }
+  ],
+  "pass": true
+}

@@ -1,0 +1,200 @@
+{
+  "release": "R-0011",
+  "defaults": {
+    "strength": 0.88,
+    "rayleighScale": 1.06,
+    "mieScale": 0.62,
+    "ozoneScale": 0.86,
+    "multiScatteringStrength": 0.64,
+    "aerialPerspectiveStrength": 0.62,
+    "skyViewStrength": 0.86,
+    "opticalDepthDebug": 0.08,
+    "atmosphereContinuityStrength": 0.96
+  },
+  "pass": true,
+  "staticAssertions": [
+    {
+      "name": "debug optical-depth overlay uses actual uSunDir",
+      "pass": true
+    },
+    {
+      "name": "atmosphere optical-depth channel uses compressed response",
+      "pass": true
+    },
+    {
+      "name": "runtime diagnostics remains available as local strict gate",
+      "pass": true
+    },
+    {
+      "name": "all twilight calibration bookmarks exist",
+      "pass": true
+    }
+  ],
+  "records": [
+    {
+      "bookmarkId": "cloud-terminator",
+      "role": "orbital-terminator",
+      "sunElevationDegrees": 4,
+      "target": {
+        "opticalDepth": [
+          0.18,
+          0.58
+        ],
+        "aerialPerspective": [
+          0,
+          0.18
+        ],
+        "orbitalRimAlpha": [
+          0.92,
+          1
+        ],
+        "localSkyAlpha": [
+          0,
+          0.04
+        ]
+      },
+      "controls": {
+        "rayleighScale": 1.1,
+        "mieScale": 0.52,
+        "ozoneScale": 0.94,
+        "multiScatteringStrength": 0.64,
+        "aerialPerspectiveStrength": 0.24,
+        "skyViewStrength": 0.86
+      },
+      "plan": {
+        "opticalSampleAltitudeMeters": 18000,
+        "cameraAltitudeMeters": 23582892,
+        "viewMu": 0.02,
+        "distanceMeters": 180000,
+        "role": "limb-shell-path"
+      },
+      "sample": {
+        "sunMu": 0.0697564737441253,
+        "opticalDepth": 0.22839324708742997,
+        "aerialPerspective": 0.156225500974045,
+        "densityR": 0.12031438840089924,
+        "densityM": 3.059023205018258e-7,
+        "ozoneBand": 0.8596460296426133,
+        "path": 7.451544751601518
+      },
+      "continuity": {
+        "localSkyAlpha": 0,
+        "orbitalRimAlpha": 0.96,
+        "horizonFogAlpha": 0,
+        "aerialPerspectiveAlpha": 0
+      },
+      "pass": true,
+      "failures": []
+    },
+    {
+      "bookmarkId": "twilight-limb",
+      "role": "orbital-limb",
+      "sunElevationDegrees": -1.5,
+      "target": {
+        "opticalDepth": [
+          0.28,
+          0.72
+        ],
+        "aerialPerspective": [
+          0,
+          0.15
+        ],
+        "orbitalRimAlpha": [
+          0.95,
+          1
+        ],
+        "localSkyAlpha": [
+          0,
+          0.03
+        ]
+      },
+      "controls": {
+        "rayleighScale": 1.12,
+        "mieScale": 0.46,
+        "ozoneScale": 1.08,
+        "multiScatteringStrength": 0.58,
+        "aerialPerspectiveStrength": 0.22,
+        "skyViewStrength": 0.95
+      },
+      "plan": {
+        "opticalSampleAltitudeMeters": 25000,
+        "cameraAltitudeMeters": 25363291,
+        "viewMu": 0.01,
+        "distanceMeters": 180000,
+        "role": "limb-shell-path"
+      },
+      "sample": {
+        "sunMu": -0.02617694830787315,
+        "opticalDepth": 0.28872950423411176,
+        "aerialPerspective": 0.0813847772372286,
+        "densityR": 0.05280357033430051,
+        "densityM": 8.95773671769673e-10,
+        "ozoneBand": 1,
+        "path": 8.405760605988334
+      },
+      "continuity": {
+        "localSkyAlpha": 0,
+        "orbitalRimAlpha": 0.96,
+        "horizonFogAlpha": 0,
+        "aerialPerspectiveAlpha": 0
+      },
+      "pass": true,
+      "failures": []
+    },
+    {
+      "bookmarkId": "low-twilight-horizon",
+      "role": "sea-level-horizon",
+      "sunElevationDegrees": 1.2,
+      "target": {
+        "opticalDepth": [
+          0.3,
+          0.86
+        ],
+        "aerialPerspective": [
+          0.28,
+          0.92
+        ],
+        "orbitalRimAlpha": [
+          0,
+          0.1
+        ],
+        "localSkyAlpha": [
+          0.94,
+          1
+        ]
+      },
+      "controls": {
+        "rayleighScale": 1.03,
+        "mieScale": 0.74,
+        "ozoneScale": 0.78,
+        "multiScatteringStrength": 0.7,
+        "aerialPerspectiveStrength": 0.86,
+        "skyViewStrength": 0.82
+      },
+      "plan": {
+        "opticalSampleAltitudeMeters": 25,
+        "cameraAltitudeMeters": 7.5,
+        "viewMu": 0.035,
+        "distanceMeters": 650000,
+        "role": "low-horizon-path"
+      },
+      "sample": {
+        "sunMu": 0.020942419883356957,
+        "opticalDepth": 0.5923483415106463,
+        "aerialPerspective": 0.86,
+        "densityR": 0.997063144551593,
+        "densityM": 0.9793821813312402,
+        "ozoneBand": 0.1458529655498358,
+        "path": 6.813639426984595
+      },
+      "continuity": {
+        "localSkyAlpha": 0.96,
+        "orbitalRimAlpha": 0,
+        "horizonFogAlpha": 0.96,
+        "aerialPerspectiveAlpha": 0.96
+      },
+      "pass": true,
+      "failures": []
+    }
+  ]
+}

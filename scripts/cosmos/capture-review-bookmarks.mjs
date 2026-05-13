@@ -7,14 +7,14 @@ import { createServer } from 'node:net';
 const root = process.cwd();
 let baseUrl = process.env.COSMOS_REVIEW_BASE_URL ?? 'http://127.0.0.1:8080';
 const shouldStartServer = process.env.COSMOS_REVIEW_START_SERVER !== '0';
-const outputDir = resolve(root, process.env.COSMOS_REVIEW_SCREENSHOT_DIR ?? 'docs/cosmos/validation/screenshots/R0004');
+const outputDir = resolve(root, process.env.COSMOS_REVIEW_SCREENSHOT_DIR ?? 'docs/cosmos/validation/screenshots/R0012');
 const viewportWidth = Number(process.env.COSMOS_REVIEW_WIDTH ?? 1920);
 const viewportHeight = Number(process.env.COSMOS_REVIEW_HEIGHT ?? 1080);
 const settleMs = Number(process.env.COSMOS_REVIEW_SETTLE_MS ?? 1800);
 const readyTimeoutMs = Number(process.env.COSMOS_REVIEW_READY_TIMEOUT_MS ?? 45000);
-const gibsTimeoutMs = Number(process.env.COSMOS_REVIEW_GIBS_TIMEOUT_MS ?? 45000);
+const atlasTimeoutMs = Number(process.env.COSMOS_REVIEW_ATLAS_TIMEOUT_MS ?? 45000);
 const screenshotTimeoutMs = Number(process.env.COSMOS_REVIEW_SCREENSHOT_TIMEOUT_MS ?? 90000);
-const captureMode = process.env.COSMOS_REVIEW_CAPTURE_MODE ?? 'canvas';
+const captureMode = process.env.COSMOS_REVIEW_CAPTURE_MODE ?? 'page';
 
 async function loadPlaywright() {
   try {
@@ -137,10 +137,10 @@ try {
   await mkdir(outputDir, { recursive: true });
 
   const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: viewportWidth, height: viewportHeight }, deviceScaleFactor: 1 });
 
   const captures = [];
-  const firstBookmarkId = 'orbit';
-  const page = await browser.newPage({ viewport: { width: viewportWidth, height: viewportHeight }, deviceScaleFactor: 1 });
+  const firstBookmarkId = bookmarkIds[0] ?? 'orbit';
   const initialUrl = `${baseUrl}/cosmos-review?bookmark=${encodeURIComponent(firstBookmarkId)}&panel=0`;
   await page.goto(initialUrl, { waitUntil: 'networkidle' });
   await page.waitForFunction(
@@ -150,11 +150,12 @@ try {
   );
   await page.waitForFunction(
     () => {
-      const state = window.__COSMOS_GIBS_SURFACE_OVERLAY_STATE__?.state;
-      return state === 'loaded' || state === 'failed';
+      const gibs = window.__COSMOS_GIBS_SURFACE_OVERLAY_STATE__?.state;
+      const bathymetry = window.__COSMOS_BATHYMETRY_OVERLAY_STATE__?.state;
+      return (gibs === 'loaded' || gibs === 'failed') && (bathymetry === 'loaded' || bathymetry === 'fallback' || bathymetry === 'error');
     },
     undefined,
-    { timeout: gibsTimeoutMs },
+    { timeout: atlasTimeoutMs },
   );
 
   for (const bookmarkId of bookmarkIds) {
@@ -172,15 +173,23 @@ try {
     await page.waitForTimeout(settleMs);
     const path = resolve(outputDir, `${bookmarkId}.png`);
     await captureReviewImage(page, path);
-    const gibsStatus = await page.evaluate(() => window.__COSMOS_GIBS_SURFACE_OVERLAY_STATE__);
-    const capture = { bookmarkId, path, gibsStatus };
+    const state = await page.evaluate(() => ({
+      gibs: window.__COSMOS_GIBS_SURFACE_OVERLAY_STATE__,
+      bathymetry: window.__COSMOS_BATHYMETRY_OVERLAY_STATE__,
+      atmosphereLut: window.__COSMOS_ATMOSPHERE_LUT_STATE__,
+      runtime: window.__COSMOS_RUNTIME_DIAGNOSTICS__,
+    }));
+    const capture = { bookmarkId, path, state };
     captures.push(capture);
     console.log(JSON.stringify({
       bookmarkId,
       path,
-      gibsState: gibsStatus?.state,
-      gibsLayer: gibsStatus?.layer,
-      gibsTime: gibsStatus?.time,
+      gibsState: state.gibs?.state,
+      gibsLayer: state.gibs?.layer,
+      gibsTime: state.gibs?.time,
+      bathymetryState: state.bathymetry?.state,
+      atmosphereLutState: state.atmosphereLut?.state,
+      runtimeState: state.runtime?.state,
     }));
   }
 

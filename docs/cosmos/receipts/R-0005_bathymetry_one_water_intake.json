@@ -1,0 +1,48 @@
+{
+  "receipt_id": "R-0005_bathymetry_one_water_intake",
+  "project": "Cosmos",
+  "patch": "Cosmos_WaterWorld_v0_5_R0005_bathymetry_one_water_intake.zip",
+  "date_utc": "2026-05-13T00:00:00Z",
+  "status": "build_test_lint_validated_with_dns_limited_data_fetch",
+  "summary": "Assimilated Water.zip one-water contract into Cosmos and added the first bathymetry/depth raster plumbing for orbital ocean, sea-level water, underwater fog/caustics, and coastal foam.",
+  "implemented": [
+    "Bathymetry overlay runtime with manifest/status callback and procedural fallback",
+    "RGBA depth atlas contract: depth01, shelf, coast, land",
+    "Procedural depth atlas generator script",
+    "NOAA ETOPO WMS preview fetch script",
+    "Bathymetry GLSL shared sampler module",
+    "Bathymetry-driven orbital planet ocean color and coast/land awareness",
+    "Bathymetry-driven projected ocean shallow optics, abyss tint, caustic bias, and coastal foam",
+    "Cosmos Review UI controls and Bathymetry data status panel",
+    "One-water physics helpers for dispersion, shallow-water speed, capillary-gravity response, and EBT top-K breaker selection",
+    "Unit tests for bathymetry overlay and one-water physics helpers"
+  ],
+  "validation": {
+    "npm_ci_dry_run": "passed",
+    "npm_ci": "passed",
+    "bathymetry_procedural": "passed",
+    "build": "passed",
+    "test": "passed_6_files_12_tests",
+    "lint": "passed_with_warning_only_existing_issues",
+    "etopo_wms_fetch": "dns_failed_in_sandbox_EAI_AGAIN_www_ngdc_noaa_gov",
+    "playwright_screenshots": "not_run_in_sandbox"
+  },
+  "new_files": [
+    "src/cosmos/bathymetry/bathymetryOverlay.ts",
+    "src/cosmos/water/waterPhysics.ts",
+    "scripts/cosmos/build-procedural-depth-atlas.mjs",
+    "scripts/cosmos/fetch-etopo-wms-depth-preview.mjs",
+    "src/test/cosmos-bathymetry-overlay.test.ts",
+    "src/test/cosmos-water-physics.test.ts",
+    "docs/cosmos/water/WATER_SOURCE_INTAKE_R0005.md",
+    "docs/cosmos/water/WATER_TO_COSMOS_CROSSWALK_R0005.md",
+    "docs/cosmos/CODEX_R0005_LOCAL_PROMPT.md",
+    "docs/cosmos/validation/VALIDATION_SUMMARY_R0005.md"
+  ],
+  "next_targets": [
+    "Convert real NOAA ETOPO or GEBCO elevation data into RGBA depth01/shelf/coast/land atlas",
+    "Add bathymetry debug channel overlays for /cosmos-review",
+    "Add SF0/SF1 spawn-field debug MVP and EBT breaker overlay",
+    "Capture local Playwright screenshots and lead-eyes review notes"
+  ]
+}

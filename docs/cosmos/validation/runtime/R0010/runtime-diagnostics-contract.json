@@ -1,0 +1,32 @@
+{
+  "release": "R-0010",
+  "purpose": "browser runtime WebGL shader compile/link and console/page-error capture",
+  "expectedModes": [
+    0,
+    2,
+    6
+  ],
+  "webglProbe": {
+    "patches": [
+      "shaderSource",
+      "compileShader",
+      "attachShader",
+      "linkProgram"
+    ],
+    "records": [
+      "webgl-shader",
+      "webgl-program"
+    ],
+    "failGate": "shaderErrors + programErrors + pageErrors must be zero before visual tuning"
+  },
+  "engineProbe": {
+    "threeDebugCheckShaderErrors": true,
+    "callback": "WebGLRenderer.debug.onShaderError",
+    "exposedWindowState": "window.__COSMOS_RUNTIME_DIAGNOSTICS__"
+  },
+  "playwrightCapture": {
+    "script": "scripts/cosmos/capture-review-runtime-diagnostics.mjs",
+    "command": "npm run cosmos:review:runtime-diagnostics",
+    "output": "docs/cosmos/validation/runtime/R0010/runtime-diagnostics.json"
+  }
+}

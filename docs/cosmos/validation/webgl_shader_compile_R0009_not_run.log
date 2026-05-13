@@ -1,0 +1,1 @@
+Browser WebGL shader compile logs were not captured in the sandbox. R-0010 target is runtime compile/log capture.

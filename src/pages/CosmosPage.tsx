@@ -86,10 +86,10 @@ const systems = [
 ];
 
 const metrics = [
-  ['Release spine', '7 drops'],
+  ['Release spine', '12 drops'],
   ['Review bookmarks', '7 fixed views'],
   ['Atlas snapshot', '2048x1024'],
-  ['Validation mode', '3 checks'],
+  ['Runtime spine', 'R0012'],
 ];
 
 const CosmosPage = () => (
@@ -221,11 +221,11 @@ const CosmosPage = () => (
             <CloudSun className="h-4 w-4" />
             Next Candidate
           </div>
-          <h2 className="mt-4 text-3xl font-semibold tracking-normal">R0005 and beyond: bathymetry, scale, atmosphere.</h2>
+          <h2 className="mt-4 text-3xl font-semibold tracking-normal">R0012: bathymetry, scale, atmosphere, and runtime diagnostics.</h2>
           <p className="mt-4 max-w-3xl text-base leading-8 text-stone-800">
-            The visual gap is now clear: true-color land retention overwhelms the water-world read. The next
-            passes need depth rasters, shallow-water color, shelf breaks, coastal foam masks, underwater fog,
-            and atmosphere/cloud LOD that holds together from orbit to sea level.
+            The visual gap is now clear: true-color land retention overwhelms the water-world read. The runtime
+            now carries depth rasters, shallow-water color targets, shelf breaks, coastal foam masks, underwater fog,
+            atmosphere LUTs, twilight calibration, and diagnostics that hold the work accountable from orbit to sea level.
           </p>
         </div>
         <div className="grid gap-2 text-sm">

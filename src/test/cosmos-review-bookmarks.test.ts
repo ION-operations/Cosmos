@@ -7,6 +7,8 @@ describe('Cosmos orbital review bookmarks', () => {
     expect(ids.size).toBe(COSMOS_REVIEW_BOOKMARKS.length);
     expect(ids.has('orbit')).toBe(true);
     expect(ids.has('sea-level')).toBe(true);
+    expect(ids.has('twilight-limb')).toBe(true);
+    expect(ids.has('low-twilight-horizon')).toBe(true);
     expect(ids.has('underwater')).toBe(true);
 
     for (const bookmark of COSMOS_REVIEW_BOOKMARKS) {

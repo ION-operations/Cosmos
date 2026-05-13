@@ -1,0 +1,171 @@
+{
+  "earthRadiusMeters": 6371000,
+  "planetCenter": {
+    "x": 0,
+    "y": -6371000,
+    "z": 0
+  },
+  "records": [
+    {
+      "bookmarkId": "orbit",
+      "position": [
+        0,
+        15500000,
+        24500000
+      ],
+      "target": [
+        0,
+        -6371000,
+        0
+      ],
+      "atmosphereState": {
+        "altitudeMeters": 26470903.735928588,
+        "localSkyAlpha": 0,
+        "orbitalRimAlpha": 1,
+        "horizonFogAlpha": 0,
+        "aerialPerspectiveAlpha": 0,
+        "cloudMicroAlpha": 0,
+        "cloudMesoAlpha": 0,
+        "cloudMacroAlpha": 1
+      }
+    },
+    {
+      "bookmarkId": "cloud-terminator",
+      "position": [
+        -9000000,
+        13000000,
+        21000000
+      ],
+      "target": [
+        0,
+        -6371000,
+        0
+      ],
+      "atmosphereState": {
+        "altitudeMeters": 23582891.917412,
+        "localSkyAlpha": 0,
+        "orbitalRimAlpha": 1,
+        "horizonFogAlpha": 0,
+        "aerialPerspectiveAlpha": 0,
+        "cloudMicroAlpha": 0,
+        "cloudMesoAlpha": 0,
+        "cloudMacroAlpha": 1
+      }
+    },
+    {
+      "bookmarkId": "high-altitude",
+      "position": [
+        1600,
+        8400,
+        3600
+      ],
+      "target": [
+        260,
+        600,
+        -400
+      ],
+      "atmosphereState": {
+        "altitudeMeters": 8401.216415220872,
+        "localSkyAlpha": 1,
+        "orbitalRimAlpha": 0,
+        "horizonFogAlpha": 1,
+        "aerialPerspectiveAlpha": 1,
+        "cloudMicroAlpha": 0.9484534169992771,
+        "cloudMesoAlpha": 1,
+        "cloudMacroAlpha": 0.3840236205231613
+      }
+    },
+    {
+      "bookmarkId": "storm-zone",
+      "position": [
+        -620,
+        1200,
+        1450
+      ],
+      "target": [
+        120,
+        140,
+        -160
+      ],
+      "atmosphereState": {
+        "altitudeMeters": 1200.1951366849244,
+        "localSkyAlpha": 1,
+        "orbitalRimAlpha": 0,
+        "horizonFogAlpha": 1,
+        "aerialPerspectiveAlpha": 1,
+        "cloudMicroAlpha": 1,
+        "cloudMesoAlpha": 1,
+        "cloudMacroAlpha": 0.35005981881939213
+      }
+    },
+    {
+      "bookmarkId": "sun-glitter",
+      "position": [
+        140,
+        260,
+        520
+      ],
+      "target": [
+        30,
+        22,
+        -140
+      ],
+      "atmosphereState": {
+        "altitudeMeters": 260.0227584494278,
+        "localSkyAlpha": 1,
+        "orbitalRimAlpha": 0,
+        "horizonFogAlpha": 1,
+        "aerialPerspectiveAlpha": 1,
+        "cloudMicroAlpha": 1,
+        "cloudMesoAlpha": 1,
+        "cloudMacroAlpha": 0.35
+      }
+    },
+    {
+      "bookmarkId": "sea-level",
+      "position": [
+        8,
+        4.2,
+        38
+      ],
+      "target": [
+        0,
+        2,
+        -160
+      ],
+      "atmosphereState": {
+        "altitudeMeters": 4.200118348933756,
+        "localSkyAlpha": 1,
+        "orbitalRimAlpha": 0,
+        "horizonFogAlpha": 1,
+        "aerialPerspectiveAlpha": 1,
+        "cloudMicroAlpha": 1,
+        "cloudMesoAlpha": 1,
+        "cloudMacroAlpha": 0.35
+      }
+    },
+    {
+      "bookmarkId": "underwater",
+      "position": [
+        0,
+        -2.7,
+        22
+      ],
+      "target": [
+        0,
+        -1.2,
+        -70
+      ],
+      "atmosphereState": {
+        "altitudeMeters": -2.6999620152637362,
+        "localSkyAlpha": 1,
+        "orbitalRimAlpha": 0,
+        "horizonFogAlpha": 1,
+        "aerialPerspectiveAlpha": 1,
+        "cloudMicroAlpha": 1,
+        "cloudMesoAlpha": 1,
+        "cloudMacroAlpha": 0.35
+      }
+    }
+  ]
+}

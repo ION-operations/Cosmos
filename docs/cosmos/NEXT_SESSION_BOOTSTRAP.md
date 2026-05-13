@@ -1,64 +1,72 @@
 # Cosmos next-session bootstrap
 
-Current master branch choice: **earth-forge**.
+Current release: **R-0012 — higher-fidelity atmosphere LUT solver**.
 
-Current patch: **Water World v0.4 / R-0004**.
+## Current renderer spine
 
-## Current renderer state
-
-- R-0001 established the deterministic Cosmos weather atlas in the main Water World route.
-- R-0002 added `/cosmos-review`, the orbital/ocean review route, and seven fixed visual bookmarks.
-- R-0003 unified the weather atlas across orbital planet, cloud, and ocean shaders.
-- R-0004 added the first real-data surface raster overlay path for the orbital planet pass.
-
-## R-0004 additions
-
-- Added `src/cosmos/gibs/gibsSurfaceOverlay.ts` for local NASA GIBS surface atlas loading, status reporting, and safe fallback texture creation.
-- Added `scripts/cosmos/fetch-gibs-global-snapshot.mjs` and package script `npm run cosmos:gibs:global-snapshot`.
-- Added expected public data location:
-  - `public/cosmos/gibs/global-truecolor.jpg`
-  - `public/cosmos/gibs/global-truecolor.manifest.json`
-- Updated `src/cosmos/orbital/shaders/planet.ts` so the procedural water-world surface can blend an optional real GIBS true-color atlas.
-- Added GIBS blend and water-world bias controls to `/cosmos-review`.
-- Added runtime GIBS status readout to the review UI.
-- Added `src/test/cosmos-gibs-surface-overlay.test.ts`.
-- Updated screenshot capture output path to `docs/cosmos/validation/screenshots/R0004`.
-
-## Validation run for R-0004
-
-```bash
-npm ci --dry-run --no-audit --no-fund
-npm run build
-npx vitest run --pool=threads --poolOptions.threads.singleThread=true --reporter=verbose
-npm run lint
-npm run cosmos:gibs:global-snapshot
+```text
+earth-forge master shell
+/cosmos-review route
+fixed Earth scale contract
+weather-atlas macro cloud/ocean coupling
+bathymetry one-water interface
+visual debug overlays
+physical atmosphere LUT interface
+runtime WebGL diagnostics gate
+R-0012 curved-path atmosphere LUT fallback solver
 ```
 
-Status:
+## What R-0012 changed
 
-- Build: passed.
-- Test: passed, 4 files / 6 tests.
-- Lint: passed with existing warning-class items only.
-- `npm ci --dry-run`: passed.
-- GIBS global snapshot: failed in sandbox with DNS `EAI_AGAIN`; retry locally.
-- Playwright screenshots: not run in sandbox; run locally after installing Playwright.
+- Added `src/cosmos/atmosphere/atmospherePhysics.ts`.
+- Upgraded CPU fallback atmosphere LUT generation from heuristic altitude/sun-angle response to curved ray/sphere optical-depth integration.
+- Added Rayleigh/Mie phase helpers and ozone-band density.
+- Increased fallback LUT texture resolutions.
+- Added LUT quality contract and PNG texture export.
+- Fixed atmosphere LUT state emission in `WorldEngine.ts`.
 
-## Immediate local Codex task
-
-Use `docs/cosmos/CODEX_R0004_LOCAL_PROMPT.md`. The key local commands are:
+## Immediate local Codex command packet
 
 ```bash
 cd Cosmos/earth-forge
 npm ci
-npm run cosmos:gibs:global-snapshot
 npm run build
-npm run test
+npx vitest run --pool=threads --poolOptions.threads.singleThread=true --reporter=verbose
 npm run lint
+npm run cosmos:review:scale-contract
+npm run cosmos:review:atmosphere-contract
+npm run cosmos:review:debug-contract
+npm run cosmos:review:atmosphere-lut-contract
+npm run cosmos:review:runtime-contract
+npm run cosmos:review:twilight-contract
+npm run cosmos:review:atmosphere-calibration
+npm run cosmos:review:atmosphere-lut-quality
+npm run cosmos:review:atmosphere-lut-export
 npm i -D playwright
 npx playwright install chromium
+COSMOS_RUNTIME_FAIL_ON_ERRORS=1 npm run cosmos:review:runtime-diagnostics
+npm run cosmos:review:debug-screenshots
 npm run cosmos:review:screenshots
 ```
 
-## Next engineering move
+## Review targets
 
-R-0005 should start the bathymetry/depth raster interface for shallow-water color, shoreline foam, shelf-break water, underwater fog density, caustic strength, and depth-correct sea colour.
+```text
+/cosmos-review?bookmark=cloud-terminator&panel=1
+/cosmos-review?bookmark=twilight-limb&panel=1
+/cosmos-review?bookmark=low-twilight-horizon&panel=1
+```
+
+Capture/inspect:
+
+```text
+mode 0 = beauty
+mode 2 = atmosphere ownership
+mode 6 = optical-depth LUT
+```
+
+## Next build candidate
+
+**R-0013: GPU/precomputed atmosphere generation path or runtime-calibrated atmosphere tuning.**
+
+Do not move into beauty-only tuning until the local R-0012 runtime diagnostics show zero shader/program/page errors.

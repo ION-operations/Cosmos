@@ -1,0 +1,40 @@
+{
+  "receiptId": "R-0012_atmosphere_lut_solver",
+  "project": "Cosmos Water World",
+  "summary": "Upgraded the CPU fallback atmosphere LUT system to a curved-path optical-depth solver with Rayleigh/Mie phase helpers, ozone band density, higher LUT resolutions, PNG debug exports, quality contract reports, and fixed atmosphere LUT state emission.",
+  "primaryFiles": [
+    "src/cosmos/atmosphere/atmospherePhysics.ts",
+    "src/cosmos/atmosphere/atmosphereLut.ts",
+    "src/cosmos/atmosphere/atmosphereCalibration.ts",
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/pages/CosmosReview.tsx",
+    "src/test/cosmos-atmosphere-physics.test.ts",
+    "src/test/cosmos-atmosphere-lut.test.ts",
+    "src/test/cosmos-atmosphere-calibration.test.ts",
+    "scripts/cosmos/report-atmosphere-lut-quality-contract.mjs",
+    "scripts/cosmos/export-atmosphere-lut-textures.mjs",
+    "scripts/cosmos/report-atmosphere-calibration-contract.mjs"
+  ],
+  "validation": {
+    "build": "passed",
+    "tests": "passed: 14 files / 42 tests",
+    "lint": "passed with existing warning-only issues",
+    "contracts": [
+      "scale",
+      "atmosphere-continuity",
+      "debug-overlay",
+      "atmosphere-lut",
+      "runtime",
+      "twilight",
+      "atmosphere-calibration",
+      "atmosphere-lut-quality"
+    ],
+    "lutTextureExport": "passed"
+  },
+  "limitations": [
+    "Runtime Playwright/WebGL diagnostics were not run in this sandbox.",
+    "R-0012 is still a CPU fallback/DataTexture solver, not the final production-grade precomputed atmosphere implementation.",
+    "Beauty tuning remains gated on local runtime shader diagnostics."
+  ],
+  "next": "R-0013 should move toward GPU/precomputed atmosphere generation or tighter runtime visual calibration using the R-0012 LUT exports and runtime diagnostics."
+}

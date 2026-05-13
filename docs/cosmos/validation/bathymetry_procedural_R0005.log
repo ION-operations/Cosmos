@@ -1,0 +1,6 @@
+
+> vite_react_shadcn_ts@0.0.0 cosmos:bathymetry:procedural
+> node scripts/cosmos/build-procedural-depth-atlas.mjs
+
+Wrote procedural bathymetry atlas: /mnt/data/r0005_work/Cosmos/earth-forge/public/cosmos/bathymetry/global-depth.png
+Wrote manifest: /mnt/data/r0005_work/Cosmos/earth-forge/public/cosmos/bathymetry/global-depth.manifest.json

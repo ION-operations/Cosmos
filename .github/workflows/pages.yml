@@ -29,6 +29,7 @@ jobs:
           cp -R pages/. dist/
           cp -R public/cosmos/pages dist/cosmos/pages
           cp -R public/cosmos/gibs dist/cosmos/gibs
+          cp -R public/cosmos/bathymetry dist/cosmos/bathymetry
           cp dist/index.html dist/404.html
 
       - name: Configure Pages

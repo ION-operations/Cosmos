@@ -7,7 +7,7 @@
 //   - dolphinjump: foam/splash interaction patterns, wake turbulence
 // ═══════════════════════════════════════════
 
-import { ATMOS_GLSL, NOISE_GLSL, WEATHER_ATLAS_GLSL } from './common';
+import { ATMOS_GLSL, ATMOSPHERE_CONTINUITY_GLSL, ATMOSPHERE_LUT_GLSL, BATHYMETRY_ATLAS_GLSL, NOISE_GLSL, SCALE_GLSL, WEATHER_ATLAS_GLSL } from './common';
 
 export const MAX_WAVES = 12;
 export const MAX_RINGS = 24;
@@ -32,6 +32,7 @@ varying vec3 vN;
 varying float vFoam, vH, vFade, vDist;
 
 ${NOISE_GLSL}
+${SCALE_GLSL}
 
 vec3 worldRay(vec2 ndc){
   vec4 cf = vec4(ndc, 1, 1);
@@ -72,6 +73,7 @@ void main(){
   float dXZ = abs(tP) * length(rd.xz);
   float fade = 1.0 - smoothstep(uPFS, uPFE, dXZ);
   fade = clamp(fade, 0.0, 1.0);
+  fade *= cosmosPassFade(uCosmosOceanPassAlpha);
   if(denom >= -1e-5) fade = 0.0;
   vFade = fade;
   float t = clamp(tP, 0.0, 1e7);
@@ -129,8 +131,7 @@ void main(){
   }
   
   vec3 Nw = normalize(cross(bitan, tan));
-  vec3 sC = vec3(uCam.x, -ER, uCam.z);
-  vec3 Nc = normalize(pos - sC);
+  vec3 Nc = normalize(pos - uCosmosPlanetCenter);
   float cM = smoothstep(0.0, 1.0, 1.0-fade);
   vN = normalize(mix(Nw, Nc, cM));
   vWP = pos;
@@ -151,9 +152,17 @@ varying vec3 vWP, vN;
 varying float vFoam, vH, vFade, vDist;
 ${ATMOS_GLSL}
 ${NOISE_GLSL}
+${SCALE_GLSL}
+${ATMOSPHERE_CONTINUITY_GLSL}
+${ATMOSPHERE_LUT_GLSL}
 ${WEATHER_ATLAS_GLSL}
+${BATHYMETRY_ATLAS_GLSL}
 
-vec3 skyCol(vec3 rd){ return atmosphere(rd, uSunDir, uSunI, uAlt); }
+vec3 skyCol(vec3 rd){
+  vec3 analyticSky = atmosphere(rd, uSunDir, uSunI, uAlt);
+  vec3 lutSky = cosmosLutSkyRadiance(rd, uSunDir, max(uCosmosCameraAltitudeMeters, 0.0)) * uSunI * 0.085;
+  return mix(analyticSky, analyticSky + lutSky, clamp(uAtmosphereLutStrength, 0.0, 1.0));
+}
 
 // Enhanced subsurface scattering (realisticoceancloseupclearwater)
 // Multiple SSS lobes for realistic light transport through water volume
@@ -173,7 +182,7 @@ vec3 subsurfaceScattering(vec3 V, vec3 N, vec3 L, float sunI, vec3 sunT){
 
 // Procedural normal perturbation for micro-wave detail (realisticoceancloseupclearwater)
 vec3 microNormals(vec3 wp, float t, float dist){
-  float detail = smoothstep(500.0, 50.0, dist); // Only close up
+  float detail = 1.0 - smoothstep(50.0, 500.0, dist); // Only close up
   if(detail < 0.01) return vec3(0.0);
   // Multi-frequency ripples
   float n1 = gnoise(vec3(wp.xz * 4.0, t * 0.8)) * 0.015;
@@ -184,13 +193,17 @@ vec3 microNormals(vec3 wp, float t, float dist){
 
 void main(){
   #include <logdepthbuf_fragment>
-  if(vFade <= 0.0001) discard;
+  if(vFade <= 0.0001 || uCosmosOceanPassAlpha <= 0.0001) discard;
   
   vec3 N = normalize(vN);
   CosmosWeatherState wx = cosmosSampleWeatherPlanar(vWP, uTime);
+  CosmosBathymetryState bathy = cosmosSampleBathymetryPlanar(vWP, uTime, wx);
   float weatherWind = smoothstep(0.05, 0.85, length(wx.wind));
   float weatherStorm = smoothstep(0.08, 0.85, wx.precip);
+  float oneWater = clamp(uOneWaterOpticsStrength, 0.0, 1.0);
+  float shelfOptics = clamp(bathy.shallow * uShallowWaterOptics * uBathymetryStrength, 0.0, 1.35);
   float localRough = mix(uRough, clamp(uRough + wx.precip * 0.10 + weatherWind * 0.035, 0.008, 0.32), uWeatherAtlasStrength);
+  localRough = clamp(localRough + bathy.shoalEnergy * oneWater * 0.032, 0.008, 0.36);
   
   // Apply micro-normal perturbation for close-up detail
   vec3 microN = microNormals(vWP, uTime, vDist);
@@ -227,24 +240,30 @@ void main(){
   float G1V = NdV / (NdV * (1.0 - k) + k);
   float G1L = NdL / (NdL * (1.0 - k) + k);
   float G = G1V * G1L;
-  vec3 sunT = exp(-BR*1.5e5*max(1.0-uSunDir.y, 0.0));
+  vec3 sunT = mix(exp(-BR*1.5e5*max(1.0-uSunDir.y, 0.0)), cosmosLutSolarTransmittance(max(uCosmosCameraAltitudeMeters, 0.0), uSunDir.y), clamp(uAtmosphereLutStrength, 0.0, 1.0));
   vec3 spec = sunT * D * G * fresnel * NdL * uSunI * 0.6;
   
   // Underwater absorption (realisticoceancloseupclearwater enhanced model)
   // Different absorption rates per wavelength for realistic color
   float depth = max(-vH*2.0+1.0, 0.0);
+  float bathyOpticalDepth = mix(9.0, 1.35, shelfOptics) + bathy.abyss * 2.5;
+  depth += bathyOpticalDepth * mix(0.12, 0.34, oneWater);
   vec3 absorb = exp(-vec3(0.45, 0.09, 0.04) * depth * 3.0);
-  // Scattering contribution increases with depth
+  // Scattering contribution increases with depth; bathymetry shifts the open ocean toward abyssal black-blue and shelves toward turquoise/green.
   vec3 scatC = vec3(0.0293, uScat*0.14, uScat*0.20);
   vec3 deepScatter = vec3(0.005, 0.02, 0.04) * (1.0 - exp(-depth * 0.5));
   vec3 uw = uDeep * absorb + scatC * (1.0 - absorb.g) + deepScatter;
+  vec3 shallowWater = vec3(0.040, 0.245, 0.255) * (0.34 + NdL * 0.66) + vec3(0.025, 0.115, 0.085) * wx.evaporation;
+  vec3 abyssWater = vec3(0.002, 0.013, 0.033);
+  uw = mix(uw, shallowWater, clamp(shelfOptics * (0.36 + oneWater * 0.34), 0.0, 0.78));
+  uw = mix(uw, abyssWater, bathy.abyss * oneWater * 0.22);
   
   // Caustic hints on shallow areas (realisticoceancloseupclearwater)
   float caustic1 = abs(gnoise(vec3(vWP.xz * 2.0 + uTime * 0.3, uTime * 0.15)));
   float caustic2 = abs(gnoise(vec3(vWP.xz * 3.5 - uTime * 0.2, uTime * 0.1)));
   float causticPattern = pow(caustic1 * caustic2, 2.0);
-  float shallowMask = smoothstep(2.0, 0.0, depth) * NdL * 0.15;
-  uw += vec3(0.1, 0.15, 0.12) * causticPattern * shallowMask * uSunI * 0.02;
+  float shallowMask = max((1.0 - smoothstep(0.0, 2.0, depth)) * 0.45, shelfOptics) * NdL * 0.15;
+  uw += vec3(0.1, 0.15, 0.12) * causticPattern * shallowMask * uSunI * 0.02 * (0.55 + oneWater * 0.65);
   
   // Enhanced SSS
   vec3 sss = subsurfaceScattering(V, N, uSunDir, uSunI, sunT);
@@ -253,9 +272,10 @@ void main(){
   vec3 water = mix(uw + sss, refl, fresnel) + spec;
   
   // Foam (multi-scale with realistic texture — dolphinjump interaction patterns)
-  float foam = smoothstep(uFoamT+0.15, uFoamT-0.05, 1.0-vFoam) * uFoamA;
+  float foam = (1.0 - smoothstep(uFoamT - 0.05, uFoamT + 0.15, 1.0 - vFoam)) * uFoamA;
   foam += smoothstep(0.4, 1.8, vH) * 0.12 * uFoamA;
   foam += weatherStorm * uWeatherAtlasStrength * 0.18 * smoothstep(0.15, 1.1, vH + 0.45);
+  foam += bathy.shoalEnergy * uCoastalFoamStrength * oneWater * 0.22 * smoothstep(0.05, 1.2, abs(vH) + weatherWind * 0.35);
   foam = clamp(foam, 0.0, 1.0);
   // Multi-frequency foam texture with Voronoi-like breakup
   float fN1 = fract(sin(dot(vWP.xz*3.7, vec2(12.9898, 78.233))) * 43758.5453);
@@ -271,8 +291,11 @@ void main(){
   // Aerial perspective (atmospheric fog)
   float dist = vDist;
   vec3 fogC = skyCol(normalize(vec3(V.x, 0.02, V.z)));
-  float fogF = 1.0 - exp(-dist*0.0008*dist*0.0008*2.5);
-  water = mix(water, fogC, fogF*0.6);
+  float fogF = cosmosAerialPerspectiveFactor(dist, uCosmosCameraAltitudeMeters);
+  float lutFogAlpha = 0.0;
+  vec3 lutFogC = cosmosLutAerialPerspectiveColor(dist, max(uCosmosCameraAltitudeMeters, 0.0), dot(N, uSunDir), lutFogAlpha);
+  fogC = mix(fogC, lutFogC, clamp(uAtmosphereLutStrength, 0.0, 1.0));
+  water = mix(water, fogC, max(fogF * 0.62, lutFogAlpha * 0.36));
   
   // Far whitecaps (greatoceanwaves wave crest patterns — wind-driven)
   float farT = smoothstep(5000.0, 80000.0, dist);
@@ -282,7 +305,7 @@ void main(){
   float rnd = fract(sin(dot(fid, vec2(127.1, 311.7))) * 43758.5453);
   float pres = step(0.94, rnd); // slightly more whitecaps
   float rd2 = fract(rnd*19.19);
-  float cap = smoothstep(mix(0.06, 0.23, rd2), 0.0, length(fract(fp)-0.5));
+  float cap = 1.0 - smoothstep(0.0, mix(0.06, 0.23, rd2), length(fract(fp)-0.5));
   // Wind-modulated whitecap intensity (greatoceanwaves)
   float windFactor = mix(smoothstep(3.0, 15.0, 7.0), clamp(0.45 + weatherWind * 0.72 + weatherStorm * 0.55, 0.0, 1.35), uWeatherAtlasStrength);
   float micro = pres * cap * farT * graz * 0.8 * windFactor;
@@ -292,5 +315,5 @@ void main(){
   water = 1.0 - exp(-water * uExpo);
   water = pow(water, vec3(1.0/2.2));
   
-  gl_FragColor = vec4(water, clamp(vFade, 0.0, 1.0));
+  gl_FragColor = vec4(water, clamp(vFade * uCosmosOceanPassAlpha, 0.0, 1.0));
 }`;

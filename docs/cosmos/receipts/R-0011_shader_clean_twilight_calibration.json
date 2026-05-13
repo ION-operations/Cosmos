@@ -1,0 +1,38 @@
+{
+  "id": "R-0011",
+  "title": "Shader-clean twilight and terminator calibration",
+  "status": "implemented_static_validated_runtime_browser_pending_local",
+  "domains": [
+    "D_SHADER_CLEAN_TWILIGHT_CALIBRATION",
+    "D_PHYSICAL_ATMOSPHERE_LUT",
+    "D_RUNTIME_SHADER_DIAGNOSTICS",
+    "D_RENDER_ATMOSPHERE",
+    "D_VISUAL_REVIEW"
+  ],
+  "changed_files": [
+    "src/cosmos/atmosphere/atmosphereCalibration.ts",
+    "src/cosmos/atmosphere/atmosphereLut.ts",
+    "src/cosmos/atmosphere/twilightCalibration.ts",
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/cosmos/orbital/shaders/debugOverlay.ts",
+    "src/pages/CosmosReview.tsx",
+    "src/test/cosmos-atmosphere-calibration.test.ts",
+    "scripts/cosmos/report-atmosphere-calibration-contract.mjs",
+    "docs/cosmos/ATMOSPHERE_CALIBRATION_R0011.md",
+    "docs/cosmos/CODEX_R0011_LOCAL_PROMPT.md"
+  ],
+  "validation": {
+    "npm_ci": "passed",
+    "build": "passed",
+    "tests": "passed_13_files_37_tests",
+    "lint": "passed_with_existing_warnings",
+    "static_contracts": "passed",
+    "runtime_playwright": "not_run_in_sandbox"
+  },
+  "notes": [
+    "R-0011 separates orbital camera altitude from representative atmospheric optical-path samples.",
+    "Mode-6 optical-depth debug now uses active uSunDir rather than a fixed up-vector.",
+    "The optical-depth alpha channel uses a compressed response to avoid saturated debug output.",
+    "Final visual calibration still requires local Playwright/WebGL runtime diagnostics."
+  ]
+}

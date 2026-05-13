@@ -1,0 +1,19 @@
+# Cosmos R-0010 runtime diagnostics contract
+
+R-0010 blocks beauty tuning until runtime browser/WebGL evidence is clean.
+
+## Required capture modes
+
+| Mode | Meaning |
+|---:|---|
+| 0 | beauty render, no overlay |
+| 2 | atmosphere-ownership debug overlay |
+| 6 | optical-depth-LUT debug overlay |
+
+## Failure gate
+
+The runtime packet should report zero shader compile errors, zero program-link errors, and zero page errors before Rayleigh/Mie/ozone/aerial-perspective tuning is treated as reliable.
+
+## Browser state
+
+The engine exposes `window.__COSMOS_RUNTIME_DIAGNOSTICS__`; the Playwright init script exposes `window.__COSMOS_WEBGL_PROBE__`.

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FlaskConical, Sun, Cloud, Mountain, Waves, TreePine, CloudRain, Sparkles, X, Cpu, Camera, ClipboardList } from 'lucide-react';
+import { FlaskConical, Sun, Cloud, Mountain, Waves, TreePine, CloudRain, Sparkles, X, Cpu, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const LABS = [
@@ -13,7 +13,6 @@ const LABS = [
   { path: '/effects', label: 'Effects Lab', icon: Sparkles, color: 'text-violet-400', desc: 'Fog, god rays, bloom, TAA' },
   { path: '/gpu', label: 'WebGPU Engine', icon: Cpu, color: 'text-fuchsia-400', desc: 'Native WebGPU + WGSL compute' },
   { path: '/cosmos-review', label: 'Cosmos Review', icon: Camera, color: 'text-cyan-300', desc: 'Orbital/ocean route + fixed visual bookmarks' },
-  { path: '/cosmos-local-run', label: 'R0004 Console', icon: ClipboardList, color: 'text-emerald-300', desc: 'Local commands, bookmark launchers, and screenshot outputs' },
 ];
 
 const LabHub: React.FC = () => {

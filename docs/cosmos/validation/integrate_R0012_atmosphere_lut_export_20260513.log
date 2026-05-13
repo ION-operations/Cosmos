@@ -1,0 +1,8 @@
+
+> vite_react_shadcn_ts@0.0.0 cosmos:review:atmosphere-lut-export
+> node scripts/cosmos/export-atmosphere-lut-textures.mjs
+
+Wrote /home/sev/Cosmos/earth-forge/docs/cosmos/validation/atmosphere/R0012/lut-textures/transmittance.png
+Wrote /home/sev/Cosmos/earth-forge/docs/cosmos/validation/atmosphere/R0012/lut-textures/multiScattering.png
+Wrote /home/sev/Cosmos/earth-forge/docs/cosmos/validation/atmosphere/R0012/lut-textures/skyView.png
+Wrote /home/sev/Cosmos/earth-forge/docs/cosmos/validation/atmosphere/R0012/lut-textures/aerialPerspective.png

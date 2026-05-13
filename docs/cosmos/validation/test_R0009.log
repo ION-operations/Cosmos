@@ -1,0 +1,37 @@
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m/mnt/data/cosmos_r0009/Cosmos/earth-forge[39m
+
+ [32m✓[39m src/test/cosmos-atmosphere-lut.test.ts[2m > [22mcosmos atmosphere LUT interface[2m > [22mdefines the R-0009 lookup texture resolutions and encodings[32m 4[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-atmosphere-lut.test.ts[2m > [22mcosmos atmosphere LUT interface[2m > [22mgenerates all four CPU fallback textures[32m 146[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-atmosphere-lut.test.ts[2m > [22mcosmos atmosphere LUT interface[2m > [22mattenuates more strongly at low altitude and grazing sun angles[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-atmosphere-lut.test.ts[2m > [22mcosmos atmosphere LUT interface[2m > [22mexports a stable state packet for browser diagnostics[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-weather-atlas.test.ts[2m > [22mCosmos weather atlas renderer contract[2m > [22mcreates the four atlas textures shared by Water World and Cosmos Review[32m 53[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-weather-atlas.test.ts[2m > [22mCosmos weather atlas renderer contract[2m > [22mwires the atlas into orbital cloud, planet, and ocean shaders[32m 2[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-bathymetry-overlay.test.ts[2m > [22mCosmos bathymetry overlay contract[2m > [22mcreates a safe RGBA bathymetry fallback texture[32m 9[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-bathymetry-overlay.test.ts[2m > [22mCosmos bathymetry overlay contract[2m > [22mwires bathymetry into orbital ocean and planet shaders[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-review-bookmarks.test.ts[2m > [22mCosmos orbital review bookmarks[2m > [22mdefines stable unique bookmark ids mapped to valid presets[32m 13[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-water-physics.test.ts[2m > [22mCosmos one-water physics helpers[2m > [22mkeeps deep-water dispersion physically ordered[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-water-physics.test.ts[2m > [22mCosmos one-water physics helpers[2m > [22mkeeps shallow-water speed depth-limited[32m 0[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-water-physics.test.ts[2m > [22mCosmos one-water physics helpers[2m > [22mincludes finite-depth capillary-gravity response[32m 0[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-water-physics.test.ts[2m > [22mCosmos one-water physics helpers[2m > [22mselects breaker events by bounded energy rather than spawning everything[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-debug-overlays.test.ts[2m > [22mCosmos R-0009 visual debug overlay contract[2m > [22mdefines stable unique debug mode ids and keys[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-debug-overlays.test.ts[2m > [22mCosmos R-0009 visual debug overlay contract[2m > [22mcreates bounded runtime state with a physical shell contract[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-debug-overlays.test.ts[2m > [22mCosmos R-0009 visual debug overlay contract[2m > [22mdescribes diagnostic color meaning for lead-eyes review[32m 0[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-debug-overlays.test.ts[2m > [22mCosmos R-0009 visual debug overlay contract[2m > [22mwires fullscreen shader diagnostics to fixed scale and shell uniforms[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-scale.test.ts[2m > [22mcosmos scale model[2m > [22mcomputes local sea-level altitude from the fixed planet center[32m 0[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-scale.test.ts[2m > [22mcosmos scale model[2m > [22mdoes not reset altitude when the camera moves horizontally[32m 0[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-scale.test.ts[2m > [22mcosmos scale model[2m > [22mclassifies the main transition bands[32m 0[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-scale.test.ts[2m > [22mcosmos scale model[2m > [22mfades local passes out before orbital planet review takes over[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-scale.test.ts[2m > [22mcosmos scale model[2m > [22mkeeps the Earth constants explicit for shader parity[32m 0[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-atmosphere-continuity.test.ts[2m > [22mCosmos R-0007 atmosphere/cloud continuity contract[2m > [22mkeeps local sky strong near sea level and shifts rim ownership to orbit[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-atmosphere-continuity.test.ts[2m > [22mCosmos R-0007 atmosphere/cloud continuity contract[2m > [22mdrops micro cloud detail before macro cloud placement fades[32m 0[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-atmosphere-continuity.test.ts[2m > [22mCosmos R-0007 atmosphere/cloud continuity contract[2m > [22mwires atmosphere continuity helpers into all active visual passes[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-gibs-surface-overlay.test.ts[2m > [22mCosmos GIBS surface overlay runtime contract[2m > [22muses stable default public URLs for local runtime data[32m 2[2mms[22m[39m
+ [32m✓[39m src/test/cosmos-gibs-surface-overlay.test.ts[2m > [22mCosmos GIBS surface overlay runtime contract[2m > [22mcreates a safe neutral texture fallback[32m 1[2mms[22m[39m
+ [32m✓[39m src/test/example.test.ts[2m > [22mexample[2m > [22mshould pass[32m 0[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m28 passed[39m[22m[90m (28)[39m
+[2m   Start at [22m 11:38:54
+[2m   Duration [22m 4.95s[2m (transform 672ms, setup 455ms, collect 773ms, tests 249ms, environment 1.94s, prepare 807ms)[22m
+

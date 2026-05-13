@@ -1,0 +1,68 @@
+{
+  "release": "R-0010",
+  "targets": [
+    {
+      "bookmarkId": "cloud-terminator",
+      "role": "orbital-terminator",
+      "sunE": 4,
+      "opticalDepth": [
+        0.18,
+        0.58
+      ],
+      "aerialPerspective": [
+        0,
+        0.18
+      ],
+      "orbitalRimAlpha": [
+        0.92,
+        1
+      ],
+      "localSkyAlpha": [
+        0,
+        0.04
+      ]
+    },
+    {
+      "bookmarkId": "twilight-limb",
+      "role": "orbital-limb",
+      "sunE": -1.5,
+      "opticalDepth": [
+        0.28,
+        0.72
+      ],
+      "aerialPerspective": [
+        0,
+        0.15
+      ],
+      "orbitalRimAlpha": [
+        0.95,
+        1
+      ],
+      "localSkyAlpha": [
+        0,
+        0.03
+      ]
+    },
+    {
+      "bookmarkId": "low-twilight-horizon",
+      "role": "sea-level-horizon",
+      "sunE": 1.2,
+      "opticalDepth": [
+        0.3,
+        0.86
+      ],
+      "aerialPerspective": [
+        0.28,
+        0.92
+      ],
+      "orbitalRimAlpha": [
+        0,
+        0.1
+      ],
+      "localSkyAlpha": [
+        0.94,
+        1
+      ]
+    }
+  ]
+}

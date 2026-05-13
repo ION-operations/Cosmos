@@ -1,0 +1,29 @@
+# Cosmos R-0009 visual debug overlay contract
+
+This report is computed without screenshots. It defines the diagnostic colour contract for lead-eyes reviews where normal beauty renders cannot isolate scale, atmosphere, cloud LOD, or optical-depth LUT failure.
+
+## Modes
+
+| Mode | Key | Target | Colour contract |
+|---:|---|---|---|
+| 0 | off | normal beauty render | none |
+| 1 | scale-ownership | pass handoff scale coherence | R=ocean G=cloud B=planet |
+| 2 | atmosphere-ownership | ground-to-space atmosphere handoff | R=local sky G=horizon fog B=orbital rim |
+| 3 | cloud-lod | cloud detail LOD handoff | R=micro G=meso B=macro |
+| 4 | physical-shells | fixed physical shell alignment | green=Earth cyan=cloud base magenta=cloud top amber=atmosphere |
+| 5 | composite-diagnostic | combined failure localization | ownership tint plus physical shell line colors |
+| 6 | optical-depth-lut | R-0009 atmosphere LUT diagnostics | R=optical depth G=aerial perspective B=multi-scattering/rim |
+
+## Bookmark expected diagnostic values
+
+| Bookmark | Alt km | Scale RGB ocean/cloud/planet | Atmo RGB local/horizon/rim | Cloud RGB micro/meso/macro |
+|---|---:|---:|---:|---:|
+| orbit | 26470.904 | 0.00/0.00/1.00 | 0.00/0.00/1.00 | 0.00/0.00/1.00 |
+| cloud-terminator | 23582.892 | 0.00/0.00/1.00 | 0.00/0.00/1.00 | 0.00/0.00/1.00 |
+| high-altitude | 8.401 | 1.00/1.00/0.00 | 1.00/1.00/0.00 | 0.95/1.00/0.38 |
+| storm-zone | 1.200 | 1.00/1.00/0.00 | 1.00/1.00/0.00 | 1.00/1.00/0.35 |
+| sun-glitter | 0.260 | 1.00/1.00/0.00 | 1.00/1.00/0.00 | 1.00/1.00/0.35 |
+| sea-level | 0.004 | 1.00/1.00/0.00 | 1.00/1.00/0.00 | 1.00/1.00/0.35 |
+| underwater | -0.003 | 1.00/1.00/0.00 | 1.00/1.00/0.00 | 1.00/1.00/0.35 |
+
+Physical shell colours: green Earth shell, cyan cloud base, magenta cloud top, amber atmosphere shell.

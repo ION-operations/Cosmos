@@ -1,0 +1,5 @@
+R-0008 browser runtime scale diagnostics were not run in this sandbox.
+Run locally:
+  npm i -D playwright
+  npx playwright install chromium
+  npm run cosmos:review:scale-diagnostics

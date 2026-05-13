@@ -32,7 +32,7 @@ void main(){
   vec2 c = gl_PointCoord - 0.5;
   float r = length(c);
   if(r > 0.5) discard;
-  float a = smoothstep(0.5, 0.15, r) * vAlpha;
+  float a = (1.0 - smoothstep(0.15, 0.5, r)) * vAlpha;
   float fog = exp(-vDist * 0.0015);
   // Mist/spray catches sunlight from behind (dolphinjump back-lighting effect)
   float backLight = pow(max(-dot(normalize(vec3(c.x, 0.5, c.y)), uSunDir), 0.0), 3.0) * 0.3;

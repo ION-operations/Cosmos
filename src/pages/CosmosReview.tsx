@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Camera, Cloud, Download, Eye, FolderOpen, Gauge, Waves, X } from 'lucide-react';
+import { ArrowLeft, Bug, Camera, Cloud, Eye, Gauge, Waves, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -11,6 +11,16 @@ import {
   WorldSettings,
 } from '@/cosmos/orbital/WorldEngine';
 import type { CosmosGibsSurfaceOverlayStatus } from '@/cosmos/gibs/gibsSurfaceOverlay';
+import type { CosmosBathymetryOverlayStatus } from '@/cosmos/bathymetry/bathymetryOverlay';
+import type { CosmosScaleState } from '@/cosmos/scale/cosmosScale';
+import type { CosmosAtmosphereLutState } from '@/cosmos/atmosphere/atmosphereLut';
+import {
+  COSMOS_R0012_ATMOSPHERE_DEFAULTS,
+  createCosmosAtmosphereCalibrationState,
+  type CosmosAtmosphereCalibrationState,
+} from '@/cosmos/atmosphere/atmosphereCalibration';
+import type { CosmosRuntimeDiagnosticsState } from '@/cosmos/runtime/runtimeDiagnostics';
+import { COSMOS_DEBUG_OVERLAY_MODES, describeCosmosDebugMode, type CosmosDebugOverlayState } from '@/cosmos/debug/cosmosDebug';
 
 interface Stats {
   fps: number;
@@ -20,7 +30,6 @@ interface Stats {
 }
 
 const PRESET_NAMES = Object.keys(PRESETS) as Array<keyof typeof PRESETS>;
-const R0004_SCREENSHOT_DIR = '/home/sev/Cosmos/earth-forge/docs/cosmos/validation/screenshots/R0004';
 
 const REVIEW_BOOKMARK_IDS = new Set(COSMOS_REVIEW_BOOKMARKS.map((item) => item.id));
 
@@ -41,8 +50,26 @@ const tuningFromBookmark = (id: CosmosReviewBookmarkId) => {
     weatherAtlasStrength: item.overrides.weatherAtlasStrength ?? 0.84,
     cloudRegimeContrast: item.overrides.cloudRegimeContrast ?? 0.72,
     macroWeatherScale: item.overrides.macroWeatherScale ?? 1.0,
+    atmosphereContinuityStrength: item.overrides.atmosphereContinuityStrength ?? 0.92,
+    horizonHazeStrength: item.overrides.horizonHazeStrength ?? 0.78,
+    cloudLodBias: item.overrides.cloudLodBias ?? 0.35,
+    atmosphereLutStrength: item.overrides.atmosphereLutStrength ?? 0.82,
+    rayleighScale: item.overrides.rayleighScale ?? 1.0,
+    mieScale: item.overrides.mieScale ?? 0.72,
+    ozoneScale: item.overrides.ozoneScale ?? 0.64,
+    multiScatteringStrength: item.overrides.multiScatteringStrength ?? 0.58,
+    aerialPerspectiveStrength: item.overrides.aerialPerspectiveStrength ?? 0.72,
+    skyViewLutStrength: item.overrides.skyViewLutStrength ?? 0.76,
+    opticalDepthDebugStrength: item.overrides.opticalDepthDebugStrength ?? 0,
     gibsSurfaceOverlayStrength: item.overrides.gibsSurfaceOverlayStrength ?? 0.52,
     gibsSurfaceWaterBias: item.overrides.gibsSurfaceWaterBias ?? 0.62,
+    bathymetryStrength: item.overrides.bathymetryStrength ?? 0.82,
+    shallowWaterOptics: item.overrides.shallowWaterOptics ?? 0.72,
+    coastalFoamStrength: item.overrides.coastalFoamStrength ?? 0.62,
+    oneWaterOpticsStrength: item.overrides.oneWaterOpticsStrength ?? 0.78,
+    debugOverlayMode: item.overrides.debugOverlayMode ?? 0,
+    debugOverlayStrength: item.overrides.debugOverlayStrength ?? 0.72,
+    debugShellOpacity: item.overrides.debugShellOpacity ?? 0.82,
   };
 };
 
@@ -50,7 +77,14 @@ declare global {
   interface Window {
     __COSMOS_REVIEW_READY__?: boolean;
     __COSMOS_ACTIVE_BOOKMARK__?: CosmosReviewBookmarkId;
-    __COSMOS_APPLY_BOOKMARK__?: (id: CosmosReviewBookmarkId) => void;
+    __COSMOS_GIBS_SURFACE_OVERLAY_STATE__?: CosmosGibsSurfaceOverlayStatus;
+    __COSMOS_BATHYMETRY_OVERLAY_STATE__?: CosmosBathymetryOverlayStatus;
+    __COSMOS_SCALE_STATE__?: CosmosScaleState;
+    __COSMOS_DEBUG_OVERLAY_STATE__?: CosmosDebugOverlayState;
+    __COSMOS_ATMOSPHERE_LUT_STATE__?: CosmosAtmosphereLutState;
+    __COSMOS_ATMOSPHERE_CALIBRATION_STATE__?: CosmosAtmosphereCalibrationState;
+    __COSMOS_RUNTIME_DIAGNOSTICS__?: CosmosRuntimeDiagnosticsState;
+    __COSMOS_ENGINE__?: WorldEngine;
   }
 }
 
@@ -59,6 +93,93 @@ const DEFAULT_GIBS_STATUS: CosmosGibsSurfaceOverlayStatus = {
   textureUrl: '/cosmos/gibs/global-truecolor.jpg',
   manifestUrl: '/cosmos/gibs/global-truecolor.manifest.json',
   message: 'Procedural fallback active.',
+};
+
+const DEFAULT_ATMOSPHERE_LUT_STATE: CosmosAtmosphereLutState = {
+  state: 'generated',
+  provider: 'cosmos-cpu-lut-fallback',
+  model: 'R0012-higher-fidelity-curved-path-lut',
+  controls: {
+    strength: COSMOS_R0012_ATMOSPHERE_DEFAULTS.strength,
+    rayleighScale: COSMOS_R0012_ATMOSPHERE_DEFAULTS.rayleighScale,
+    mieScale: COSMOS_R0012_ATMOSPHERE_DEFAULTS.mieScale,
+    ozoneScale: COSMOS_R0012_ATMOSPHERE_DEFAULTS.ozoneScale,
+    multiScatteringStrength: COSMOS_R0012_ATMOSPHERE_DEFAULTS.multiScatteringStrength,
+    aerialPerspectiveStrength: COSMOS_R0012_ATMOSPHERE_DEFAULTS.aerialPerspectiveStrength,
+    skyViewStrength: COSMOS_R0012_ATMOSPHERE_DEFAULTS.skyViewStrength,
+    opticalDepthDebug: COSMOS_R0012_ATMOSPHERE_DEFAULTS.opticalDepthDebug,
+  },
+  spec: {
+    transmittance: { width: 320, height: 80, channels: 4, encoding: 'RGBA8 RGB=solar transmittance from curved optical-depth integral, A=compressed optical depth' },
+    multiScattering: { width: 96, height: 48, channels: 4, encoding: 'RGBA8 RGB=phase-weighted multiple-scattering proxy, A=energy' },
+    skyView: { width: 240, height: 135, channels: 4, encoding: 'RGBA8 RGB=sky-view radiance proxy using curved path samples, A=horizon/terminator weight' },
+    aerialPerspective: { width: 128, height: 72, channels: 4, encoding: 'RGBA8 RGB=aerial-perspective tint from path sample, A=fog density' },
+  },
+  message: 'Generated deterministic CPU atmosphere lookup textures.',
+};
+
+const DEFAULT_ATMOSPHERE_CALIBRATION_STATE: CosmosAtmosphereCalibrationState = createCosmosAtmosphereCalibrationState();
+
+const DEFAULT_RUNTIME_DIAGNOSTICS: CosmosRuntimeDiagnosticsState = {
+  state: 'unknown',
+  model: 'R0011-runtime-shader-clean-calibration',
+  generatedAtIso: new Date(0).toISOString(),
+  renderer: {
+    isWebGL2: false,
+    precision: 'unknown',
+    logarithmicDepthBuffer: false,
+    maxTextures: 0,
+    maxTextureSize: 0,
+    maxVertexTextures: 0,
+    vertexTextures: false,
+    floatFragmentTextures: false,
+    maxAnisotropy: 0,
+    checkShaderErrors: true,
+    programCount: 0,
+    memoryGeometries: 0,
+    memoryTextures: 0,
+    calls: 0,
+    triangles: 0,
+    points: 0,
+    lines: 0,
+  },
+  webglProbe: {
+    installed: false,
+    shaderCompiles: 0,
+    shaderWarnings: 0,
+    shaderErrors: 0,
+    programLinks: 0,
+    programWarnings: 0,
+    programErrors: 0,
+    maxShaderLogLength: 0,
+    maxProgramLogLength: 0,
+  },
+  messages: [],
+  counts: {
+    total: 0,
+    errors: 0,
+    warnings: 0,
+    shaderErrors: 0,
+    shaderWarnings: 0,
+    programErrors: 0,
+    programWarnings: 0,
+    pageErrors: 0,
+    contextLosses: 0,
+  },
+  context: { lost: false, lostCount: 0, restoredCount: 0 },
+  message: 'Runtime diagnostics not initialized yet.',
+};
+
+const DEFAULT_BATHYMETRY_STATUS: CosmosBathymetryOverlayStatus = {
+  state: 'fallback',
+  textureUrl: '/cosmos/bathymetry/global-depth.png',
+  manifestUrl: '/cosmos/bathymetry/global-depth.manifest.json',
+  provider: 'procedural-fallback',
+  encoding: 'RGBA depth01/shelf/coast/land',
+  verticalDatum: 'synthetic sea-level-relative',
+  minElevationMeters: -11000,
+  maxElevationMeters: 8500,
+  message: 'Procedural bathymetry fallback active.',
 };
 
 const formatAltitude = (altitude: number) => {
@@ -116,6 +237,13 @@ const CosmosReview = () => {
   const [panelOpen, setPanelOpen] = useState(searchParams.get('panel') !== '0');
   const [tuning, setTuning] = useState(() => tuningFromBookmark(initialBookmarkRef.current));
   const [gibsStatus, setGibsStatus] = useState<CosmosGibsSurfaceOverlayStatus>(DEFAULT_GIBS_STATUS);
+  const [bathymetryStatus, setBathymetryStatus] = useState<CosmosBathymetryOverlayStatus>(DEFAULT_BATHYMETRY_STATUS);
+  const [scaleState, setScaleState] = useState<CosmosScaleState | null>(null);
+  const [debugState, setDebugState] = useState<CosmosDebugOverlayState | null>(null);
+  const [atmosphereLutState, setAtmosphereLutState] = useState<CosmosAtmosphereLutState>(DEFAULT_ATMOSPHERE_LUT_STATE);
+  const [atmosphereCalibrationState, setAtmosphereCalibrationState] = useState<CosmosAtmosphereCalibrationState>(DEFAULT_ATMOSPHERE_CALIBRATION_STATE);
+  const [runtimeDiagnostics, setRuntimeDiagnostics] = useState<CosmosRuntimeDiagnosticsState>(DEFAULT_RUNTIME_DIAGNOSTICS);
+  const [debugShellsEnabled, setDebugShellsEnabled] = useState(false);
 
   const bookmark = useMemo(
     () => COSMOS_REVIEW_BOOKMARKS.find((item) => item.id === activeBookmark) ?? COSMOS_REVIEW_BOOKMARKS[0],
@@ -126,10 +254,20 @@ const CosmosReview = () => {
     if (!canvasRef.current) return;
     const engine = new WorldEngine(canvasRef.current);
     engineRef.current = engine;
+    window.__COSMOS_ENGINE__ = engine;
     engine.setStatsCallback((fps, particles, rings, alt) => {
       setStats({ fps, particles, rings, alt });
+      if (window.__COSMOS_SCALE_STATE__) setScaleState(window.__COSMOS_SCALE_STATE__);
+      if (window.__COSMOS_DEBUG_OVERLAY_STATE__) setDebugState(window.__COSMOS_DEBUG_OVERLAY_STATE__);
+      if (window.__COSMOS_RUNTIME_DIAGNOSTICS__) setRuntimeDiagnostics(window.__COSMOS_RUNTIME_DIAGNOSTICS__);
+      if (window.__COSMOS_ATMOSPHERE_CALIBRATION_STATE__) setAtmosphereCalibrationState(window.__COSMOS_ATMOSPHERE_CALIBRATION_STATE__);
     });
     engine.setGibsOverlayStatusCallback(setGibsStatus);
+    engine.setBathymetryOverlayStatusCallback(setBathymetryStatus);
+    engine.setDebugOverlayStateCallback(setDebugState);
+    engine.setAtmosphereLutStateCallback(setAtmosphereLutState);
+    engine.setAtmosphereCalibrationStateCallback(setAtmosphereCalibrationState);
+    engine.setRuntimeDiagnosticsCallback(setRuntimeDiagnostics);
     window.__COSMOS_REVIEW_READY__ = false;
     engine.applyReviewBookmark(initialBookmarkRef.current);
     window.__COSMOS_ACTIVE_BOOKMARK__ = initialBookmarkRef.current;
@@ -140,6 +278,7 @@ const CosmosReview = () => {
     return () => {
       engine.stop();
       engineRef.current = null;
+      window.__COSMOS_ENGINE__ = undefined;
       window.__COSMOS_REVIEW_READY__ = false;
     };
   }, []);
@@ -150,46 +289,34 @@ const CosmosReview = () => {
     engineRef.current?.applyReviewBookmark(id);
     setActiveBookmark(id);
     setActivePreset(next.preset);
-    setTuning(tuningFromBookmark(id));
+    setTuning((prev) => ({ ...tuningFromBookmark(id), debugOverlayMode: prev.debugOverlayMode, debugOverlayStrength: prev.debugOverlayStrength, debugShellOpacity: prev.debugShellOpacity }));
     window.__COSMOS_ACTIVE_BOOKMARK__ = id;
     document.documentElement.dataset.cosmosBookmark = id;
   }, []);
-
-  useEffect(() => {
-    window.__COSMOS_APPLY_BOOKMARK__ = applyBookmark;
-    return () => {
-      delete window.__COSMOS_APPLY_BOOKMARK__;
-    };
-  }, [applyBookmark]);
 
   const applyPreset = useCallback((preset: keyof typeof PRESETS) => {
     engineRef.current?.applyPreset(preset);
     setActivePreset(preset);
   }, []);
 
-  const captureCurrentCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${activeBookmark}.png`;
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }, 'image/png');
-  }, [activeBookmark]);
-
   const updateTuning = useCallback(<K extends keyof WorldSettings>(key: K, value: WorldSettings[K]) => {
     engineRef.current?.updateSettings({ [key]: value } as Partial<WorldSettings>);
     if (typeof value === 'number' && key in tuning) {
       setTuning((prev) => ({ ...prev, [key]: value }));
     }
+    if (window.__COSMOS_DEBUG_OVERLAY_STATE__) setDebugState(window.__COSMOS_DEBUG_OVERLAY_STATE__);
   }, [tuning]);
 
-  const expectedScreenshotPath = `${R0004_SCREENSHOT_DIR}/${activeBookmark}.png`;
-  const expectedScreenshotUrl = `/@fs${expectedScreenshotPath}`;
+  const setDebugMode = useCallback((mode: number) => {
+    updateTuning('debugOverlayMode', mode);
+  }, [updateTuning]);
+
+  const toggleDebugShells = useCallback(() => {
+    const next = !debugShellsEnabled;
+    setDebugShellsEnabled(next);
+    engineRef.current?.updateSettings({ debugShellsEnabled: next });
+    if (window.__COSMOS_DEBUG_OVERLAY_STATE__) setDebugState(window.__COSMOS_DEBUG_OVERLAY_STATE__);
+  }, [debugShellsEnabled]);
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black text-foreground">
@@ -218,6 +345,12 @@ const CosmosReview = () => {
           <span>Spray</span><span className="text-right font-mono text-foreground">{stats.particles}</span>
           <span>Rings</span><span className="text-right font-mono text-foreground">{stats.rings}</span>
           <span>GIBS</span><span className="text-right font-mono text-foreground">{gibsStatus.state}</span>
+          <span>Depth</span><span className="text-right font-mono text-foreground">{bathymetryStatus.state}</span>
+          <span>LOD</span><span className="text-right font-mono text-foreground">{scaleState?.lod ?? '—'}</span>
+          <span>Pass α</span><span className="text-right font-mono text-foreground">{scaleState ? `${scaleState.oceanAlpha.toFixed(2)}/${scaleState.cloudAlpha.toFixed(2)}/${scaleState.planetAlpha.toFixed(2)}` : '—'}</span>
+          <span>Debug</span><span className="text-right font-mono text-foreground">{debugState?.modeKey ?? 'off'}</span>
+          <span>Runtime</span><span className="text-right font-mono text-foreground">{runtimeDiagnostics.state}</span>
+          <span>Shaders</span><span className="text-right font-mono text-foreground">{runtimeDiagnostics.renderer.programCount}/{runtimeDiagnostics.counts.shaderErrors + runtimeDiagnostics.counts.programErrors}</span>
         </div>
       </div>
 
@@ -298,11 +431,104 @@ const CosmosReview = () => {
               <ReviewSlider label="Atlas strength" keyName="weatherAtlasStrength" value={tuning.weatherAtlasStrength} min={0} max={1} step={0.01} onChange={updateTuning} />
               <ReviewSlider label="Regime contrast" keyName="cloudRegimeContrast" value={tuning.cloudRegimeContrast} min={0} max={1} step={0.01} onChange={updateTuning} />
               <ReviewSlider label="Macro scale" keyName="macroWeatherScale" value={tuning.macroWeatherScale} min={0.35} max={2.2} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Cloud LOD lock" keyName="cloudLodBias" value={tuning.cloudLodBias} min={0} max={1} step={0.01} onChange={updateTuning} />
+              <div className="flex items-center gap-2 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Eye className="h-4 w-4 text-indigo-400" /> Atmosphere continuity
+              </div>
+              <ReviewSlider label="Continuity strength" keyName="atmosphereContinuityStrength" value={tuning.atmosphereContinuityStrength} min={0} max={1.2} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Horizon haze" keyName="horizonHazeStrength" value={tuning.horizonHazeStrength} min={0} max={1.5} step={0.01} onChange={updateTuning} />
+              <div className="flex items-center gap-2 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Eye className="h-4 w-4 text-violet-400" /> Physical atmosphere LUT
+              </div>
+              <ReviewSlider label="LUT strength" keyName="atmosphereLutStrength" value={tuning.atmosphereLutStrength} min={0} max={1} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Rayleigh scale" keyName="rayleighScale" value={tuning.rayleighScale} min={0} max={2.2} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Mie/aerosol scale" keyName="mieScale" value={tuning.mieScale} min={0} max={2.2} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Ozone scale" keyName="ozoneScale" value={tuning.ozoneScale} min={0} max={2} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Multiple scattering" keyName="multiScatteringStrength" value={tuning.multiScatteringStrength} min={0} max={1.5} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Aerial perspective" keyName="aerialPerspectiveStrength" value={tuning.aerialPerspectiveStrength} min={0} max={1.5} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Sky-view LUT" keyName="skyViewLutStrength" value={tuning.skyViewLutStrength} min={0} max={1.5} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Optical debug" keyName="opticalDepthDebugStrength" value={tuning.opticalDepthDebugStrength} min={0} max={1} step={0.01} onChange={updateTuning} />
               <div className="flex items-center gap-2 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <Eye className="h-4 w-4 text-emerald-400" /> GIBS surface overlay
               </div>
               <ReviewSlider label="GIBS blend" keyName="gibsSurfaceOverlayStrength" value={tuning.gibsSurfaceOverlayStrength} min={0} max={1} step={0.01} onChange={updateTuning} />
               <ReviewSlider label="Water-world bias" keyName="gibsSurfaceWaterBias" value={tuning.gibsSurfaceWaterBias} min={0} max={1} step={0.01} onChange={updateTuning} />
+              <div className="flex items-center gap-2 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Waves className="h-4 w-4 text-blue-400" /> Bathymetry / one-water optics
+              </div>
+              <ReviewSlider label="Bathymetry blend" keyName="bathymetryStrength" value={tuning.bathymetryStrength} min={0} max={1} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Shallow-water optics" keyName="shallowWaterOptics" value={tuning.shallowWaterOptics} min={0} max={1.35} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Coastal foam" keyName="coastalFoamStrength" value={tuning.coastalFoamStrength} min={0} max={1.5} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="One-water composite" keyName="oneWaterOpticsStrength" value={tuning.oneWaterOpticsStrength} min={0} max={1} step={0.01} onChange={updateTuning} />
+            </section>
+
+            <section className="space-y-3 rounded-xl border border-border/30 bg-background/45 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Bug className="h-4 w-4 text-amber-400" /> Visual diagnostics
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {COSMOS_DEBUG_OVERLAY_MODES.map((mode) => (
+                  <button
+                    key={mode.id}
+                    onClick={() => setDebugMode(mode.id)}
+                    className={`rounded-md border px-2 py-1.5 text-left text-[10px] transition-colors ${
+                      tuning.debugOverlayMode === mode.id
+                        ? 'border-amber-400/70 bg-amber-400/15 text-amber-100'
+                        : 'border-border/30 bg-background/50 text-muted-foreground hover:bg-background/80'
+                    }`}
+                  >
+                    <span className="block font-semibold uppercase tracking-wider">{mode.shortLabel}</span>
+                    <span className="block opacity-75">{mode.colorMeaning}</span>
+                  </button>
+                ))}
+              </div>
+              <ReviewSlider label="Overlay strength" keyName="debugOverlayStrength" value={tuning.debugOverlayStrength} min={0} max={1} step={0.01} onChange={updateTuning} />
+              <ReviewSlider label="Shell opacity" keyName="debugShellOpacity" value={tuning.debugShellOpacity} min={0} max={1} step={0.01} onChange={updateTuning} />
+              <Button variant="outline" size="sm" className="w-full bg-background/45" onClick={toggleDebugShells}>
+                {debugShellsEnabled ? 'Disable 3D shell wireframes' : 'Enable 3D shell wireframes'}
+              </Button>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Active: <span className="font-semibold text-foreground">{describeCosmosDebugMode(tuning.debugOverlayMode).label}</span>.
+                {debugState ? ` ${debugState.modeKey}: ${debugState.shellsEnabled ? 'wire shells on' : 'wire shells off'}.` : ''}
+              </p>
+            </section>
+
+            <section className="rounded-xl border border-border/30 bg-background/45 p-3 text-[11px] leading-relaxed text-muted-foreground">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">Runtime shader diagnostics</h3>
+              <p className="mt-2"><span className="font-semibold text-foreground">State:</span> {runtimeDiagnostics.state}</p>
+              <p><span className="font-semibold text-foreground">Model:</span> {runtimeDiagnostics.model}</p>
+              <p><span className="font-semibold text-foreground">Shader checks:</span> {runtimeDiagnostics.renderer.checkShaderErrors ? 'enabled' : 'disabled'}</p>
+              <p><span className="font-semibold text-foreground">Programs:</span> {runtimeDiagnostics.renderer.programCount}</p>
+              <p><span className="font-semibold text-foreground">WebGL probe:</span> {runtimeDiagnostics.webglProbe.installed ? 'installed' : 'not installed'}</p>
+              <p><span className="font-semibold text-foreground">Errors:</span> {runtimeDiagnostics.counts.errors} total / {runtimeDiagnostics.counts.shaderErrors} shader / {runtimeDiagnostics.counts.programErrors} program / {runtimeDiagnostics.counts.pageErrors} page</p>
+              <p><span className="font-semibold text-foreground">Warnings:</span> {runtimeDiagnostics.counts.warnings}</p>
+              <p className="mt-1">{runtimeDiagnostics.message}</p>
+            </section>
+
+            <section className="rounded-xl border border-border/30 bg-background/45 p-3 text-[11px] leading-relaxed text-muted-foreground">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">Atmosphere LUT status</h3>
+              <p className="mt-2"><span className="font-semibold text-foreground">State:</span> {atmosphereLutState.state}</p>
+              <p><span className="font-semibold text-foreground">Provider:</span> {atmosphereLutState.provider}</p>
+              <p><span className="font-semibold text-foreground">Model:</span> {atmosphereLutState.model}</p>
+              <p><span className="font-semibold text-foreground">Transmittance:</span> {atmosphereLutState.spec.transmittance.width}×{atmosphereLutState.spec.transmittance.height}</p>
+              <p><span className="font-semibold text-foreground">Sky-view:</span> {atmosphereLutState.spec.skyView.width}×{atmosphereLutState.spec.skyView.height}</p>
+              <p className="mt-1">{atmosphereLutState.message}</p>
+            </section>
+
+            <section className="rounded-xl border border-border/30 bg-background/45 p-3 text-[11px] leading-relaxed text-muted-foreground">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">R-0011 atmosphere calibration</h3>
+              <p className="mt-2"><span className="font-semibold text-foreground">State:</span> {atmosphereCalibrationState.pass ? 'static targets pass' : 'needs attention'}</p>
+              <p><span className="font-semibold text-foreground">Runtime gate:</span> {atmosphereCalibrationState.runtimeGate.expectedState}</p>
+              <p><span className="font-semibold text-foreground">Active:</span> {atmosphereCalibrationState.activeBookmarkId ?? activeBookmark}</p>
+              <div className="mt-2 space-y-1">
+                {atmosphereCalibrationState.evaluations.map((evaluation) => (
+                  <p key={evaluation.bookmarkId}>
+                    <span className="font-semibold text-foreground">{evaluation.bookmarkId}:</span>{' '}
+                    OD {evaluation.sample.opticalDepth.toFixed(2)} / AP {evaluation.sample.aerialPerspective.toFixed(2)} / rim {evaluation.continuity.orbitalRimAlpha.toFixed(2)} / sky {evaluation.continuity.localSkyAlpha.toFixed(2)}
+                  </p>
+                ))}
+              </div>
+              <p className="mt-1">{atmosphereCalibrationState.message}</p>
             </section>
 
             <section className="rounded-xl border border-border/30 bg-background/45 p-3 text-[11px] leading-relaxed text-muted-foreground">
@@ -314,27 +540,15 @@ const CosmosReview = () => {
               {gibsStatus.message && <p className="mt-1">{gibsStatus.message}</p>}
             </section>
 
-            <section className="space-y-3 rounded-xl border border-border/30 bg-background/45 p-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">Capture/output</h3>
-              <div className="grid grid-cols-1 gap-2">
-                <Button size="sm" className="justify-start" onClick={captureCurrentCanvas}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Capture {activeBookmark}.png
-                </Button>
-                <Button asChild size="sm" variant="outline" className="justify-start bg-background/50">
-                  <a href={expectedScreenshotUrl} target="_blank" rel="noreferrer">
-                    <FolderOpen className="mr-2 h-4 w-4" />
-                    Open saved PNG
-                  </a>
-                </Button>
-                <Button asChild size="sm" variant="outline" className="justify-start bg-background/50">
-                  <Link to="/cosmos-local-run">
-                    <Camera className="mr-2 h-4 w-4" />
-                    R0004 run console
-                  </Link>
-                </Button>
-              </div>
-              <p className="break-all text-[10px] leading-relaxed text-muted-foreground">{expectedScreenshotPath}</p>
+            <section className="rounded-xl border border-border/30 bg-background/45 p-3 text-[11px] leading-relaxed text-muted-foreground">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">Bathymetry data status</h3>
+              <p className="mt-2"><span className="font-semibold text-foreground">State:</span> {bathymetryStatus.state}</p>
+              {bathymetryStatus.provider && <p><span className="font-semibold text-foreground">Provider:</span> {bathymetryStatus.provider}</p>}
+              {bathymetryStatus.layer && <p><span className="font-semibold text-foreground">Layer:</span> {bathymetryStatus.layer}</p>}
+              {bathymetryStatus.encoding && <p><span className="font-semibold text-foreground">Encoding:</span> {bathymetryStatus.encoding}</p>}
+              {bathymetryStatus.verticalDatum && <p><span className="font-semibold text-foreground">Datum:</span> {bathymetryStatus.verticalDatum}</p>}
+              <p className="break-all"><span className="font-semibold text-foreground">Texture:</span> {bathymetryStatus.textureUrl}</p>
+              {bathymetryStatus.message && <p className="mt-1">{bathymetryStatus.message}</p>}
             </section>
 
             <section className="rounded-xl border border-border/30 bg-muted/20 p-3 text-[11px] leading-relaxed text-muted-foreground">

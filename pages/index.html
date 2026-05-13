@@ -38,10 +38,10 @@
           <aside class="evidence" aria-label="Current evidence">
             <h2>Current Evidence</h2>
             <div class="evidence__grid">
-              <div><strong>7 drops</strong><span>Release spine</span></div>
+              <div><strong>12 drops</strong><span>Release spine</span></div>
               <div><strong>7 fixed views</strong><span>Review bookmarks</span></div>
               <div><strong>2048x1024</strong><span>GIBS atlas</span></div>
-              <div><strong>3 checks</strong><span>Build / test / lint</span></div>
+              <div><strong>R0012</strong><span>Atmosphere LUT</span></div>
             </div>
           </aside>
         </div>
@@ -54,14 +54,17 @@
             <h2>A renderer with receipts.</h2>
             <p>
               Cosmos follows the ION project style: visible evidence before claims, stable IDs for repeatable
-              review, local-first validation, and direct notes about what still needs to improve.
+              review, local-first validation, and direct notes about what still needs to improve. The app has
+              evolved through bathymetry intake, scale coherence, debug overlays, runtime shader diagnostics,
+              twilight calibration, and the R0012 atmosphere LUT solver.
             </p>
           </div>
           <div class="systems">
             <article><strong>GIBS Surface Atlas</strong><span>NASA true-color intake with procedural fallback.</span></article>
+            <article><strong>Bathymetry Atlas</strong><span>Depth, shelf, coast, and one-water optics channels.</span></article>
             <article><strong>Weather Atlas Spine</strong><span>Shared macro fields for clouds and sea state.</span></article>
-            <article><strong>Water-World Stack</strong><span>Orbit, altitude, sea-level, and underwater targets.</span></article>
-            <article><strong>ION Receipts</strong><span>Phase records, logs, and repeatable visual evidence.</span></article>
+            <article><strong>Atmosphere LUT</strong><span>CPU lookup textures for sky, haze, and aerial perspective.</span></article>
+            <article><strong>Runtime Diagnostics</strong><span>Shader, twilight, debug, and calibration contracts.</span></article>
           </div>
         </div>
       </section>
@@ -111,16 +114,17 @@
       <section class="next">
         <div>
           <div class="eyebrow eyebrow--dark">Next Candidate</div>
-          <h2>R0005 and beyond: bathymetry, scale, atmosphere.</h2>
+          <h2>R0012: bathymetry, scale, atmosphere, and runtime diagnostics.</h2>
           <p>
-            The current true-color atlas still retains too much land/coast signal for a Water World. The next pass
-            needs depth rasters, shallow-water color, shelf breaks, coastal foam masks, underwater fog, and
-            atmosphere/cloud LOD that holds from orbit to sea level.
+            The current true-color atlas still retains too much land/coast signal for a Water World, but the
+            plumbing is now in place: depth rasters, shallow-water color, shelf breaks, coastal foam masks,
+            underwater fog targets, atmosphere LUTs, twilight calibration, and runtime shader diagnostics.
           </p>
         </div>
         <nav>
           <a href="https://github.com/ION-operations/Cosmos">GitHub Repository</a>
           <a href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/R0004_LOCAL_RUN.md">R0004 Local Run</a>
+          <a href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/ATMOSPHERE_LUT_SOLVER_R0012.md">R0012 Atmosphere LUT</a>
           <a href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/GITHUB_PAGES_COSMOS.md">Pages Handoff</a>
         </nav>
       </section>

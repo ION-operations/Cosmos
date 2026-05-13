@@ -1,0 +1,16 @@
+{
+  "provider": "procedural-fallback",
+  "source": "Cosmos deterministic procedural bathymetry atlas",
+  "layer": "global-depth-fallback",
+  "width": 2048,
+  "height": 1024,
+  "encoding": "RGBA: R depth01 0=shore/land 1=abyss, G shelf, B coast, A land",
+  "verticalDatum": "synthetic sea-level-relative",
+  "minElevationMeters": -11000,
+  "maxElevationMeters": 8500,
+  "generatedAtUtc": "2026-05-13T02:10:42.833Z",
+  "notes": [
+    "This is a deterministic fallback atlas for shader and UI validation.",
+    "Replace with NOAA ETOPO or GEBCO-derived atlas for final realism."
+  ]
+}

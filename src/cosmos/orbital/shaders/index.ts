@@ -9,3 +9,4 @@ export { terrainVS, terrainFS } from './terrain';
 export { cloudVS, cloudFS } from './clouds';
 export { planetVS, planetFS } from './planet';
 export { partVS, partFS } from './particles';
+export { debugOverlayVS, debugOverlayFS } from './debugOverlay';

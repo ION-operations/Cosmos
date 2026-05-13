@@ -1,0 +1,51 @@
+{
+  "id": "R-0008",
+  "title": "Visual debug overlays for scale, atmosphere, cloud LOD, and physical shell diagnostics",
+  "created_at": "2026-05-13T00:00:00-04:00",
+  "status": "completed_in_sandbox_build_validated_static_reports_generated",
+  "intent": "Expose explicit browser diagnostics so lead-eyes review can distinguish beauty issues from scale ownership, atmosphere handoff, cloud LOD, and shell-registration failures.",
+  "new_files": [
+    "src/cosmos/debug/cosmosDebug.ts",
+    "src/cosmos/orbital/shaders/debugOverlay.ts",
+    "src/test/cosmos-debug-overlays.test.ts",
+    "scripts/cosmos/report-debug-overlay-contract.mjs",
+    "scripts/cosmos/capture-review-debug-overlays.mjs",
+    "docs/cosmos/DEBUG_OVERLAYS_R0008.md",
+    "docs/cosmos/CODEX_R0008_LOCAL_PROMPT.md",
+    "docs/cosmos/validation/VALIDATION_SUMMARY_R0008.md"
+  ],
+  "modified_files": [
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/cosmos/orbital/shaders/index.ts",
+    "src/pages/CosmosReview.tsx",
+    "package.json",
+    "scripts/cosmos/capture-review-bookmarks.mjs",
+    "scripts/cosmos/capture-review-scale-state.mjs",
+    "scripts/cosmos/report-bookmark-scale-contract.mjs",
+    "scripts/cosmos/report-atmosphere-continuity-contract.mjs",
+    "docs/cosmos/COSMOS_DOMAIN_REGISTRY.json",
+    "docs/cosmos/COSMOS_AGENT_ROSTER.json",
+    "docs/cosmos/COSMOS_QUEUE.json",
+    "docs/cosmos/NEXT_SESSION_BOOTSTRAP.md",
+    "src/cosmos/README.md"
+  ],
+  "debug_modes": [
+    "off",
+    "scale-ownership",
+    "atmosphere-ownership",
+    "cloud-lod",
+    "physical-shells",
+    "composite-diagnostic"
+  ],
+  "validation": {
+    "npm_ci": "passed",
+    "build": "passed",
+    "tests": "passed_9_files_24_tests",
+    "lint": "passed_warning_only_existing",
+    "scale_contract": "passed",
+    "atmosphere_contract": "passed",
+    "debug_contract": "passed",
+    "playwright_screenshots": "not_run_in_sandbox_local_codex_prompt_added"
+  },
+  "next_target": "R-0009 physical atmosphere LUT/transmittance interface and first optical-depth debug layer"
+}

@@ -1,0 +1,44 @@
+{
+  "id": "R-0007_atmosphere_cloud_lod",
+  "project": "Cosmos",
+  "title": "Atmosphere continuity and cloud LOD refinement",
+  "status": "completed",
+  "summary": "Added a shared atmosphere continuity contract to stabilize ground-to-space sky, orbital rim, aerial perspective, and cloud micro/meso/macro LOD transitions after the R-0006 fixed-Earth scale correction.",
+  "files_added": [
+    "src/cosmos/atmosphere/atmosphereContinuity.ts",
+    "src/test/cosmos-atmosphere-continuity.test.ts",
+    "scripts/cosmos/report-atmosphere-continuity-contract.mjs",
+    "docs/cosmos/ATMOSPHERE_CLOUD_LOD_R0007.md",
+    "docs/cosmos/CODEX_R0007_LOCAL_PROMPT.md",
+    "docs/cosmos/validation/VALIDATION_SUMMARY_R0007.md",
+    "docs/cosmos/receipts/R-0007_atmosphere_cloud_lod.json"
+  ],
+  "files_modified": [
+    "src/cosmos/scale/cosmosScale.ts",
+    "src/cosmos/orbital/WorldEngine.ts",
+    "src/cosmos/orbital/shaders/common.ts",
+    "src/cosmos/orbital/shaders/sky.ts",
+    "src/cosmos/orbital/shaders/clouds.ts",
+    "src/cosmos/orbital/shaders/planet.ts",
+    "src/cosmos/orbital/shaders/ocean.ts",
+    "src/pages/CosmosReview.tsx",
+    "scripts/cosmos/report-bookmark-scale-contract.mjs",
+    "package.json",
+    "docs/cosmos/COSMOS_DOMAIN_REGISTRY.json",
+    "docs/cosmos/COSMOS_AGENT_ROSTER.json",
+    "docs/cosmos/COSMOS_QUEUE.json",
+    "docs/cosmos/NEXT_SESSION_BOOTSTRAP.md"
+  ],
+  "validation": {
+    "npm_ci_dry_run": "passed",
+    "npm_ci": "not_completed_in_sandbox_timeout_sigterm",
+    "build": "passed",
+    "test": "passed_8_files_20_tests",
+    "lint": "passed_with_existing_warnings",
+    "scale_contract": "passed",
+    "atmosphere_contract": "passed",
+    "playwright_runtime_diagnostics": "not_run_in_sandbox",
+    "playwright_screenshots": "not_run_in_sandbox"
+  },
+  "next": "Run local Playwright captures and diagnostics, then R-0008 visual debug overlays for Earth/atmosphere/cloud shell and LOD ownership bands."
+}

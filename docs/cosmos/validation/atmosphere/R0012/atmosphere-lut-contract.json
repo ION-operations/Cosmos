@@ -1,0 +1,122 @@
+{
+  "earthRadiusMeters": 6371000,
+  "planetCenter": {
+    "x": 0,
+    "y": -6371000,
+    "z": 0
+  },
+  "spec": {
+    "transmittance": {
+      "width": 320,
+      "height": 80,
+      "encoding": "RGB=curved-path solar transmittance, A=compressed optical depth"
+    },
+    "multiScattering": {
+      "width": 96,
+      "height": 48,
+      "encoding": "RGB=phase-weighted multiple-scattering proxy, A=energy"
+    },
+    "skyView": {
+      "width": 240,
+      "height": 135,
+      "encoding": "RGB=sky-view radiance proxy with curved path samples, A=horizon/terminator"
+    },
+    "aerialPerspective": {
+      "width": 128,
+      "height": 72,
+      "encoding": "RGB=aerial-perspective path tint, A=fog density"
+    }
+  },
+  "records": [
+    {
+      "bookmarkId": "orbit",
+      "altitudeMeters": 26470903.735928588,
+      "sample": {
+        "opticalDepth": 0,
+        "aerialPerspective": 0,
+        "localSky": 0,
+        "orbitalRim": 1
+      }
+    },
+    {
+      "bookmarkId": "cloud-terminator",
+      "altitudeMeters": 23582891.917412,
+      "sample": {
+        "opticalDepth": 0,
+        "aerialPerspective": 0,
+        "localSky": 0,
+        "orbitalRim": 1
+      }
+    },
+    {
+      "bookmarkId": "twilight-limb",
+      "altitudeMeters": 25363291.247796915,
+      "sample": {
+        "opticalDepth": 0,
+        "aerialPerspective": 0,
+        "localSky": 0,
+        "orbitalRim": 1
+      }
+    },
+    {
+      "bookmarkId": "high-altitude",
+      "altitudeMeters": 8401.216415220872,
+      "sample": {
+        "opticalDepth": 0.1500128829262172,
+        "aerialPerspective": 0.5960996950535704,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "storm-zone",
+      "altitudeMeters": 1200.1951366849244,
+      "sample": {
+        "opticalDepth": 0.30398688359096976,
+        "aerialPerspective": 0.6196884856921903,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "sun-glitter",
+      "altitudeMeters": 260.0227584494278,
+      "sample": {
+        "opticalDepth": 0.39783382079767804,
+        "aerialPerspective": 0.6198718716781189,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "sea-level",
+      "altitudeMeters": 4.200118348933756,
+      "sample": {
+        "opticalDepth": 0.4338179633716477,
+        "aerialPerspective": 0.6199011309396278,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "low-twilight-horizon",
+      "altitudeMeters": 7.500480378977954,
+      "sample": {
+        "opticalDepth": 0.4333188967957716,
+        "aerialPerspective": 0.6199007947764015,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    },
+    {
+      "bookmarkId": "underwater",
+      "altitudeMeters": -2.6999620152637362,
+      "sample": {
+        "opticalDepth": 0.43445445741913175,
+        "aerialPerspective": 0.619901557289762,
+        "localSky": 1,
+        "orbitalRim": 0
+      }
+    }
+  ]
+}

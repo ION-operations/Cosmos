@@ -1,0 +1,4 @@
+Not run in sandbox. Run locally with:
+  npm i -D playwright
+  npx playwright install chromium
+  npm run cosmos:review:runtime-diagnostics

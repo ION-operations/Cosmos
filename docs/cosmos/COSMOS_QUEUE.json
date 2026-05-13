@@ -35,7 +35,7 @@
         "D_OCEAN_SURFACE",
         "D_DATA_ASSIMILATION"
       ],
-      "status": "next"
+      "status": "implemented_in_R-0005_bathymetry_atlas_ocean_foam_and_shallow_color_added"
     },
     {
       "id": "Q-0006",
@@ -71,7 +71,7 @@
         "D_OCEAN_SURFACE",
         "D_DATA_ASSIMILATION"
       ],
-      "status": "next"
+      "status": "implemented_in_R-0005_bathymetry_runtime_loader_and_ui_status_added"
     },
     {
       "id": "Q-0010",
@@ -90,7 +90,7 @@
         "D_VISUAL_REVIEW",
         "D_ORBITAL_COMPOSITION"
       ],
-      "status": "next_local_codex"
+      "status": "reframed_in_R-0006_images_are_insufficient_scale_diagnostics_added_local_screenshots_still_pending"
     },
     {
       "id": "Q-0012",
@@ -110,7 +110,7 @@
         "D_RENDER_ATMOSPHERE",
         "D_OCEAN_SURFACE"
       ],
-      "status": "next_after_local_screenshots"
+      "status": "advanced_in_R-0006_false_scale_root_cause_fixed_review_again_locally"
     },
     {
       "id": "Q-0014",
@@ -120,7 +120,212 @@
         "D_OCEAN_SURFACE",
         "D_DATA_ASSIMILATION"
       ],
-      "status": "next"
+      "status": "implemented_in_R-0005_depth_atlas_interface_and_one_water_optics_controls_added"
+    },
+    {
+      "id": "Q-0015",
+      "title": "Assimilate Water.zip one-water contract into Cosmos ocean architecture and tests",
+      "domains": [
+        "D_OCEAN_SURFACE",
+        "D_UNDERWATER",
+        "D_VISUAL_REVIEW"
+      ],
+      "status": "completed_in_R-0005_source_intake_and_crosswalk_added"
+    },
+    {
+      "id": "Q-0016",
+      "title": "Convert real NOAA ETOPO or GEBCO elevation data into RGBA depth01/shelf/coast/land atlas",
+      "domains": [
+        "D_DATA_ASSIMILATION",
+        "D_UNDERWATER",
+        "D_OCEAN_SURFACE"
+      ],
+      "status": "next_local_codex"
+    },
+    {
+      "id": "Q-0017",
+      "title": "Add SF0/SF1 spawn-field debug MVP and EBT breaker overlay for sea-level review",
+      "domains": [
+        "D_OCEAN_SURFACE",
+        "D_VISUAL_REVIEW"
+      ],
+      "status": "next_after_depth_data"
+    },
+    {
+      "id": "Q-0018",
+      "title": "Fix camera-following planet center and unify scale transitions across ocean/cloud/planet/atmosphere passes",
+      "domains": [
+        "D_SCALE_COHERENCE",
+        "D_ORBITAL_COMPOSITION",
+        "D_RENDER_ATMOSPHERE",
+        "D_CLOUD_WEATHER"
+      ],
+      "status": "completed_in_R-0006"
+    },
+    {
+      "id": "Q-0019",
+      "title": "Run non-image scale diagnostics and Playwright scale-state captures for all review bookmarks locally",
+      "domains": [
+        "D_SCALE_COHERENCE",
+        "D_VISUAL_REVIEW",
+        "D_ORBITAL_COMPOSITION"
+      ],
+      "status": "static_contract_completed_in_R-0006_browser_runtime_capture_next_local_codex"
+    },
+    {
+      "id": "Q-0020",
+      "title": "Promote atmosphere scattering to a tested dimensional model with view-from-ground-to-space continuity",
+      "domains": [
+        "D_SCALE_COHERENCE",
+        "D_RENDER_ATMOSPHERE",
+        "D_ATMOSPHERE_CONTINUITY"
+      ],
+      "status": "advanced_in_R-0007_atmosphere_ownership_and_cloud_lod_contract_added"
+    },
+    {
+      "id": "Q-0021",
+      "title": "Run local R-0007 atmosphere continuity diagnostics and Playwright captures for all bookmarks",
+      "domains": [
+        "D_ATMOSPHERE_CONTINUITY",
+        "D_VISUAL_REVIEW",
+        "D_ORBITAL_COMPOSITION"
+      ],
+      "status": "next_local_codex"
+    },
+    {
+      "id": "Q-0022",
+      "title": "Add render debug overlays for Earth shell, atmosphere shell, cloud base/top, rim ownership, and cloud LOD bands",
+      "domains": [
+        "D_SCALE_COHERENCE",
+        "D_ATMOSPHERE_CONTINUITY",
+        "D_VISUAL_REVIEW"
+      ],
+      "status": "completed_in_R-0008_debug_overlay_runtime_contract_and_scripts_added"
+    },
+    {
+      "id": "Q-0023",
+      "title": "Start physically based precomputed atmosphere LUT planning for future WebGPU/WebGL2 path",
+      "domains": [
+        "D_RENDER_ATMOSPHERE",
+        "D_ATMOSPHERE_CONTINUITY"
+      ],
+      "status": "research_and_design_next_after_R-0007_visual_review"
+    },
+    {
+      "id": "Q-0024",
+      "title": "Capture R-0008 normal and debug-mode screenshot packets locally, then annotate lead-eyes failure notes by mode",
+      "domains": [
+        "D_VISUAL_DEBUG_OVERLAYS",
+        "D_VISUAL_REVIEW",
+        "D_ORBITAL_COMPOSITION"
+      ],
+      "status": "next_local_codex"
+    },
+    {
+      "id": "Q-0025",
+      "title": "Begin R-0009 physical atmosphere LUT planning and first transmittance/multi-scattering interface",
+      "domains": [
+        "D_RENDER_ATMOSPHERE",
+        "D_ATMOSPHERE_CONTINUITY",
+        "D_SCALE_COHERENCE"
+      ],
+      "status": "completed_in_R-0009_physical_atmosphere_lut_interface_added"
+    },
+    {
+      "id": "Q-0026",
+      "title": "Run R-0009 browser WebGL shader compile/log capture and optical-depth debug screenshots locally",
+      "domains": [
+        "D_PHYSICAL_ATMOSPHERE_LUT",
+        "D_VISUAL_DEBUG_OVERLAYS",
+        "D_VISUAL_REVIEW",
+        "D_ORBITAL_COMPOSITION"
+      ],
+      "status": "implemented_in_R-0010_runtime_capture_script_added_local_run_pending"
+    },
+    {
+      "id": "Q-0027",
+      "title": "Calibrate twilight, terminator rim thickness, horizon haze, and aerial perspective against R-0009 LUT controls",
+      "domains": [
+        "D_PHYSICAL_ATMOSPHERE_LUT",
+        "D_RENDER_ATMOSPHERE",
+        "D_ATMOSPHERE_CONTINUITY"
+      ],
+      "status": "implemented_in_R-0010_twilight_contract_added_tuning_pending_after_runtime_clean"
+    },
+    {
+      "id": "Q-0028",
+      "title": "Upgrade CPU fallback LUTs toward a higher-fidelity transmittance and multiple-scattering solver",
+      "domains": [
+        "D_PHYSICAL_ATMOSPHERE_LUT",
+        "D_RENDER_ATMOSPHERE"
+      ],
+      "status": "implemented_in_R-0012_curved_path_solver_and_higher_resolution_luts_added"
+    },
+    {
+      "id": "Q-0029",
+      "title": "Run R-0010 Playwright runtime shader diagnostics locally and collect WebGL/browser receipts",
+      "domains": [
+        "D_RUNTIME_SHADER_DIAGNOSTICS",
+        "D_VISUAL_REVIEW"
+      ],
+      "status": "next_local_codex"
+    },
+    {
+      "id": "Q-0030",
+      "title": "Tune twilight/terminator Rayleigh Mie ozone and aerial perspective defaults after clean runtime diagnostics",
+      "domains": [
+        "D_TWILIGHT_TERMINATOR_CALIBRATION",
+        "D_PHYSICAL_ATMOSPHERE_LUT",
+        "D_RENDER_ATMOSPHERE"
+      ],
+      "status": "implemented_in_R-0011_static_shader_clean_calibration_defaults_and_contract_added_runtime_visual_gate_pending_local_codex"
+    },
+    {
+      "id": "Q-0031",
+      "title": "Promote runtime shader diagnostics into the standard validation gate for all future atmosphere/cloud/ocean patches",
+      "domains": [
+        "D_RUNTIME_SHADER_DIAGNOSTICS"
+      ],
+      "status": "advanced_in_R-0011_runtime_diagnostics_kept_as_standard_gate_local_run_pending"
+    },
+    {
+      "id": "Q-0032",
+      "title": "Run R-0011 strict runtime diagnostics and compare mode 0/mode 2/mode 6 captures for twilight bookmarks",
+      "domains": [
+        "D_SHADER_CLEAN_TWILIGHT_CALIBRATION",
+        "D_RUNTIME_SHADER_DIAGNOSTICS",
+        "D_VISUAL_REVIEW"
+      ],
+      "status": "next_local_codex"
+    },
+    {
+      "id": "Q-0033",
+      "title": "After shader-clean runtime pass, upgrade atmosphere LUT fallback toward higher-fidelity transmittance and multi-scattering solver",
+      "domains": [
+        "D_PHYSICAL_ATMOSPHERE_LUT",
+        "D_RENDER_ATMOSPHERE"
+      ],
+      "status": "completed_in_R-0012_higher_fidelity_curved_path_lut_solver_added"
+    },
+    {
+      "id": "Q-0034",
+      "title": "Run R-0012 LUT texture exports and inspect transmittance/multi-scattering/sky-view/aerial-perspective PNGs for banding or false colour",
+      "domains": [
+        "D_ATMOSPHERE_LUT_SOLVER",
+        "D_VISUAL_REVIEW",
+        "D_RENDER_ATMOSPHERE"
+      ],
+      "status": "implemented_static_export_generated_runtime_visual_review_next_local_codex"
+    },
+    {
+      "id": "Q-0035",
+      "title": "Move from CPU fallback atmosphere LUTs toward GPU/precomputed atmosphere pass while keeping R-0012 contracts stable",
+      "domains": [
+        "D_ATMOSPHERE_LUT_SOLVER",
+        "D_RUNTIME_SHADER_DIAGNOSTICS",
+        "D_RENDER_ATMOSPHERE"
+      ],
+      "status": "next_build_target_R-0013_candidate"
     }
   ]
 }

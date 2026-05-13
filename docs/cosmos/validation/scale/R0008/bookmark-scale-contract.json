@@ -1,0 +1,164 @@
+{
+  "earthRadiusMeters": 6371000,
+  "planetCenter": {
+    "x": 0,
+    "y": -6371000,
+    "z": 0
+  },
+  "records": [
+    {
+      "bookmarkId": "orbit",
+      "position": [
+        0,
+        15500000,
+        24500000
+      ],
+      "target": [
+        0,
+        -6371000,
+        0
+      ],
+      "scaleState": {
+        "altitudeMeters": 26470903.735928588,
+        "lod": "orbital",
+        "lod01": 1,
+        "oceanAlpha": 0,
+        "cloudAlpha": 0,
+        "planetAlpha": 1,
+        "localAtmosphereAlpha": 0
+      }
+    },
+    {
+      "bookmarkId": "cloud-terminator",
+      "position": [
+        -9000000,
+        13000000,
+        21000000
+      ],
+      "target": [
+        0,
+        -6371000,
+        0
+      ],
+      "scaleState": {
+        "altitudeMeters": 23582891.917412,
+        "lod": "orbital",
+        "lod01": 1,
+        "oceanAlpha": 0,
+        "cloudAlpha": 0,
+        "planetAlpha": 1,
+        "localAtmosphereAlpha": 0
+      }
+    },
+    {
+      "bookmarkId": "high-altitude",
+      "position": [
+        1600,
+        8400,
+        3600
+      ],
+      "target": [
+        260,
+        600,
+        -400
+      ],
+      "scaleState": {
+        "altitudeMeters": 8401.216415220872,
+        "lod": "low-altitude",
+        "lod01": 0.00007214830945140616,
+        "oceanAlpha": 1,
+        "cloudAlpha": 1,
+        "planetAlpha": 0,
+        "localAtmosphereAlpha": 1
+      }
+    },
+    {
+      "bookmarkId": "storm-zone",
+      "position": [
+        -620,
+        1200,
+        1450
+      ],
+      "target": [
+        120,
+        140,
+        -160
+      ],
+      "scaleState": {
+        "altitudeMeters": 1200.1951366849244,
+        "lod": "low-altitude",
+        "lod01": 0,
+        "oceanAlpha": 1,
+        "cloudAlpha": 1,
+        "planetAlpha": 0,
+        "localAtmosphereAlpha": 1
+      }
+    },
+    {
+      "bookmarkId": "sun-glitter",
+      "position": [
+        140,
+        260,
+        520
+      ],
+      "target": [
+        30,
+        22,
+        -140
+      ],
+      "scaleState": {
+        "altitudeMeters": 260.0227584494278,
+        "lod": "surface",
+        "lod01": 0,
+        "oceanAlpha": 1,
+        "cloudAlpha": 1,
+        "planetAlpha": 0,
+        "localAtmosphereAlpha": 1
+      }
+    },
+    {
+      "bookmarkId": "sea-level",
+      "position": [
+        8,
+        4.2,
+        38
+      ],
+      "target": [
+        0,
+        2,
+        -160
+      ],
+      "scaleState": {
+        "altitudeMeters": 4.200118348933756,
+        "lod": "surface",
+        "lod01": 0,
+        "oceanAlpha": 1,
+        "cloudAlpha": 1,
+        "planetAlpha": 0,
+        "localAtmosphereAlpha": 1
+      }
+    },
+    {
+      "bookmarkId": "underwater",
+      "position": [
+        0,
+        -2.7,
+        22
+      ],
+      "target": [
+        0,
+        -1.2,
+        -70
+      ],
+      "scaleState": {
+        "altitudeMeters": -2.6999620152637362,
+        "lod": "surface",
+        "lod01": 0,
+        "oceanAlpha": 1,
+        "cloudAlpha": 1,
+        "planetAlpha": 0,
+        "localAtmosphereAlpha": 1
+      }
+    }
+  ]
+}
