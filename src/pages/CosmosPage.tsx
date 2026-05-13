@@ -8,6 +8,7 @@ import {
   FileText,
   Github,
   Layers,
+  Network,
   Radar,
   Satellite,
   Sparkles,
@@ -221,6 +222,11 @@ const CosmosPage = () => (
               <a href="#history">Image History</a>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/25 bg-black/20 text-white hover:bg-white/10">
+              <Link to="/projects">
+                Projects Hub
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/25 bg-black/20 text-white hover:bg-white/10">
               <Link to="/cosmos-review?bookmark=sea-level&panel=1">
                 Review Bookmarks
               </Link>
@@ -301,6 +307,12 @@ const CosmosPage = () => (
             Cosmos follows the ION style of evidence-first project design: clear operating docs, stable review
             IDs, validation logs, and explicit next-candidate work instead of hidden visual drift.
           </p>
+          <Button asChild className="mt-6 bg-cyan-300 text-stone-950 hover:bg-cyan-200">
+            <Link to="/projects">
+              <Network className="mr-2 h-4 w-4" />
+              Open Projects Hub
+            </Link>
+          </Button>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {systems.map(({ icon: Icon, label, text }) => (
@@ -441,6 +453,10 @@ const CosmosPage = () => (
             <span className="flex items-center gap-2"><Github className="h-4 w-4" /> ION Operations / Cosmos</span>
             <ArrowRight className="h-4 w-4" />
           </a>
+          <Link className="flex items-center justify-between border border-stone-950/15 bg-stone-950/5 px-4 py-3 hover:bg-stone-950/10" to="/projects">
+            <span>Projects Hub</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
           <Link className="flex items-center justify-between border border-stone-950/15 bg-stone-950/5 px-4 py-3 hover:bg-stone-950/10" to="/cosmos-review?bookmark=orbit&panel=1">
             <span>Orbit Review</span>
             <ArrowRight className="h-4 w-4" />

@@ -18,6 +18,7 @@ const WeatherLab = lazy(() => import("./pages/WeatherLab"));
 const EffectsLab = lazy(() => import("./pages/EffectsLab"));
 const CosmosReview = lazy(() => import("./pages/CosmosReview"));
 const CosmosLocalRun = lazy(() => import("./pages/CosmosLocalRun"));
+const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
 
 const queryClient = new QueryClient();
 const routerBaseName = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/effects" element={<EffectsLab />} />
             <Route path="/cosmos-review" element={<CosmosReview />} />
             <Route path="/cosmos-local-run" element={<CosmosLocalRun />} />
+            <Route path="/projects" element={<ProjectsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
