@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cosmos - Water World Renderer</title>
+    <meta
+      name="description"
+      content="Cosmos is an ION Operations water-world Earth renderer with satellite intake, review bookmarks, and validation receipts."
+    />
+    <meta name="author" content="ION Operations" />
+    <meta property="og:title" content="Cosmos - Water World Renderer" />
+    <meta property="og:description" content="A cinematic Earth and ocean rendering lab for ION Operations." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://ion-operations.github.io/Cosmos/cosmos/pages/sea-level.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://ion-operations.github.io/Cosmos/cosmos/pages/sea-level.png" />
+    <link rel="stylesheet" href="/Cosmos/styles.css" />
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <img class="hero__image" src="/Cosmos/cosmos/pages/sea-level.png" alt="Cosmos sea-level water renderer" />
+        <div class="hero__shade"></div>
+        <div class="hero__content">
+          <div class="hero__copy">
+            <div class="eyebrow">ION Operations / Water World</div>
+            <h1>Cosmos</h1>
+            <p>
+              A cinematic Earth and ocean rendering lab with satellite intake, weather-scale atmosphere,
+              water-world review bookmarks, and phase receipts for every material change.
+            </p>
+            <div class="actions">
+              <a class="button button--primary" href="#review">Review Captures</a>
+              <a class="button" href="https://github.com/ION-operations/Cosmos#run-locally">Run Locally</a>
+            </div>
+          </div>
+          <aside class="evidence" aria-label="Current evidence">
+            <h2>Current Evidence</h2>
+            <div class="evidence__grid">
+              <div><strong>7 drops</strong><span>Release spine</span></div>
+              <div><strong>7 fixed views</strong><span>Review bookmarks</span></div>
+              <div><strong>2048x1024</strong><span>GIBS atlas</span></div>
+              <div><strong>3 checks</strong><span>Build / test / lint</span></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="band">
+        <div class="section-grid">
+          <div>
+            <div class="eyebrow eyebrow--warm">Design Brief</div>
+            <h2>A renderer with receipts.</h2>
+            <p>
+              Cosmos follows the ION project style: visible evidence before claims, stable IDs for repeatable
+              review, local-first validation, and direct notes about what still needs to improve.
+            </p>
+          </div>
+          <div class="systems">
+            <article><strong>GIBS Surface Atlas</strong><span>NASA true-color intake with procedural fallback.</span></article>
+            <article><strong>Weather Atlas Spine</strong><span>Shared macro fields for clouds and sea state.</span></article>
+            <article><strong>Water-World Stack</strong><span>Orbit, altitude, sea-level, and underwater targets.</span></article>
+            <article><strong>ION Receipts</strong><span>Phase records, logs, and repeatable visual evidence.</span></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="review" class="review">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Lead-Eyes Views</div>
+            <h2>Seven fixed visual critique surfaces.</h2>
+          </div>
+          <a class="button" href="https://github.com/ION-operations/Cosmos/tree/main/docs/cosmos/validation/screenshots/R0004">
+            Screenshot Folder
+          </a>
+        </div>
+        <div class="shot-grid">
+          <a class="shot" href="/Cosmos/cosmos/pages/orbit.png">
+            <img src="/Cosmos/cosmos/pages/orbit.png" alt="Orbit review capture" />
+            <span><strong>Orbit</strong>Atmosphere rim, cloud scale, global color, land retention.</span>
+          </a>
+          <a class="shot" href="/Cosmos/cosmos/pages/cloud-terminator.png">
+            <img src="/Cosmos/cosmos/pages/cloud-terminator.png" alt="Cloud terminator review capture" />
+            <span><strong>Cloud Terminator</strong>Dawn cloud stacking, shadow falloff, orbital balance.</span>
+          </a>
+          <a class="shot" href="/Cosmos/cosmos/pages/high-altitude.png">
+            <img src="/Cosmos/cosmos/pages/high-altitude.png" alt="High-altitude review capture" />
+            <span><strong>High Altitude</strong>Haze, water color, cloud decks, atlas blending.</span>
+          </a>
+          <a class="shot" href="/Cosmos/cosmos/pages/storm-zone.png">
+            <img src="/Cosmos/cosmos/pages/storm-zone.png" alt="Storm-zone review capture" />
+            <span><strong>Storm Zone</strong>Storm mass, wave scale, foam hierarchy, horizon visibility.</span>
+          </a>
+          <a class="shot" href="/Cosmos/cosmos/pages/sun-glitter.png">
+            <img src="/Cosmos/cosmos/pages/sun-glitter.png" alt="Sun-glitter review capture" />
+            <span><strong>Sun Glitter</strong>Fresnel response, micro-normal scale, specular balance.</span>
+          </a>
+          <a class="shot" href="/Cosmos/cosmos/pages/sea-level.png">
+            <img src="/Cosmos/cosmos/pages/sea-level.png" alt="Sea-level review capture" />
+            <span><strong>Sea Level</strong>Horizon match, near-surface wave detail, water continuity.</span>
+          </a>
+          <a class="shot" href="/Cosmos/cosmos/pages/underwater.png">
+            <img src="/Cosmos/cosmos/pages/underwater.png" alt="Underwater review capture" />
+            <span><strong>Underwater</strong>Absorption, turbidity, caustics targets, bathymetry gaps.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="next">
+        <div>
+          <div class="eyebrow eyebrow--dark">Next Candidate</div>
+          <h2>R0005 and beyond: bathymetry, scale, atmosphere.</h2>
+          <p>
+            The current true-color atlas still retains too much land/coast signal for a Water World. The next pass
+            needs depth rasters, shallow-water color, shelf breaks, coastal foam masks, underwater fog, and
+            atmosphere/cloud LOD that holds from orbit to sea level.
+          </p>
+        </div>
+        <nav>
+          <a href="https://github.com/ION-operations/Cosmos">GitHub Repository</a>
+          <a href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/R0004_LOCAL_RUN.md">R0004 Local Run</a>
+          <a href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/GITHUB_PAGES_COSMOS.md">Pages Handoff</a>
+        </nav>
+      </section>
+    </main>
+  </body>
+</html>

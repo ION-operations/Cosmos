@@ -20,13 +20,13 @@ Local routes:
 
 | Route | Purpose |
 | --- | --- |
-| `/` | Public Cosmos project page |
+| `/` | Public Cosmos project page when running the Vite app locally |
 | `/lab` | Main interactive renderer |
 | `/cosmos-review` | Fixed lead-eyes review bookmarks |
 | `/cosmos-local-run` | Local command/output console |
 | `/gpu` | WebGPU/WebGL2 experimental renderer |
 
-The Pages workflow lives at `.github/workflows/pages.yml` and builds with `GITHUB_PAGES=true`, which sets the Vite base path to `/Cosmos/`.
+The hosted GitHub Pages workflow lives at `.github/workflows/pages.yml`. It publishes a static project page from `pages/` plus the committed R0004 review assets in `public/cosmos/`, so Pages deployment does not need to install dependencies, commit `dist/`, or carry browser binaries.
 
 ---
 
@@ -123,10 +123,11 @@ COSMOS_REVIEW_BOOKMARKS=storm-zone,sea-level npm run cosmos:review:screenshots
 
 The workflow:
 
-- installs with `npm ci`;
-- builds the Vite app with `GITHUB_PAGES=true`;
-- copies `dist/index.html` to `dist/404.html` for SPA fallback;
-- deploys the `dist/` artifact to Pages.
+- checks out the repository;
+- copies `pages/` into a temporary `dist/` artifact;
+- copies `public/cosmos/pages` and `public/cosmos/gibs` into that artifact;
+- copies `dist/index.html` to `dist/404.html` for a simple fallback;
+- deploys the generated artifact to Pages.
 
 ---
 
