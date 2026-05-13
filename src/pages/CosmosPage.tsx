@@ -85,11 +85,104 @@ const systems = [
   },
 ];
 
+const latestAssets = [
+  {
+    title: 'GitHub App Surface',
+    image: assetUrl('cosmos/pages/r0012/home.png'),
+    href: assetUrl('cosmos/pages/r0012/home.png'),
+    text: 'Static Pages home validation capture.',
+  },
+  {
+    title: 'NASA GIBS Atlas',
+    image: assetUrl('cosmos/gibs/global-truecolor.jpg'),
+    href: assetUrl('cosmos/gibs/global-truecolor.jpg'),
+    text: 'True-color WMS surface raster, 2048x1024.',
+  },
+  {
+    title: 'Bathymetry Atlas',
+    image: assetUrl('cosmos/bathymetry/global-depth.png'),
+    href: assetUrl('cosmos/bathymetry/global-depth.png'),
+    text: 'Depth, shelf, coast, and land-mask channels.',
+  },
+  {
+    title: 'Atmosphere LUT',
+    image: assetUrl('cosmos/pages/lut/sky-view.png'),
+    href: assetUrl('cosmos/pages/lut/sky-view.png'),
+    text: 'R0012 CPU solver debug texture exports.',
+  },
+];
+
+const imageHistory = [
+  {
+    title: 'R0012 orbit smoke',
+    image: assetUrl('cosmos/pages/r0012/orbit-smoke.png'),
+    href: assetUrl('cosmos/pages/r0012/orbit-smoke.png'),
+    text: '1920x1080 capture from the review screenshot harness after LUT solver integration.',
+  },
+  {
+    title: 'R0012 transmittance LUT',
+    image: assetUrl('cosmos/pages/lut/transmittance.png'),
+    href: assetUrl('cosmos/pages/lut/transmittance.png'),
+    text: 'Generated PNG export used for atmosphere solver review.',
+  },
+  {
+    title: 'R0012 multi-scattering LUT',
+    image: assetUrl('cosmos/pages/lut/multi-scattering.png'),
+    href: assetUrl('cosmos/pages/lut/multi-scattering.png'),
+    text: 'Low-resolution texture showing accumulated atmosphere contribution.',
+  },
+  {
+    title: 'R0012 aerial perspective LUT',
+    image: assetUrl('cosmos/pages/lut/aerial-perspective.png'),
+    href: assetUrl('cosmos/pages/lut/aerial-perspective.png'),
+    text: 'Distance haze and optical-depth review surface.',
+  },
+  {
+    title: 'R0004 seven-view capture set',
+    image: assetUrl('cosmos/pages/sea-level.png'),
+    href: '#review',
+    text: 'Canonical lead-eyes bookmarks for orbit, weather, storm, glitter, sea-level, and underwater critique.',
+  },
+  {
+    title: 'R0004 GIBS surface atlas',
+    image: assetUrl('cosmos/gibs/global-truecolor.jpg'),
+    href: assetUrl('cosmos/gibs/global-truecolor.manifest.json'),
+    text: 'First real global true-color raster stored with manifest state.',
+  },
+  {
+    title: 'R0005 bathymetry atlas',
+    image: assetUrl('cosmos/bathymetry/global-depth.png'),
+    href: assetUrl('cosmos/bathymetry/global-depth.manifest.json'),
+    text: 'Depth raster plumbing for shallow water, shelf breaks, coast foam, fog, and caustics.',
+  },
+  {
+    title: 'Terminator review lineage',
+    image: assetUrl('cosmos/pages/cloud-terminator.png'),
+    href: assetUrl('cosmos/pages/cloud-terminator.png'),
+    text: 'Cloud stacking, twilight handoff, rim thickness, and atmosphere calibration target.',
+  },
+];
+
+const releases = [
+  ['R0012', 'Atmosphere LUT solver', 'Curved-path optical-depth solver, ozone density, PNG LUT exports, quality contracts.', 'R-0012_atmosphere_lut_solver.json'],
+  ['R0011', 'Shader-clean twilight calibration', 'Representative atmosphere samples and twilight defaults after shader cleanup.', 'R-0011_shader_clean_twilight_calibration.json'],
+  ['R0010', 'Runtime shader diagnostics', 'WebGL program logs, diagnostics panel, twilight review targets.', 'R-0010_runtime_shader_twilight.json'],
+  ['R0009', 'Physical atmosphere LUT interface', 'Transmittance, multi-scattering, sky-view, and aerial-perspective data textures.', 'R-0009_physical_atmosphere_lut.json'],
+  ['R0008', 'Visual debug overlays', 'Scale ownership, atmosphere ownership, cloud LOD, physical shell overlays.', 'R-0008_visual_debug_overlays.json'],
+  ['R0007', 'Atmosphere and cloud LOD', 'Ground-to-orbit sky continuity, rim tuning, and cloud band ownership.', 'R-0007_atmosphere_cloud_lod.json'],
+  ['R0006', 'Scale coherence', 'Fixed Earth center, shared scale uniforms, spherical cloud shell altitude logic.', 'R-0006_scale_coherence_ion.json'],
+  ['R0005', 'Bathymetry one-water intake', 'Depth atlas channels, shallow optics, coastal foam, underwater fog targets.', 'R-0005_bathymetry_one_water_intake.json'],
+  ['R0004', 'GIBS surface overlay runtime', 'NASA true-color global atlas loader, manifest, UI data state, seven screenshots.', 'R-0004_gibs_surface_overlay_runtime.json'],
+  ['R0003', 'Weather atlas unification', 'Shared weather atlas sampled by orbit, clouds, ocean, and terrain forcing.', 'R-0003_weather_atlas_unification.json'],
+  ['R0002', 'Orbital review route', 'Dedicated Cosmos Review route and stable bookmark IDs.', 'R-0002_orbital_review_route.json'],
+  ['R0001', 'Weather atlas spine', 'Deterministic water-world weather generator and first ION Cosmos operating docs.', 'R-0001_weather_atlas_spine.json'],
+];
+
 const metrics = [
-  ['Release spine', '12 drops'],
+  ['Release spine', '12 releases'],
   ['Review bookmarks', '7 fixed views'],
   ['Atlas snapshot', '2048x1024'],
-  ['Runtime spine', 'R0012'],
+  ['LUT exports', 'R0012'],
 ];
 
 const CosmosPage = () => (
@@ -122,6 +215,12 @@ const CosmosPage = () => (
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/25 bg-black/20 text-white hover:bg-white/10">
+              <a href="#latest">Latest Images</a>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/25 bg-black/20 text-white hover:bg-white/10">
+              <a href="#history">Image History</a>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/25 bg-black/20 text-white hover:bg-white/10">
               <Link to="/cosmos-review?bookmark=sea-level&panel=1">
                 Review Bookmarks
               </Link>
@@ -142,6 +241,50 @@ const CosmosPage = () => (
               </div>
             ))}
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="latest" className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-normal text-cyan-200">
+            <Satellite className="h-4 w-4" />
+            Latest Images
+          </div>
+          <h2 className="mt-4 text-3xl font-semibold tracking-normal text-white">R0012 visual state, public on Pages.</h2>
+        </div>
+        <Button asChild variant="outline" className="border-white/15 bg-white/[0.04] text-white hover:bg-white/10">
+          <a href="https://github.com/ION-operations/Cosmos/tree/main/public/cosmos/pages" target="_blank" rel="noreferrer">
+            Public Image Folder
+          </a>
+        </Button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+        <a href={assetUrl('cosmos/pages/r0012/orbit-smoke.png')} className="overflow-hidden border border-white/10 bg-[#11100d]">
+          <img
+            src={assetUrl('cosmos/pages/r0012/orbit-smoke.png')}
+            alt="R0012 Cosmos sky-only orbit validation capture"
+            className="aspect-[16/10] w-full object-cover"
+          />
+          <div className="p-5">
+            <h3 className="text-2xl font-semibold text-white">R0012 Sky-Only Runtime</h3>
+            <p className="mt-2 text-sm leading-6 text-stone-400">
+              Runtime smoke capture with sky visible by default, GIBS loaded, bathymetry loaded, atmosphere LUT generated, and diagnostics ok.
+            </p>
+          </div>
+        </a>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {latestAssets.map((asset) => (
+            <a key={asset.title} href={asset.href} className="overflow-hidden border border-white/10 bg-[#11100d]">
+              <img src={asset.image} alt={asset.title} className="aspect-[16/10] w-full object-cover" />
+              <div className="p-4">
+                <h3 className="text-sm font-semibold text-white">{asset.title}</h3>
+                <p className="mt-1 text-xs leading-5 text-stone-400">{asset.text}</p>
+              </div>
+            </a>
+          ))}
         </div>
       </div>
     </section>
@@ -171,7 +314,7 @@ const CosmosPage = () => (
       </div>
     </section>
 
-    <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+    <section id="review" className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-normal text-cyan-200">
@@ -211,6 +354,71 @@ const CosmosPage = () => (
             </div>
           </Link>
         ))}
+      </div>
+    </section>
+
+    <section id="history" className="mx-auto max-w-7xl border-t border-white/10 px-5 py-16 lg:px-8">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-normal text-cyan-200">
+            <Layers className="h-4 w-4" />
+            Image History
+          </div>
+          <h2 className="mt-4 text-3xl font-semibold tracking-normal text-white">Every visible asset has a trail.</h2>
+        </div>
+        <Button asChild variant="outline" className="border-white/15 bg-white/[0.04] text-white hover:bg-white/10">
+          <a href="https://github.com/ION-operations/Cosmos/tree/main/docs/cosmos/validation" target="_blank" rel="noreferrer">
+            Validation Logs
+          </a>
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {imageHistory.map((asset) => (
+          <a key={asset.title} href={asset.href} className="overflow-hidden border border-white/10 bg-[#11100d]">
+            <img src={asset.image} alt={asset.title} className="aspect-[16/10] w-full object-cover" />
+            <div className="p-4">
+              <h3 className="text-base font-semibold text-white">{asset.title}</h3>
+              <p className="mt-2 min-h-[76px] text-xs leading-5 text-stone-400">{asset.text}</p>
+              <span className="mt-4 inline-flex text-xs font-semibold text-cyan-200">Open</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section id="releases" className="border-t border-white/10 bg-[linear-gradient(180deg,#11100d_0%,#080807_100%)]">
+      <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-normal text-cyan-200">
+              <FileText className="h-4 w-4" />
+              Release History
+            </div>
+            <h2 className="mt-4 text-3xl font-semibold tracking-normal text-white">Receipt-backed evolution from R0001 to R0012.</h2>
+          </div>
+          <Button asChild variant="outline" className="border-white/15 bg-white/[0.04] text-white hover:bg-white/10">
+            <a href="https://github.com/ION-operations/Cosmos/tree/main/docs/cosmos/receipts" target="_blank" rel="noreferrer">
+              Receipt Folder
+            </a>
+          </Button>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {releases.map(([id, title, text, file]) => (
+            <a
+              key={id}
+              href={`https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/${file}`}
+              target="_blank"
+              rel="noreferrer"
+              className="min-h-[160px] border border-white/10 bg-[#11100d] p-4"
+            >
+              <span className="inline-flex border border-cyan-200/40 px-2 py-1 text-xs font-semibold text-cyan-200">{id}</span>
+              <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
+              <p className="mt-2 text-xs leading-5 text-stone-400">{text}</p>
+            </a>
+          ))}
+        </div>
       </div>
     </section>
 

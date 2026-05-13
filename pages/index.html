@@ -12,9 +12,9 @@
     <meta property="og:title" content="Cosmos - Water World Renderer" />
     <meta property="og:description" content="A cinematic Earth and ocean rendering lab for ION Operations." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://ion-operations.github.io/Cosmos/cosmos/pages/sea-level.png" />
+    <meta property="og:image" content="https://ion-operations.github.io/Cosmos/cosmos/pages/r0012/orbit-smoke.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://ion-operations.github.io/Cosmos/cosmos/pages/sea-level.png" />
+    <meta name="twitter:image" content="https://ion-operations.github.io/Cosmos/cosmos/pages/r0012/orbit-smoke.png" />
     <link rel="stylesheet" href="/Cosmos/styles.css" />
   </head>
   <body>
@@ -31,19 +31,60 @@
               water-world review bookmarks, and phase receipts for every material change.
             </p>
             <div class="actions">
-              <a class="button button--primary" href="#review">Review Captures</a>
+              <a class="button button--primary" href="#latest">Latest Images</a>
+              <a class="button" href="#history">Image History</a>
+              <a class="button" href="#releases">Release History</a>
               <a class="button" href="https://github.com/ION-operations/Cosmos#run-locally">Run Locally</a>
             </div>
           </div>
           <aside class="evidence" aria-label="Current evidence">
             <h2>Current Evidence</h2>
             <div class="evidence__grid">
-              <div><strong>12 drops</strong><span>Release spine</span></div>
+              <div><strong>12 releases</strong><span>Receipt-backed spine</span></div>
               <div><strong>7 fixed views</strong><span>Review bookmarks</span></div>
               <div><strong>2048x1024</strong><span>GIBS atlas</span></div>
-              <div><strong>R0012</strong><span>Atmosphere LUT</span></div>
+              <div><strong>R0012</strong><span>LUT solver exports</span></div>
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section id="latest" class="latest">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Latest Images</div>
+            <h2>R0012 visual state, public on Pages.</h2>
+          </div>
+          <a class="button" href="https://github.com/ION-operations/Cosmos/tree/main/public/cosmos/pages">
+            Public Image Folder
+          </a>
+        </div>
+        <div class="image-board">
+          <a class="feature-shot" href="/Cosmos/cosmos/pages/r0012/orbit-smoke.png">
+            <img src="/Cosmos/cosmos/pages/r0012/orbit-smoke.png" alt="R0012 Cosmos sky-only orbit validation capture" />
+            <span>
+              <strong>R0012 Sky-Only Runtime</strong>
+              Runtime smoke capture with sky visible by default, GIBS loaded, bathymetry loaded, atmosphere LUT generated, and diagnostics ok.
+            </span>
+          </a>
+          <div class="asset-stack">
+            <a class="asset-tile" href="/Cosmos/cosmos/pages/r0012/home.png">
+              <img src="/Cosmos/cosmos/pages/r0012/home.png" alt="R0012 Cosmos home page capture" />
+              <span><strong>GitHub App Surface</strong>Static Pages home validation capture.</span>
+            </a>
+            <a class="asset-tile" href="/Cosmos/cosmos/gibs/global-truecolor.jpg">
+              <img src="/Cosmos/cosmos/gibs/global-truecolor.jpg" alt="NASA GIBS global true-color surface atlas" />
+              <span><strong>NASA GIBS Atlas</strong>True-color WMS surface raster, 2048x1024.</span>
+            </a>
+            <a class="asset-tile" href="/Cosmos/cosmos/bathymetry/global-depth.png">
+              <img src="/Cosmos/cosmos/bathymetry/global-depth.png" alt="Cosmos bathymetry depth raster atlas" />
+              <span><strong>Bathymetry Atlas</strong>Depth, shelf, coast, and land-mask channels.</span>
+            </a>
+            <a class="asset-tile" href="/Cosmos/cosmos/pages/lut/sky-view.png">
+              <img src="/Cosmos/cosmos/pages/lut/sky-view.png" alt="R0012 atmosphere sky-view LUT export" />
+              <span><strong>Atmosphere LUT</strong>R0012 CPU solver debug texture exports.</span>
+            </a>
+          </div>
         </div>
       </section>
 
@@ -107,6 +148,134 @@
           <a class="shot" href="/Cosmos/cosmos/pages/underwater.png">
             <img src="/Cosmos/cosmos/pages/underwater.png" alt="Underwater review capture" />
             <span><strong>Underwater</strong>Absorption, turbidity, caustics targets, bathymetry gaps.</span>
+          </a>
+        </div>
+      </section>
+
+      <section id="history" class="image-history">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Image History</div>
+            <h2>Every visible asset has a trail.</h2>
+          </div>
+          <a class="button" href="https://github.com/ION-operations/Cosmos/tree/main/docs/cosmos/validation">
+            Validation Logs
+          </a>
+        </div>
+        <div class="history-grid">
+          <article class="asset-card">
+            <img src="/Cosmos/cosmos/pages/r0012/orbit-smoke.png" alt="R0012 full-resolution orbit smoke screenshot" />
+            <div>
+              <strong>R0012 orbit smoke</strong>
+              <span>1920x1080 capture from the review screenshot harness after LUT solver integration.</span>
+              <a href="/Cosmos/cosmos/pages/r0012/orbit-smoke.png">Open image</a>
+            </div>
+          </article>
+          <article class="asset-card">
+            <img src="/Cosmos/cosmos/pages/lut/transmittance.png" alt="R0012 atmosphere transmittance LUT" />
+            <div>
+              <strong>R0012 transmittance LUT</strong>
+              <span>Generated PNG export used for atmosphere solver review.</span>
+              <a href="/Cosmos/cosmos/pages/lut/transmittance.png">Open image</a>
+            </div>
+          </article>
+          <article class="asset-card">
+            <img src="/Cosmos/cosmos/pages/lut/multi-scattering.png" alt="R0012 atmosphere multi-scattering LUT" />
+            <div>
+              <strong>R0012 multi-scattering LUT</strong>
+              <span>Low-resolution texture showing accumulated atmosphere contribution.</span>
+              <a href="/Cosmos/cosmos/pages/lut/multi-scattering.png">Open image</a>
+            </div>
+          </article>
+          <article class="asset-card">
+            <img src="/Cosmos/cosmos/pages/lut/aerial-perspective.png" alt="R0012 atmosphere aerial perspective LUT" />
+            <div>
+              <strong>R0012 aerial perspective LUT</strong>
+              <span>Distance haze and optical-depth review surface.</span>
+              <a href="/Cosmos/cosmos/pages/lut/aerial-perspective.png">Open image</a>
+            </div>
+          </article>
+          <article class="asset-card">
+            <img src="/Cosmos/cosmos/pages/sea-level.png" alt="R0004 sea-level water world review screenshot" />
+            <div>
+              <strong>R0004 seven-view capture set</strong>
+              <span>Canonical lead-eyes bookmarks for orbit, weather, storm, glitter, sea-level, and underwater critique.</span>
+              <a href="#review">Review set</a>
+            </div>
+          </article>
+          <article class="asset-card">
+            <img src="/Cosmos/cosmos/gibs/global-truecolor.jpg" alt="R0004 NASA GIBS true-color atlas" />
+            <div>
+              <strong>R0004 GIBS surface atlas</strong>
+              <span>First real global true-color raster stored with manifest state.</span>
+              <a href="/Cosmos/cosmos/gibs/global-truecolor.manifest.json">Open manifest</a>
+            </div>
+          </article>
+          <article class="asset-card">
+            <img src="/Cosmos/cosmos/bathymetry/global-depth.png" alt="R0005 bathymetry depth raster" />
+            <div>
+              <strong>R0005 bathymetry atlas</strong>
+              <span>Depth raster plumbing for shallow water, shelf breaks, coast foam, fog, and caustics.</span>
+              <a href="/Cosmos/cosmos/bathymetry/global-depth.manifest.json">Open manifest</a>
+            </div>
+          </article>
+          <article class="asset-card">
+            <img src="/Cosmos/cosmos/pages/cloud-terminator.png" alt="R0004 cloud terminator review screenshot" />
+            <div>
+              <strong>Terminator review lineage</strong>
+              <span>Cloud stacking, twilight handoff, rim thickness, and atmosphere calibration target.</span>
+              <a href="/Cosmos/cosmos/pages/cloud-terminator.png">Open image</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="releases" class="release-history">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Release History</div>
+            <h2>Receipt-backed evolution from R0001 to R0012.</h2>
+          </div>
+          <a class="button" href="https://github.com/ION-operations/Cosmos/tree/main/docs/cosmos/receipts">
+            Receipt Folder
+          </a>
+        </div>
+        <div class="timeline">
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0012_atmosphere_lut_solver.json">
+            <span>R0012</span><strong>Atmosphere LUT solver</strong><em>Curved-path optical-depth solver, ozone density, PNG LUT exports, quality contracts.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0011_shader_clean_twilight_calibration.json">
+            <span>R0011</span><strong>Shader-clean twilight calibration</strong><em>Representative atmosphere samples and twilight defaults after shader cleanup.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0010_runtime_shader_twilight.json">
+            <span>R0010</span><strong>Runtime shader diagnostics</strong><em>WebGL program logs, diagnostics panel, twilight review targets.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0009_physical_atmosphere_lut.json">
+            <span>R0009</span><strong>Physical atmosphere LUT interface</strong><em>Transmittance, multi-scattering, sky-view, and aerial-perspective data textures.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0008_visual_debug_overlays.json">
+            <span>R0008</span><strong>Visual debug overlays</strong><em>Scale ownership, atmosphere ownership, cloud LOD, physical shell overlays.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0007_atmosphere_cloud_lod.json">
+            <span>R0007</span><strong>Atmosphere and cloud LOD</strong><em>Ground-to-orbit sky continuity, rim tuning, and cloud band ownership.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0006_scale_coherence_ion.json">
+            <span>R0006</span><strong>Scale coherence</strong><em>Fixed Earth center, shared scale uniforms, spherical cloud shell altitude logic.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0005_bathymetry_one_water_intake.json">
+            <span>R0005</span><strong>Bathymetry one-water intake</strong><em>Depth atlas channels, shallow optics, coastal foam, underwater fog targets.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0004_gibs_surface_overlay_runtime.json">
+            <span>R0004</span><strong>GIBS surface overlay runtime</strong><em>NASA true-color global atlas loader, manifest, UI data state, seven screenshots.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0003_weather_atlas_unification.json">
+            <span>R0003</span><strong>Weather atlas unification</strong><em>Shared weather atlas sampled by orbit, clouds, ocean, and terrain forcing.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0002_orbital_review_route.json">
+            <span>R0002</span><strong>Orbital review route</strong><em>Dedicated Cosmos Review route and stable bookmark IDs.</em>
+          </a>
+          <a class="release" href="https://github.com/ION-operations/Cosmos/blob/main/docs/cosmos/receipts/R-0001_weather_atlas_spine.json">
+            <span>R0001</span><strong>Weather atlas spine</strong><em>Deterministic water-world weather generator and first ION Cosmos operating docs.</em>
           </a>
         </div>
       </section>
