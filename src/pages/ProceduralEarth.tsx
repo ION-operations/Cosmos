@@ -2125,18 +2125,18 @@ const DEFAULT_SETTINGS = {
   starIntensity: 1.0,
   
   // Clouds
-  cloudCoverage: 0.5,
-  cloudDensity: 0.05,
+  cloudCoverage: 0.65,
+  cloudDensity: 0.95,
   cloudScale: 1.0,
-  cloudDetailScale: 3.0,
+  cloudDetailScale: 1.8,
   cloudSpeed: 0.5,
   cloudHeight: 1500,
   cloudThickness: 1500,
-  cloudLightAbsorption: 0.5,
-  cloudAmbient: 0.4,
+  cloudLightAbsorption: 0.3,
+  cloudAmbient: 1.0,
   cloudSilverLining: 0.3,
   cloudPowder: 0.5,
-  cloudSteps: 64,
+  cloudSteps: 68,
   cloudLightSteps: 8,
   
   // Terrain
@@ -2246,15 +2246,16 @@ const DEFAULT_SETTINGS = {
   enableUnderwaterBubbles: true,
 };
 
+// Full lab boots sky-only so every other renderer layer starts opt-in.
 const DEFAULT_LAYERS: LayerVisibility = {
   sky: true,
-  clouds: true,
+  clouds: false,
   terrain: false,
-  ocean: true,
+  ocean: false,
   vegetation: false,
   weather: false,
-  fog: true,
-  godRays: true,
+  fog: false,
+  godRays: false,
 };
 
 type Settings = typeof DEFAULT_SETTINGS;
@@ -3446,7 +3447,7 @@ const ProceduralEarth: React.FC = () => {
                     <SliderSetting
                       label="Density"
                       value={settings.cloudDensity}
-                      min={0.01} max={0.2} step={0.005}
+                      min={0.01} max={1.5} step={0.01}
                       onChange={(v) => updateSetting('cloudDensity', v)}
                     />
                     <SliderSetting
@@ -3467,7 +3468,7 @@ const ProceduralEarth: React.FC = () => {
                     <SliderSetting
                       label="Detail Scale"
                       value={settings.cloudDetailScale}
-                      min={0.5} max={10} step={0.5}
+                      min={0.5} max={10} step={0.1}
                       onChange={(v) => updateSetting('cloudDetailScale', v)}
                     />
                   </SettingSection>
@@ -3489,6 +3490,18 @@ const ProceduralEarth: React.FC = () => {
                   
                   <SettingSection title="Cloud Lighting">
                     <SliderSetting
+                      label="Light Absorption"
+                      value={settings.cloudLightAbsorption}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('cloudLightAbsorption', v)}
+                    />
+                    <SliderSetting
+                      label="Ambient"
+                      value={settings.cloudAmbient}
+                      min={0} max={2} step={0.05}
+                      onChange={(v) => updateSetting('cloudAmbient', v)}
+                    />
+                    <SliderSetting
                       label="Silver Lining"
                       value={settings.cloudSilverLining}
                       min={0} max={1} step={0.05}
@@ -3499,6 +3512,16 @@ const ProceduralEarth: React.FC = () => {
                       value={settings.cloudPowder}
                       min={0} max={1} step={0.05}
                       onChange={(v) => updateSetting('cloudPowder', v)}
+                    />
+                  </SettingSection>
+
+                  <SettingSection title="Cloud Quality">
+                    <SliderSetting
+                      label="Ray Steps"
+                      value={settings.cloudSteps}
+                      min={16} max={128} step={1}
+                      format={(v) => `${Math.round(v)} steps`}
+                      onChange={(v) => updateSetting('cloudSteps', Math.round(v))}
                     />
                   </SettingSection>
                 </TabsContent>
